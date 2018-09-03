@@ -47,15 +47,4 @@ class SkyRemote:
         client.send(command_bytes)
         command_bytes[1] = 0        
         client.send(command_bytes)
-
         client.close()
-        # client.send(command_bytes)
-
-        # while True:
-        #
-        #     if not data:
-        #         break
-        #     conn.send(data)
-
-
-        # conn.close()
