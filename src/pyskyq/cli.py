@@ -15,13 +15,12 @@ also be used as template for Python modules.
 
 Note: This skeleton file can be safely removed if not needed!
 """
-from __future__ import division, print_function, absolute_import
 
 import argparse
 import sys
 import logging
 
-from pyskyq import __version__
+from pyskyq import __version__, SkyQ, REMOTE_COMMANDS
 
 __author__ = "Bradley Wood"
 __copyright__ = "Bradley Wood"
@@ -30,21 +29,10 @@ __license__ = "mit"
 _logger = logging.getLogger(__name__)
 
 
-def fib(n):
-    """Fibonacci example function
-
-    Args:
-      n (int): integer
-
-    Returns:
-      int: n-th Fibonacci number
+def send(cmd):
+    """Send a command to the sky box.
     """
-    assert n > 0
-    a, b = 1, 1
-    for i in range(n-1):
-        a, b = b, a+b
-    return a
-
+    pass
 
 def parse_args(args):
     """Parse command line parameters
@@ -56,16 +44,16 @@ def parse_args(args):
       :obj:`argparse.Namespace`: command line parameters namespace
     """
     parser = argparse.ArgumentParser(
-        description="Just a Fibonnaci demonstration")
+        description="Sends a command to a SkyQ box")
     parser.add_argument(
         '--version',
         action='version',
         version='pyskyq {ver}'.format(ver=__version__))
     parser.add_argument(
-        dest="n",
-        help="n-th Fibonacci number",
-        type=int,
-        metavar="INT")
+        dest="cmd",
+        help="command to send",
+        type=str,
+        metavar="CMD")
     parser.add_argument(
         '-v',
         '--verbose',
@@ -102,8 +90,9 @@ def main(args):
     """
     args = parse_args(args)
     setup_logging(args.loglevel)
-    _logger.debug("Starting crazy calculations...")
-    print("The {}-th Fibonacci number is {}".format(args.n, fib(args.n)))
+    _logger.debug("Starting SkyQ...")
+    skyq = SkyQ('skyq')
+    skyq.remote.send_command(REMOTE_COMMANDS[args.cmd])
     _logger.info("Script ends here")
 
 
