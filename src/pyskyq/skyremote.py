@@ -36,10 +36,10 @@ class SkyRemote:
         length = 12
         while True:
             data = client.recv(24)
-            self.logger.debug(f'Received data={data}')
+            self.logger.error(f'Received data={data}')
             if len(data) < 24:
                 client.send(data[0:length])
-                self.logger.debug(f'Sent data={data[0:length]}')
+                self.logger.error(f'Sent data={data[0:length]}')
                 length = 1
             else:
                 break
