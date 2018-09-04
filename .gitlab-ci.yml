@@ -20,7 +20,7 @@ cache:
 
 before_script:
   - python -V    # Print out python version for debugging
-  - env
+  - sed -i "s/_BRANCH_/$CI_BUILD_REF_NAME/g" README.rst # fix badges to use branch name
   - pip install pipenv
   - pipenv install --dev --ignore-pipfile
 
