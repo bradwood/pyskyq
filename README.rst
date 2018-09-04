@@ -1,8 +1,8 @@
-.. image:: https://gitlab.com/bradwood/pyskyq/badges/_BRANCH_/pipeline.svg
-   :target: https://gitlab.com/bradwood/pyskyq/commits/_BRANCH_
+.. image:: https://gitlab.com/bradwood/pyskyq/badges/develop/pipeline.svg
+   :target: https://gitlab.com/bradwood/pyskyq/commits/develop
 
-.. image:: https://gitlab.com/bradwood/pyskyq/badges/_BRANCH_/coverage.svg
-   :target: https://gitlab.com/bradwood/pyskyq/commits/_BRANCH_
+.. image:: https://gitlab.com/bradwood/pyskyq/badges/develop/coverage.svg
+   :target: https://gitlab.com/bradwood/pyskyq/commits/develop
 
 
 ======

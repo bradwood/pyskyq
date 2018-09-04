@@ -19,15 +19,8 @@ cache:
   - "$CI_PROJECT_DIR/.venv"
 
 before_script:
-  - python -V    # Print out python version for debugging
-  - sed -i "s/_BRANCH_/$CI_BUILD_REF_NAME/g" README.rst # fix badges to use branch name
   - pip install pipenv
   - pipenv install --dev --ignore-pipfile
-
-# after_script:
-#   - ls -la $CI_PROJECT_DIR/.pipcache
-#   - ls -la $CI_PROJECT_DIR/.pipenvcache
-#   - ls -la $CI_PROJECT_DIR/.venv
 
 unit testing and coverage:
   stage: Unit tests & Coverage
@@ -45,7 +38,7 @@ pages:
   stage: Coverage Reporting
   script:
     - mkdir -p public/coverage
-    - cp -fr htmlcov/* public/coverage/
+    - cp -fr htmlcov/* public/$CI_BUILD_REF_NAME/coverage/
   dependencies:
     - unit testing and coverage
   artifacts:
