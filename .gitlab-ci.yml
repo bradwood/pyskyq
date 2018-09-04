@@ -21,7 +21,7 @@ cache:
 before_script:
   - python -V    # Print out python version for debugging
   - pip install pipenv
-  - pipenv install --dev
+  - pipenv install --dev --ignore-pipfile
 
 # after_script:
 #   - ls -la $CI_PROJECT_DIR/.pipcache
