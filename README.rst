@@ -1,3 +1,7 @@
+[![pipeline status](https://gitlab.com/bradwood/pyskyq/badges/master/pipeline.svg)](https://gitlab.com/bradwood/pyskyq/commits/master)
+[![coverage report](https://gitlab.com/bradwood/pyskyq/badges/master/coverage.svg)](https://gitlab.com/bradwood/pyskyq/commits/master)
+
+
 ======
 pyskyq
 ======
