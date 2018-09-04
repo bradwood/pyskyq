@@ -1,5 +1,4 @@
 [
-  "tests/test_skeleton.py::test_fib",
   "tests/test_skyq.py::test_SkyQ_init[hostname-5900-None]",
   "tests/test_skyq.py::test_SkyQ_init[hostname-2342-logger1]"
 ]
