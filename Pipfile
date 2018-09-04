@@ -12,8 +12,8 @@ pytest-cov = "*"
 sphinx = "*"
 pylint = "*"
 "autopep8" = "*"
-setuptools-scm = "*"
 setuptools = "*"
+bumpversion = "*"
 
 [requires]
 python_version = "3.6"

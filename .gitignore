@@ -4,6 +4,7 @@
 *.so
 *.cfg
 !setup.cfg
+!.bumpversion.cfg
 *.orig
 *.log
 *.pot
