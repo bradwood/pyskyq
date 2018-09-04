@@ -37,7 +37,7 @@ unit testing and coverage:
 pages:
   stage: Coverage Reporting
   script:
-    - mkdir -p public/coverage
+    - mkdir -p public/$CI_BUILD_REF_NAME/coverage
     - cp -fr htmlcov/* public/$CI_BUILD_REF_NAME/coverage/
   dependencies:
     - unit testing and coverage
