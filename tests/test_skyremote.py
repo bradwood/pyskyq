@@ -11,22 +11,22 @@ def test_sky_remote_init():
 
 def test_sky_remote_send_command(mocker):
     
-    #m.patch('SkyRemote.logger')
+    m = mocker.patch('socket.socket')
+    m.return_value.recv.side_effect = [  # set up the data to be returned on each successive call of socket.recv()
+        b'SKY 000.001\n',
+        b'\x01\x01',
+        b'\x00\x00\x00\x00',
+        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+    ]
 
-    # Mocket.register(MocketEntry(('localhost', 8080), b'SKY 000.001\n'))
-    with mocker.patch('socket.socket') as mock_socket:
-        skyrem = SkyRemote('blah')
-        skyrem.send_command(rcmd.play)
-        mock_socket.assert_called_with(socket.AF_INET, socket.SOCK_STREAM)
-        mock_socket.connect.return_value = None
-        mock_socket.recv.return_value = b'SKY 000.001\n'
+    skyrem = SkyRemote('blah')
 
-        #m.debug.assert_called_with("Received data=b'SKY 000.001\n'")
+    skyrem.send_command(rcmd.play)
 
-
-# def test_sky_remote_send_command():
-#     skyrem = SkyRemote('localhost', 8080)
-#     # for record in caplog.records:
-#     #     assert record.levelname == 'DEBUG'
-#     # assert 'SKY 000.001'  in caplog.text
-#     assert False
+    m.assert_called_with(socket.AF_INET, socket.SOCK_STREAM)
+    
+    assert m.return_value.recv.call_count == 4
+    m.return_value.send.assert_any_call(b'SKY 000.001\n')
+    m.return_value.send.assert_any_call(b'\x01')
+    m.return_value.send.assert_any_call(b'\x00')
+    m.return_value.send.assert_any_call(bytearray(b'\x04\x00\x00\x00\x00\x00\xe4\x00'))

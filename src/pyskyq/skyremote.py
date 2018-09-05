@@ -36,15 +36,17 @@ class SkyRemote:
         length = 12
         while True:
             data = client.recv(24)
-            self.logger.error(f'Received data={data}')
-            if len(data) < 24:
+            self.logger.debug(f'Received data={data}')
+            if len(data) < 24: # box sends 24 x \x00 to signal end of hand-shake.
                 client.send(data[0:length])
-                self.logger.error(f'Sent data={data[0:length]}')
+                self.logger.debug(f'Sent data={data[0:length]}')
                 length = 1
             else:
                 break
         
         client.send(command_bytes)
-        command_bytes[1] = 0        
+        self.logger.debug(f'Send command part 1 data={command_bytes}')
+        command_bytes[1] = 0
         client.send(command_bytes)
+        self.logger.debug(f'Send command part 2 data={command_bytes}')
         client.close()
