@@ -12,11 +12,42 @@ pyskyq
 
 A Python library for controlling a SkyQ Box
 
+Installing
+==========
+
+To install:
+
+::
+
+    pip install pyskyq
+
+Using the cli
+=============
+
+You can use the cli tool like this:
+
+::
+
+    pyskyq play
+
+See .. _constants.py: src/pyskyq/constants.py for a list of the commands that can be passed.
+
+Using the library
+=================
+
+The below snippet gives an example of usage:
+
+::
+    from pyskyq import SkyQ
+
+    skyq = SkyQ('1.2.3.4')
+    skyq.remote.send_command(rcmd.play)
 
 Credits
 =======
 Code and ideas obtained from:
-* https://github.com/dalhundal/sky-remote
-* https://gladdy.uk/blog/2017/03/13/skyq-upnp-rest-and-websocket-api-interfaces/
+
+- https://github.com/dalhundal/sky-remote
+- https://gladdy.uk/blog/2017/03/13/skyq-upnp-rest-and-websocket-api-interfaces/
 
 Thank you to those individuals for their contributions.
