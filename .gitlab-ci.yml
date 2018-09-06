@@ -91,10 +91,10 @@ deploy_to_test_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
-  only: # only ORs items under it. Use multiple to get an AND. 
-    - tags 
   only:
-    - develop
+    - tags 
+  except:
+    - master
 
 deploy_to_live_pypi:
   stage: Release to Live PyPI
