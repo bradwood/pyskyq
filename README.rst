@@ -32,7 +32,7 @@ You can use the cli tool like this:
 
 See constants.py_ for a list of the commands that can be passed.
 
-.. _constants.py: : src/pyskyq/constants.py
+.. _constants.py: src/pyskyq/constants.py
 
 Using the library
 =================
