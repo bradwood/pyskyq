@@ -4,6 +4,12 @@
 .. image:: https://gitlab.com/bradwood/pyskyq/badges/develop/coverage.svg
    :target: https://bradwood.gitlab.io/pyskyq/develop/coverage/
 
+.. image:: https://img.shields.io/pypi/v/nine.svg   
+   :target: https://pypi.org/project/pyskyq/
+
+.. image:: https://img.shields.io/readthedocs/pip.svg   
+   :target: https://pyskyq.readthedocs.io/en/latest/
+
 
 ======
 pyskyq
@@ -32,7 +38,7 @@ You can use the cli tool like this:
 
 This will press the "play" button on your Sky Q Remote. See constants.py_ for a list of the commands that can be passed.
 
-.. _constants.py: src/pyskyq/constants.py
+.. _constants.py: https://gitlab.com/bradwood/pyskyq/blob/develop/src/pyskyq/constants.py
 
 Using the library
 =================
