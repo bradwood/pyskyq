@@ -1,10 +1,11 @@
 """Constants for button codes, ports, and so on"""
 from collections import namedtuple
+from typing import NamedTuple, Dict, NamedTuple
 
 REMOTE_LEGACY_PORT: int = 5900
 REMOTE_PORT: int = 49160
 
-REMOTE_COMMANDS = {
+REMOTE_COMMANDS: Dict[str,int] = {
 	'power': 0,
 	'select': 1,
 	'backup': 2,
@@ -48,6 +49,7 @@ REMOTE_COMMANDS = {
 	'sky': 241,
 }
 
-RCmdTuple = namedtuple('RCmdTuple', sorted(REMOTE_COMMANDS))
+# Silence mypy type errors on the below 2 commands.
 
-rcmd = RCmdTuple(**REMOTE_COMMANDS)
+RCmdTuple = namedtuple('RCmdTuple', sorted(REMOTE_COMMANDS))  # type: ignore
+rcmd = RCmdTuple(**REMOTE_COMMANDS)  # type: ignore

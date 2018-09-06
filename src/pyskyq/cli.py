@@ -7,6 +7,8 @@ Cli wrapper for the skyq API
 import argparse
 import sys
 import logging
+from typing import List
+
 
 from pyskyq import __version__, SkyQ, REMOTE_COMMANDS
 
@@ -17,7 +19,7 @@ __license__ = "mit"
 _logger = logging.getLogger(__name__)
 
 
-def parse_args(args):
+def parse_args(args: List[str]) -> argparse.Namespace:
     """Parse command line parameters
 
     Args:
@@ -54,7 +56,7 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def setup_logging(loglevel):
+def setup_logging(loglevel: int):
     """Setup basic logging
 
     Args:
@@ -65,17 +67,17 @@ def setup_logging(loglevel):
                         format=logformat, datefmt="%Y-%m-%d %H:%M:%S")
 
 
-def main(args):
+def main(args: List[str]):
     """Main entry point allowing external calls
 
     Args:
       args ([str]): command line parameter list
     """
-    args = parse_args(args)
-    setup_logging(args.loglevel)
+    pargs = parse_args(args)
+    setup_logging(pargs.loglevel)
     _logger.debug("Starting SkyQ...")
     skyq = SkyQ('skyq')
-    skyq.remote.send_command(REMOTE_COMMANDS[args.cmd])
+    skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
     _logger.info("Script ends here")
 
 
