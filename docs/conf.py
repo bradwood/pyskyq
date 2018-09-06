@@ -82,7 +82,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pyskyq'
-copyright = u'2018, Bradley Wood'
+copyright = u' 2018, Bradley Wood'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -140,7 +140,12 @@ html_theme = 'alabaster'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+html_theme_options = {
+    'github_user': 'bradwood',
+    'github_repo': 'pyskyq',
+    'description': 'A Python library for the Sky Q box.',
+    'github_button': 'true',
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []

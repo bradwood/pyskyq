@@ -3,11 +3,11 @@
 import logging
 import socket
 import math
-from typing import Optional, Callable
+from typing import Optional
 
 from .constants import REMOTE_PORT
 
-
+# pylint: disable=too-few-public-methods
 class SkyRemote:
     """Main SkyRemote implementation"""
 
@@ -28,10 +28,10 @@ class SkyRemote:
         command_bytes = bytearray([4, 1, 0, 0, 0, 0, math.floor(224 + (code/16)), code % 16])
         self.logger.debug(f'command_bytes={command_bytes}')
 
-        # TODO try/except socket.gaierror 
+        # TODO try/except socket.gaierror
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((self.host, self.port))
-        
+
         # Wait until ready for data
         length = 12
         while True:
@@ -43,7 +43,7 @@ class SkyRemote:
                 length = 1
             else:
                 break
-        
+
         client.send(command_bytes)
         self.logger.debug(f'Send command part 1 data={command_bytes}')
         command_bytes[1] = 0
