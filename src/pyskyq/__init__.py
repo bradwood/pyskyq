@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
+"""Import and merge all modules in this package.-"""
 from .skyq import SkyQ
-from .constants import rcmd, REMOTE_COMMANDS
+from .constants import RCMD, REMOTE_COMMANDS
 from ._version import __version__
 from .skyremote import SkyRemote

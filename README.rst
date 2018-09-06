@@ -6,7 +6,7 @@
 
 .. image:: https://badge.fury.io/py/pyskyq.svg
     :target: https://badge.fury.io/py/pyskyq
-    
+
 .. image:: https://img.shields.io/readthedocs/pip.svg   
    :target: https://pyskyq.readthedocs.io/en/latest/
 
@@ -50,7 +50,7 @@ The below snippet gives an example of usage:
     from pyskyq import SkyQ
 
     skyq = SkyQ('1.2.3.4')
-    skyq.remote.send_command(rcmd.play)
+    skyq.remote.send_command(RCMD.play)
 
 Credits
 =======
