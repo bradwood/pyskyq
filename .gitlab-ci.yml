@@ -51,12 +51,12 @@ pages:
     - master
 
 
-# linting:
-#   stage: Linting
-#   script:
-#   - pipenv run lint.sh
-#   except:
-#     - master
+static_type_checking:
+  stage: Linting
+  script:
+  - pipenv run mypy src --quick-and-dirty --verbose
+  except:
+    - master
 
 package:
   stage: Package
