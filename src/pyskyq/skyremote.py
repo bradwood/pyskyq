@@ -28,7 +28,7 @@ class SkyRemote:
         command_bytes = bytearray([4, 1, 0, 0, 0, 0, math.floor(224 + (code/16)), code % 16])
         self.logger.debug(f'command_bytes={command_bytes}')
 
-        # TODO try/except         
+        # TODO try/except socket.gaierror 
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((self.host, self.port))
         

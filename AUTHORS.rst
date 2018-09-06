@@ -2,4 +2,4 @@
 Contributors
 ============
 
-* Bradley Wood <git@bradleywood.com>
+- Bradley Wood <git@bradleywood.com>

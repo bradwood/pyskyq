@@ -16,6 +16,7 @@ setuptools = "*"
 bumpversion = "*"
 pytest-mock = "*"
 twine = "*"
+docutils = "*"
 
 [requires]
 python_version = "3.6"
