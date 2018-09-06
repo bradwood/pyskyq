@@ -70,7 +70,11 @@ package:
   except:
     - master
 
-.pypi_deploy:
+deploy_to_test_pypi:
+  stage: Release to Test PyPI
+  environment:
+    name: Test PyPI
+    url: https://test.pypi.org/project/pyskyq
   dependencies:
     - package
   script:
@@ -89,17 +93,25 @@ package:
   only:
     - master
 
-
-deploy_to_test_pypi:
-  extends: .pypi_deploy
-  stage: Release to Test PyPI
-  environment:
-    name: Test PyPI
-    url: https://test.pypi.org/project/pyskyq
-
 deploy_to_live_pypi:
-  extends: .pypi_deploy
   stage: Release to Live PyPI
   environment:
     name: Live PyPI
     url: https://pypi.org/project/pyskyq
+  dependencies:
+    - package
+  script:
+  - rm -f .pypirc
+  - echo "[distutils]" >> ~/.pypirc
+  - echo "index-servers =" >> ~/.pypirc
+  - echo "    pypi" >> ~/.pypirc
+  - echo "" >> ~/.pypirc
+  - echo "[pypi]" >> ~/.pypirc
+  - echo "${PYPI_REPO}" >> ~/.pypirc
+  - echo "${PYPI_USER}" >> ~/.pypirc
+  - echo "${PYPI_PASSWORD}" >> ~/.pypirc
+  - pipenv run twine upload dist/*
+  only: # only ORs items under it. Use multiple to get an AND. 
+    - tags 
+  only:
+    - master
