@@ -4,6 +4,7 @@
 *.so
 *.cfg
 !setup.cfg
+!.bumpversion.cfg
 *.orig
 *.log
 *.pot
@@ -11,6 +12,7 @@ __pycache__/*
 .cache/*
 .*.swp
 */.ipynb_checkpoints/*
+.pytest_cache
 
 # Project files
 .ropeproject
@@ -40,3 +42,13 @@ docs/api/*
 docs/_build/*
 cover/*
 MANIFEST
+
+
+
+
+
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+

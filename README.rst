@@ -1,19 +1,22 @@
+.. image:: https://gitlab.com/bradwood/pyskyq/badges/develop/pipeline.svg
+   :target: https://gitlab.com/bradwood/pyskyq/pipelines
+
+.. image:: https://gitlab.com/bradwood/pyskyq/badges/develop/coverage.svg
+   :target: https://bradwood.gitlab.io/pyskyq/develop/coverage/
+
+
 ======
 pyskyq
 ======
 
 
-Add a short description here!
+A Python library for controlling a SkyQ Box
 
 
-Description
-===========
+Credits
+=======
+Code and ideas obtained from:
+* https://github.com/dalhundal/sky-remote
+* https://gladdy.uk/blog/2017/03/13/skyq-upnp-rest-and-websocket-api-interfaces/
 
-A longer description of your project goes here...
-
-
-Note
-====
-
-This project has been set up using PyScaffold 3.0.3. For details and usage
-information on PyScaffold see http://pyscaffold.org/.
+Thank you to those individuals for their contributions.
