@@ -58,6 +58,13 @@ static_type_checking:
   except:
     - master
 
+pylint:
+  stage: Linting
+  script:
+  - pipenv run pylint src
+  except:
+    - master
+
 package:
   stage: Package
   artifacts:
