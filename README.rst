@@ -30,7 +30,9 @@ You can use the cli tool like this:
 
     pyskyq play
 
-See .. _constants.py: src/pyskyq/constants.py for a list of the commands that can be passed.
+See constants.py_ for a list of the commands that can be passed.
+
+.. _constants.py: : src/pyskyq/constants.py
 
 Using the library
 =================
@@ -38,6 +40,7 @@ Using the library
 The below snippet gives an example of usage:
 
 ::
+
     from pyskyq import SkyQ
 
     skyq = SkyQ('1.2.3.4')
