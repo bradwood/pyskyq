@@ -1,7 +1,7 @@
 import pytest
 import socket
 
-from pyskyq import SkyQ, SkyRemote, rcmd
+from pyskyq import SkyQ, SkyRemote, RCMD
 
 
 def test_sky_remote_init():
@@ -21,7 +21,7 @@ def test_sky_remote_send_command(mocker):
 
     skyrem = SkyRemote('blah')
 
-    skyrem.send_command(rcmd.play)
+    skyrem.send_command(RCMD.play)
 
     m.assert_called_with(socket.AF_INET, socket.SOCK_STREAM)
     

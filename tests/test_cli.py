@@ -3,7 +3,7 @@ import socket
 import sys
 
 from pyskyq.cli import run
-from pyskyq import rcmd
+from pyskyq import RCMD
 
 def test_cli(mocker):
 

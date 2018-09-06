@@ -16,7 +16,7 @@ __author__ = "Bradley Wood"
 __copyright__ = "Bradley Wood"
 __license__ = "mit"
 
-_logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def parse_args(args: List[str]) -> argparse.Namespace:
@@ -75,10 +75,10 @@ def main(args: List[str]):
     """
     pargs = parse_args(args)
     setup_logging(pargs.loglevel)
-    _logger.debug("Starting SkyQ...")
+    LOGGER.debug("Starting SkyQ...")
     skyq = SkyQ('skyq')
     skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
-    _logger.info("Script ends here")
+    LOGGER.info("Script ends here")
 
 
 def run():
