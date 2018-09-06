@@ -10,7 +10,8 @@ stages:
   - Coverage Reporting
   - Linting
   - Package
-  - Release
+  - Release to Test PyPI
+  - Release to Live PyPI
 
 cache:
   untracked: true
@@ -69,11 +70,7 @@ package:
   except:
     - master
 
-deploy_to_test_pypi:
-  stage: Release
-  environment:
-    name: Test PyPI
-    url: https://test.pypi.org/project/pyskyq
+.pypi_deploy:
   dependencies:
     - package
   script:
@@ -87,8 +84,22 @@ deploy_to_test_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
-
-  only:
+  only: # only ORs items under it. Use multiple to get an AND. 
     - tags 
+  only:
     - master
 
+
+deploy_to_test_pypi:
+  extends: .pypi_deploy
+  stage: Release to Test PyPI
+  environment:
+    name: Test PyPI
+    url: https://test.pypi.org/project/pyskyq
+
+deploy_to_live_pypi:
+  extends: .pypi_deploy
+  stage: Release to Live PyPI
+  environment:
+    name: Live PyPI
+    url: https://pypi.org/project/pyskyq
