@@ -30,7 +30,7 @@ You can use the cli tool like this:
 
     pyskyq play
 
-See constants.py_ for a list of the commands that can be passed.
+This will press the "play" button on your Sky Q Remote. See constants.py_ for a list of the commands that can be passed.
 
 .. _constants.py: src/pyskyq/constants.py
 
