@@ -9,7 +9,9 @@ stages:
   - Unit tests & Coverage
   - Coverage Reporting
   - Linting
-  - Package & Release
+  - Package
+  - Release to Test PyPI
+  - Release to Live PyPI
 
 cache:
   untracked: true
@@ -44,8 +46,6 @@ pages:
   artifacts:
     paths:
     - public
-  except:
-    - master
 
 
 # linting:
@@ -55,12 +55,63 @@ pages:
 #   except:
 #     - master
 
-# package and release:
-#   stage: Package & Release
-#   artifacts:
-#     paths:
-#       - dist
-#   script:
-#   - pipenv run build.sh
-#   only:
-#     - master
+package:
+  stage: Package
+  artifacts:
+    name: "$CI_PROJECT_NAME-$CI_COMMIT_TAG"
+    paths:
+      - dist/
+    when: on_success
+  script:
+  - rm -rf dist
+  - pipenv run python setup.py sdist bdist_wheel
+  only:
+    - tags 
+  except:
+    - master
+
+deploy_to_test_pypi:
+  stage: Release to Test PyPI
+  environment:
+    name: Test PyPI
+    url: https://test.pypi.org/project/pyskyq
+  dependencies:
+    - package
+  script:
+  - rm -f .pypirc
+  - echo "[distutils]" >> ~/.pypirc
+  - echo "index-servers =" >> ~/.pypirc
+  - echo "    pypi" >> ~/.pypirc
+  - echo "" >> ~/.pypirc
+  - echo "[pypi]" >> ~/.pypirc
+  - echo "${PYPI_REPO}" >> ~/.pypirc
+  - echo "${PYPI_USER}" >> ~/.pypirc
+  - echo "${PYPI_PASSWORD}" >> ~/.pypirc
+  - pipenv run twine upload dist/*
+  only: # only ORs items under it. Use multiple to get an AND. 
+    - tags 
+  only:
+    - master
+
+deploy_to_live_pypi:
+  stage: Release to Live PyPI
+  environment:
+    name: Live PyPI
+    url: https://pypi.org/project/pyskyq
+  dependencies:
+    - package
+  script:
+  - rm -f .pypirc
+  - echo "[distutils]" >> ~/.pypirc
+  - echo "index-servers =" >> ~/.pypirc
+  - echo "    pypi" >> ~/.pypirc
+  - echo "" >> ~/.pypirc
+  - echo "[pypi]" >> ~/.pypirc
+  - echo "${PYPI_REPO}" >> ~/.pypirc
+  - echo "${PYPI_USER}" >> ~/.pypirc
+  - echo "${PYPI_PASSWORD}" >> ~/.pypirc
+  - pipenv run twine upload dist/*
+  only: # only ORs items under it. Use multiple to get an AND. 
+    - tags 
+  only:
+    - master
