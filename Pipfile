@@ -15,6 +15,7 @@ pylint = "*"
 setuptools = "*"
 bumpversion = "*"
 pytest-mock = "*"
+twine = "*"
 
 [requires]
 python_version = "3.6"
