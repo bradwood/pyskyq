@@ -21,6 +21,7 @@ cache:
   - "$CI_PROJECT_DIR/.venv"
 
 before_script:
+  - pip install --upgrade pip
   - pip install pipenv
   - pipenv install --dev --ignore-pipfile
 
@@ -46,6 +47,8 @@ pages:
   artifacts:
     paths:
     - public
+  except:
+    - master
 
 
 # linting:
@@ -91,7 +94,7 @@ deploy_to_test_pypi:
   only: # only ORs items under it. Use multiple to get an AND. 
     - tags 
   only:
-    - master
+    - develop
 
 deploy_to_live_pypi:
   stage: Release to Live PyPI
