@@ -37,11 +37,12 @@ unit testing and coverage:
   except:
     - master
 
+# TODO: Add something like this to enable dir listing https://stackoverflow.com/questions/21395159/shell-script-to-create-a-static-html-directory-listing
 pages:
   stage: Coverage Reporting
   script:
-    - mkdir -p public/$CI_BUILD_REF_NAME/coverage
-    - cp -fr htmlcov/* public/$CI_BUILD_REF_NAME/coverage/
+    - mkdir -p public/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/
+    - cp -fr htmlcov/* public/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/
   dependencies:
     - unit testing and coverage
   artifacts:
@@ -75,9 +76,9 @@ package:
   script:
   - rm -rf dist
   - pipenv run python setup.py sdist bdist_wheel
-  only:
+  only: # only ORs items under it. Use multiple to get an AND. 
     - tags 
-  except:
+  only:
     - master
 
 deploy_to_test_pypi:
@@ -98,9 +99,9 @@ deploy_to_test_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
-  only:
+  only: # only ORs items under it. Use multiple to get an AND. 
     - tags 
-  except:
+  only:
     - master
 
 deploy_to_live_pypi:
@@ -124,4 +125,4 @@ deploy_to_live_pypi:
   only: # only ORs items under it. Use multiple to get an AND. 
     - tags 
   only:
-    - master
+  - /^*-stable/@bradwood/pyskyq
