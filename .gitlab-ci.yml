@@ -19,6 +19,8 @@ cache:
   - "$CI_PROJECT_DIR/.pipcache"
   - "$CI_PROJECT_DIR/.pipenvcache"
   - "$CI_PROJECT_DIR/.venv"
+  - "$CI_PROJECT_DIR/.mypy_cache"
+  - "$CI_PROJECT_DIR/.pytest_cache"
 
 before_script:
   - pip install --upgrade pip
@@ -74,10 +76,11 @@ package:
       - dist/
     when: on_success
   script:
+  - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 1; fi  # hack to ensure TAG is present as only: with AND doesn't work
   - rm -rf dist
   - pipenv run python setup.py sdist bdist_wheel
-  only: # only ORs items under it. Use multiple to get an AND. 
-    - tags 
+  # only:
+  #   - tags 
   only:
     - master
 
@@ -89,6 +92,7 @@ deploy_to_test_pypi:
   dependencies:
     - package
   script:
+  - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 1; fi  # hack to ensure TAG is present as only: with AND doesn't work
   - rm -f .pypirc
   - echo "[distutils]" >> ~/.pypirc
   - echo "index-servers =" >> ~/.pypirc
@@ -99,8 +103,8 @@ deploy_to_test_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
-  only: # only ORs items under it. Use multiple to get an AND. 
-    - tags 
+  # only: 
+  #   - tags 
   only:
     - master
 
@@ -112,6 +116,7 @@ deploy_to_live_pypi:
   dependencies:
     - package
   script:
+  - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 1; fi  # hack to ensure TAG is present as only: with AND doesn't work
   - rm -f .pypirc
   - echo "[distutils]" >> ~/.pypirc
   - echo "index-servers =" >> ~/.pypirc
@@ -122,7 +127,7 @@ deploy_to_live_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
-  only: # only ORs items under it. Use multiple to get an AND. 
-    - tags 
+  # only: # only ORs items under it. Use multiple to get an AND. 
+  #   - tags 
   only:
   - /^*-stable/@bradwood/pyskyq
