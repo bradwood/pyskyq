@@ -89,7 +89,7 @@ deploy_to_test_pypi:
   dependencies:
     - package
   script:
-  - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 1; fi  # hack to ensure TAG is present as only: with AND doesn't work
+  - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 0; fi  # Silently do nothing if there is no tag on this commit.
   - rm -f .pypirc
   - echo "[distutils]" >> ~/.pypirc
   - echo "index-servers =" >> ~/.pypirc
