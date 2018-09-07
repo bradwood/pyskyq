@@ -37,7 +37,7 @@ unit testing and coverage:
           - htmlcov
       expire_in: 1 day
   except:
-    - master
+  - master
 
 # TODO: Add something like this to enable dir listing https://stackoverflow.com/questions/21395159/shell-script-to-create-a-static-html-directory-listing
 pages:
@@ -51,7 +51,7 @@ pages:
     paths:
     - public
   except:
-    - master
+  - master
 
 
 static_type_checking:
@@ -66,20 +66,20 @@ pylint:
   script:
   - pipenv run pylint src
   except:
-    - master
+  - master
 
 package:
   stage: Package
   artifacts:
     name: "$CI_PROJECT_NAME-$CI_COMMIT_TAG"
     paths:
-      - dist/
+    - dist/
     when: on_success
   script:
   - rm -rf dist
   - pipenv run python setup.py sdist bdist_wheel
   only:
-    - master
+  - master
 
 deploy_to_test_pypi:
   stage: Release to Test PyPI
@@ -87,9 +87,9 @@ deploy_to_test_pypi:
     name: Test PyPI
     url: https://test.pypi.org/project/pyskyq
   dependencies:
-    - package
+  - package
   script:
-  - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 0; fi  # Silently do nothing if there is no tag on this commit.
+  # - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 0; fi  # hack to ensure TAG is present as only: with AND doesn't work
   - rm -f .pypirc
   - echo "[distutils]" >> ~/.pypirc
   - echo "index-servers =" >> ~/.pypirc
@@ -100,10 +100,10 @@ deploy_to_test_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
-  # only: 
-  #   - tags 
   only:
-    - master
+  - /^v?\d+\.\d+\.\d+$/  #only semver strings e.g. 1.0.0 or v1.0.1
+  except:
+  - /^(?!.*(master)$).*$/  # exclude everything that does not match "master" -- DeMorgan's theorem in action.
 
 deploy_to_live_pypi:
   stage: Release to Live PyPI
@@ -111,9 +111,9 @@ deploy_to_live_pypi:
     name: Live PyPI
     url: https://pypi.org/project/pyskyq
   dependencies:
-    - package
+  - package
   script:
-  - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 1; fi  # hack to ensure TAG is present as only: with AND doesn't work
+  # - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 0; fi  # hack to ensure TAG is present as only: with AND doesn't work
   - rm -f .pypirc
   - echo "[distutils]" >> ~/.pypirc
   - echo "index-servers =" >> ~/.pypirc
@@ -124,7 +124,7 @@ deploy_to_live_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
-  # only: # only ORs items under it. Use multiple to get an AND. 
-  #   - tags 
   only:
-  - /^*-stable/@bradwood/pyskyq
+  - /^v?\d+\.\d+\.\d+$/  #only semver strings e.g. 1.0.0 or v1.0.1
+  except:
+  - /^(?!.*(master)$).*$/  # exclude everything that does not match "master" -- DeMorgan's theorem in action.
