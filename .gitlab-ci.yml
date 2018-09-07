@@ -76,11 +76,8 @@ package:
       - dist/
     when: on_success
   script:
-  - if [ -z "$CI_COMMIT_TAG" ]; then echo "Needs a git tag!"; exit 1; fi  # hack to ensure TAG is present as only: with AND doesn't work
   - rm -rf dist
   - pipenv run python setup.py sdist bdist_wheel
-  # only:
-  #   - tags 
   only:
     - master
 
