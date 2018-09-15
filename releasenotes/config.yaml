@@ -1,0 +1,11 @@
+---
+branch: master
+stop_at_branch_base: false
+sections:
+  # The prelude section is implicitly included.
+  - [features, New Features]
+  - [issues, Known Issues]
+  - [upgrade, Upgrade Notes]
+  - [api, API Changes]
+  - [security, Security Issues]
+  - [fixes, Bug Fixes]
