@@ -78,8 +78,8 @@ package:
   script:
   - rm -rf dist
   - pipenv run python setup.py sdist bdist_wheel
-  only:
-  - master
+  # only:
+  # - master
 
 deploy_to_test_pypi:
   stage: Release to Test PyPI
@@ -101,9 +101,9 @@ deploy_to_test_pypi:
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
   only:
-  - /^v?\d+\.\d+\.\d+$/  #only semver strings e.g. 1.0.0 or v1.0.1
-  except:
-  - /^(?!.*(master)$).*$/  # exclude everything that does not match "master" -- DeMorgan's theorem in action.
+  - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
+  # except:
+  # - /^(?!.*(master)$).*$/  # exclude everything that does not match "master" -- DeMorgan's theorem in action.
 
 deploy_to_live_pypi:
   stage: Release to Live PyPI
@@ -125,6 +125,6 @@ deploy_to_live_pypi:
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
   only:
-  - /^v?\d+\.\d+\.\d+$/  #only semver strings e.g. 1.0.0 or v1.0.1
-  except:
-  - /^(?!.*(master)$).*$/  # exclude everything that does not match "master" -- DeMorgan's theorem in action.
+  - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
+  # except:
+  # - /^(?!.*(master)$).*$/  # exclude everything that does not match "master" -- DeMorgan's theorem in action.
