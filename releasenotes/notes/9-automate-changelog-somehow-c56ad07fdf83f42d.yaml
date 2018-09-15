@@ -1,0 +1,8 @@
+---
+prelude: >
+    Inegrated ``reno`` to allow better release note generation and publication.
+features:
+  - |
+    Added ``reno`` to manage release note generation - fixes issue 9_
+    
+    .. _9: https://gitlab.com/bradwood/pyskyq/issues/9

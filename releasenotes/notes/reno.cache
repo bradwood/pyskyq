@@ -1,0 +1,16 @@
+---
+file-contents:
+  releasenotes/notes/9-automate-changelog-somehow-c56ad07fdf83f42d.yaml:
+    features: ['Added ``reno`` to manage release note generation - fixes issue 9_
+
+
+        .. _9: https://gitlab.com/bradwood/pyskyq/issues/9
+
+        ']
+    prelude: 'Inegrated ``reno`` to allow better release note generation and publication.
+
+      '
+notes:
+- files:
+  - [releasenotes/notes/9-automate-changelog-somehow-c56ad07fdf83f42d.yaml, null]
+  version: v0.1.2

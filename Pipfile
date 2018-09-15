@@ -19,6 +19,7 @@ twine = "*"
 docutils = "*"
 mypy = "*"
 rope = "*"
+reno = {version = "*", extras = ["sphinx"]}
 
 [requires]
 python_version = "3.6"
