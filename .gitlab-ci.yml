@@ -81,8 +81,8 @@ package:
   - pipenv install --dev --ignore-pipfile
   - rm -rf dist
   - pipenv run python setup.py sdist bdist_wheel
-  # only:
-  # - master
+  only:
+  - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
 
 deploy_to_test_pypi:
   stage: Release to Test PyPI
@@ -104,8 +104,8 @@ deploy_to_test_pypi:
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - ls -la dist/
   - pipenv run twine upload dist/*
-  # only:
-  # - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
+  only:
+  - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
   # except:
   # - /^(?!.*(master)$).*$/  # exclude everything that does not match "master" -- DeMorgan's theorem in action.
 
