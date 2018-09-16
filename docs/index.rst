@@ -14,7 +14,7 @@ Contents
    Readme <readme>
    License <license>
    Authors <authors>
-   Changelog <changelog>
+   Release Notes <changelog>
    Module Reference <api/modules>
 
 

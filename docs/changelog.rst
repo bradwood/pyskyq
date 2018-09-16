@@ -1,2 +1,7 @@
-.. _changes:
-.. include:: ../CHANGELOG.rst
+.. _changelog:
+
+=============
+Release Notes
+=============
+
+.. release-notes::
