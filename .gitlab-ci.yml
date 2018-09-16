@@ -102,8 +102,8 @@ deploy_to_test_pypi:
   - echo "${PYPI_REPO}" >> ~/.pypirc
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
-  - pipenv run twine upload dist/*
   - ls -la dist/
+  - pipenv run twine upload dist/*
   # only:
   # - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
   # except:
