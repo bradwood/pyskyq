@@ -78,8 +78,8 @@ package:
     - dist/
     when: on_success
   script:
-  - rm -rf dist
   - pipenv install --dev --ignore-pipfile
+  - rm -rf dist
   - pipenv run python setup.py sdist bdist_wheel
   # only:
   # - master
