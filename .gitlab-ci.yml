@@ -25,11 +25,11 @@ cache:
 before_script:
   - pip install --upgrade pip
   - pip install pipenv
-  - pipenv install --dev --ignore-pipfile
 
 unit testing and coverage:
   stage: Unit tests & Coverage
   script:
+  - pipenv install --dev --ignore-pipfile
   - pipenv run python setup.py test
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/' # regex used to pull out the coverage percentate in gitlab.
   artifacts:
@@ -57,6 +57,7 @@ pages:
 static_type_checking:
   stage: Linting
   script:
+  - pipenv install --dev --ignore-pipfile
   - pipenv run mypy src --quick-and-dirty --verbose
   except:
     - master
@@ -64,6 +65,7 @@ static_type_checking:
 pylint:
   stage: Linting
   script:
+  - pipenv install --dev --ignore-pipfile
   - pipenv run pylint src
   except:
   - master
@@ -77,6 +79,7 @@ package:
     when: on_success
   script:
   - rm -rf dist
+  - pipenv install --dev --ignore-pipfile
   - pipenv run python setup.py sdist bdist_wheel
   # only:
   # - master
