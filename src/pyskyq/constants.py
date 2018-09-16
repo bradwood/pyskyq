@@ -3,7 +3,10 @@ from collections import namedtuple
 from typing import Dict
 
 REMOTE_LEGACY_PORT: int = 5900
+"""int: Legacy port number for older Sky Boxes."""
+
 REMOTE_PORT: int = 49160
+"""int: Current port number for newer Sky Boxes."""
 
 REMOTE_COMMANDS: Dict[str, int] = {
     'power': 0,
@@ -48,8 +51,15 @@ REMOTE_COMMANDS: Dict[str, int] = {
     'boxoffice': 240,
     'sky': 241,
 }
+"""
+Dictionary mapping strings of button names to their associated codes.
+"""  # pylint: disable=W0105
 
 # Silence mypy type errors on the below 2 commands.
 
 RCMDTUPLE = namedtuple('RCMDTUPLE', sorted(REMOTE_COMMANDS))  # type: ignore
+
 RCMD = RCMDTUPLE(**REMOTE_COMMANDS)  # type: ignore
+"""
+Named tuple object with attributes as button names and their values as the associated remote code.
+"""  # pylint: disable=W0105

@@ -8,7 +8,27 @@ from .skyremote import SkyRemote
 
 # pylint: disable=too-few-public-methods
 class SkyQ:
-    """Main Sky Q class definition."""
+    """Main Sky Q class definition.
+
+    This is the main SkyQ Class definition which provides all available access
+    to the SkyQ box that is currently implemented.
+
+    Attributes:
+        host (str): Hostname or IPv4 address of SkyQ Box.
+        remote_port (int): Port number to use to connect to the Remote TCP socket.
+            Defaults to the standard port used by SkyQ boxes which is 49160.
+        logger (logging.Logger): Standard Python logger object which if not passed will
+            instantiate a local logger.
+        remote (SkyRemote): An instance of the SkyRemote class which can be used to
+            call the lower-level remote API which essentially emulated button-presses on
+            the SkyQ Remote.
+
+    Todos:
+        * Add interface to read EPG
+        * Add higher level channel selector interface to pick channels by name, rather than number.
+        * Add misc higher level interfaces to give "now and next" type responses.
+    """
+
 
     def __init__(self,
                  host: str,
@@ -16,7 +36,20 @@ class SkyQ:
                  logger: Optional[logging.Logger] = None,
                  ) -> None:
 
-        """Initialise SkyQ object. """
+        """Initialise SkyQ object.
+
+        This method instantiates the SkyQ object, which will also instantiate a SkyRemote object.
+
+        Args:
+            host (str): String with resolvable hostname or IPv4 address to SkyQ box.
+            remote_port (int, optional): Port number to use to connect to the Remote TCP socket.
+                Defaults to the standard port used by SkyQ boxes which is 49160.
+            logger (logging.Logger, optional): Standard Python logger object which if not passed
+                will instantiate a local logger.
+        Returns:
+            None
+
+        """
         self.host = host
         self.remote_port = remote_port
         self.logger = logging.getLogger(__name__) if not logger else logger

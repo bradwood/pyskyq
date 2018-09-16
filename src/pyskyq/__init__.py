@@ -1,4 +1,4 @@
-"""Import and merge all modules in this package.-"""
+"""Import and merge all modules in this package."""
 from .skyq import SkyQ
 from .constants import RCMD, REMOTE_COMMANDS
 from ._version import __version__

@@ -1,7 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Cli wrapper for the skyq API
+Cli wrapper for the skyq API.
+
+This module implements a cli client which can be used to interact with the SkyQ Box.
+
+Example:
+    You can invoke the cli client like this:
+
+        ``$ pyskyq pause``
+
+        ``$ pyskyq play``
+Notes:
+    The main purpose of this package is to provide the API, so the CLI implementation is really
+    more just for my own testing. A much better cli client should probably be built using this
+    libary, but that is not the scope of this project.
+
 """
 
 import argparse
@@ -26,7 +40,7 @@ def parse_args(args: List[str]) -> argparse.Namespace:
       args ([str]): command line parameters as list of strings
 
     Returns:
-      :obj:`argparse.Namespace`: command line parameters namespace
+      :obj:`argparse.Namespace`: command line parameters namespace.
     """
     parser = argparse.ArgumentParser(
         description="Sends a command to a SkyQ box")
@@ -60,7 +74,7 @@ def setup_logging(loglevel: int):
     """Setup basic logging
 
     Args:
-      loglevel (int): minimum loglevel for emitting messages
+      loglevel (int): minimum loglevel for emitting messages.
     """
     logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
     logging.basicConfig(level=loglevel, stream=sys.stdout,
@@ -82,7 +96,7 @@ def main(args: List[str]):
 
 
 def run():
-    """Entry point for console_scripts
+    """Entry point for console_scripts.
     """
     main(sys.argv[1:])
 
