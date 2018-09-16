@@ -103,8 +103,9 @@ deploy_to_test_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - pipenv run twine upload dist/*
-  only:
-  - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
+  - ls -la dist/
+  # only:
+  # - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
   # except:
   # - /^(?!.*(master)$).*$/  # exclude everything that does not match "master" -- DeMorgan's theorem in action.
 
