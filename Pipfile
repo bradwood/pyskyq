@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 "e1839a8" = {editable = true, path = "."}
+aiohttp = "*"
 
 [dev-packages]
 pytest = "*"
@@ -22,4 +23,4 @@ rope = "*"
 reno = {version = "*", extras = ["sphinx"]}
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"
