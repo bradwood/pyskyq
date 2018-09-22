@@ -4,7 +4,9 @@ import asyncio
 import logging
 from typing import Any, List, Optional
 
-import aiohttp
+# import aiohttp
+
+from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
@@ -65,7 +67,7 @@ class EPG:
         # create channel's list (in panda's)
 
     @staticmethod
-    async def _fetch(session: aiohttp.ClientSession,
+    async def _fetch(session: ClientSession,
                      url: str
                      ) -> Any:
         """Fetch data from URL asynchronously.
@@ -89,7 +91,7 @@ class EPG:
             return await response.json()
 
     async def _fetch_all_chan_details(self,
-                                      session: aiohttp.ClientSession,
+                                      session: ClientSession,
                                       sid_list: List[int]
                                       ) -> List:
         """Fetch channel detail data from SkyQ box asynchronously.
@@ -127,8 +129,8 @@ class EPG:
         self.logger.debug('Fetching channel list')
         url = f'http://{self.host}:{self.port}{REST_SERVICES_URL}'
 
-        timeout = aiohttp.ClientTimeout(total=60)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        timeout = ClientTimeout(total=60)
+        async with ClientSession(timeout=timeout) as session:
             chan_payload = await self._fetch(session, url)
 
         self.channels = chan_payload['services']
@@ -147,8 +149,8 @@ class EPG:
         """
         # TODO: error handling on SID.
         sid_list = [chan['sid'] for chan in self.channels]
-        timeout = aiohttp.ClientTimeout(total=60)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        timeout = ClientTimeout(total=60)
+        async with ClientSession(timeout=timeout) as session:
             channels = await self._fetch_all_chan_details(session, sid_list)
             for channel in channels:
                 #TODO: handle each detail channel
