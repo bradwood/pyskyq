@@ -1,22 +1,28 @@
-import pytest
+import asyncio
 import socket
 import sys
 
-from pyskyq.cli import run
+import aiohttp
+import pytest
+from asynctest import CoroutineMock, MagicMock
+
 from pyskyq import RCMD
+from pyskyq.cli import run
+
+from .asynccontextmanagermock import AsyncContextManagerMock
+from .mock_constants import SERVICE_MOCK, REMOTE_TCP_MOCK
+
 
 def test_cli(mocker):
 
     m = mocker.patch('socket.socket')
-    m.return_value.recv.side_effect = [  # set up the data to be returned on each successive call of socket.recv()
-        b'SKY 000.001\n',
-        b'\x01\x01',
-        b'\x00\x00\x00\x00',
-        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
-    ]
+    m.return_value.recv.side_effect = REMOTE_TCP_MOCK
+
+    a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
+    a.return_value.__aenter__.return_value.json = CoroutineMock(side_effect=SERVICE_MOCK)
 
     mocker.patch.object(sys, 'argv', ['pyskyq', 'play'])
-    
+
     run()
 
     m.assert_called_with(socket.AF_INET, socket.SOCK_STREAM)

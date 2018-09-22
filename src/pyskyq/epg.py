@@ -78,7 +78,7 @@ class EPG:
             url (str): URL to fetch.
 
         Returns:
-            str: The body of data returned.
+            any: The body of data returned.
 
         Todos:
             * improve URL error handling on input
@@ -127,7 +127,8 @@ class EPG:
         self.logger.debug('Fetching channel list')
         url = f'http://{self.host}:{self.port}{REST_SERVICES_URL}'
 
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=60)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             chan_payload = await self._fetch(session, url)
 
         self.channels = chan_payload['services']
@@ -146,7 +147,8 @@ class EPG:
         """
         # TODO: error handling on SID.
         sid_list = [chan['sid'] for chan in self.channels]
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=60)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             channels = await self._fetch_all_chan_details(session, sid_list)
             for channel in channels:
                 #TODO: handle each detail channel

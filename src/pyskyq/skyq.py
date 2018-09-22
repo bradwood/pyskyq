@@ -35,6 +35,7 @@ class SkyQ:
 
     def __init__(self,
                  host: str,
+                 *,
                  remote_port: int = REMOTE_PORT,
                  rest_port: int = REST_PORT,
                  logger: Optional[logging.Logger] = None,

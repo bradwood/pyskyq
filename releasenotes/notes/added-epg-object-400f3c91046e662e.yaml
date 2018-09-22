@@ -1,56 +1,21 @@
 ---
 prelude: >
-    This ia quite a big bump, chiefly because it introduces use of ``asyncio`` and
-    other Python 3.7 features.
+    This ia quite a big bump, chiefly because it introduces use of :py:class:`asyncio` and
+    other Python 3.7 features. The main addition is the introduction of the :class:`pyskyq.epg.EPG`
+    class, which provides access to channel datails (name, number, HD/SD, description, etc).
+
+    It **does not** (yet) provide the actual EPG programme data.
 features:
-  - Added `EPG` support.
-  - Upgraded minimum pyhton version to 3.7.
-issues:
   - |
-    List known issues here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
+    Added :class:`pyskyq.epg.EPG` support, specifically, the :attr:`~pyskyq.epg.EPG.channels
+    attribute and data which closes issue 15_
+
+    .. _15: https://gitlab.com/bradwood/pyskyq/issues/15
+
 upgrade:
-  - |
-    List upgrade notes here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
-deprecations:
-  - |
-    List deprecations notes here, or remove this section.  All of the list
-    items in this section are combined when the release notes are rendered, so
-    the text needs to be worded so that it does not depend on any information
-    only available in another section, such as the prelude. This may mean
-    repeating some details.
-critical:
-  - |
-    Add critical notes here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
-security:
-  - |
-    Add security notes here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
-fixes:
-  - |
-    Add normal bug fixes here, or remove this section.  All of the list items
-    in this section are combined when the release notes are rendered, so the
-    text needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
+  - Upgraded minimum Python version to 3.7 due to the use of newer :py:class:`asyncio` features.
 other:
-  - |
-    Add other notes here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
+  - tidied up some of the texts, including mocking the SkyQ Box REST API
+  - fixed up all the tests that were breaking due to missing mocks on the REST API
+  - changed the call signature for :meth:`pyskyq.SkyQ.__init__` to force use of keyword arguments
+    for optional parameters.
