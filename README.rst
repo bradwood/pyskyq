@@ -35,7 +35,7 @@ You can use the cli tool like this:
 
 This will press the "play" button on your Sky Q Remote. See constants.py_ for a list of the commands that can be passed.
 
-.. _constants.py: https://gitlab.com/bradwood/pyskyq/blob/develop/src/pyskyq/constants.py
+.. _constants.py: https://gitlab.com/bradwood/pyskyq/blob/master/src/pyskyq/constants.py
 
 
 Using the library
@@ -61,8 +61,11 @@ Please refer to the documentation at pyskyq.readthedocs.io_.
 Contributions
 =============
 
-Contributions are welcome. Please fork the project on GitLab **Not GitHub** and raise an issue and
+Contributions are welcome. Please fork the project on GitLab_ **Not GitHub** and raise an issue and
 merge request there.
+
+.. _GitLab: https://gitlab.com/bradwood/pyskyq/
+
 
 Credits
 =======
