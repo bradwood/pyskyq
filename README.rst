@@ -1,9 +1,6 @@
 .. image:: https://gitlab.com/bradwood/pyskyq/badges/master/pipeline.svg
    :target: https://gitlab.com/bradwood/pyskyq/pipelines
 
-.. image:: https://gitlab.com/bradwood/pyskyq/badges/master/coverage.svg
-   :target: https://bradwood.gitlab.io/pyskyq/master/coverage/
-
 .. image:: https://badge.fury.io/py/pyskyq.svg
     :target: https://badge.fury.io/py/pyskyq
 
@@ -16,14 +13,14 @@ pyskyq
 ======
 
 
-A Python library for controlling a SkyQ Box
+A Python library for controlling a SkyQ Box.
 
 Installing
 ==========
 
 To install:
 
-::
+.. code:: bash
 
     pip install pyskyq
 
@@ -32,7 +29,7 @@ Using the cli
 
 You can use the cli tool like this:
 
-::
+.. code:: bash
 
     pyskyq play
 
@@ -40,17 +37,32 @@ This will press the "play" button on your Sky Q Remote. See constants.py_ for a 
 
 .. _constants.py: https://gitlab.com/bradwood/pyskyq/blob/develop/src/pyskyq/constants.py
 
+
 Using the library
 =================
 
 The below snippet gives an example of usage:
 
-::
+.. code:: python
 
     from pyskyq import SkyQ
 
     skyq = SkyQ('1.2.3.4')
     skyq.remote.send_command(RCMD.play)
+
+Documentation
+=============
+
+Please refer to the documentation at pyskyq.readthedocs.io_.
+
+.. _pyskyq.readthedocs.io: https://pyskyq.readthedocs.io/en/latest/
+
+
+Contributions
+=============
+
+Contributions are welcome. Please fork the project on GitLab **Not GitHub** and raise an issue and
+merge request there.
 
 Credits
 =======
