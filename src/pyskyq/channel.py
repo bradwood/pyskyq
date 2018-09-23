@@ -85,12 +85,6 @@ class Channel:
             super().__setattr__(name, value)
 
 
-    def __delattr__(self, name: str) -> None:
-        if not name.startswith('_') and name != 'logger':
-            raise AttributeError(f"Can't delete {name}")
-        else:
-            super().__delattr__(name)
-
     def add_detail_data(self, detail_dict: Dict) -> None:
         """ Add additional properties obtained from the detail endpoint to the object.
 
