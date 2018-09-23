@@ -34,8 +34,9 @@ class EPG:
                  ) -> None:
         """Initialise Sky EPG Object.
 
-        This method instantiates the EPG object and populates the
-        :attr:`~pyskyq.epg.EPG._channels` data structure.
+        This method instantiates the EPG object and populates it with:
+
+        - Channel data
 
         Args:
             host (str): String with resolvable hostname or IPv4 address to SkyQ box.
@@ -141,15 +142,14 @@ class EPG:
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
             channels = await self._fetch_all_chan_details(session, sid_list)
-            for channel, sid in zip(channels,sid_list):
+            for channel, sid in zip(channels, sid_list):
                 self.get_channel(sid).add_detail_data(channel)
 
 
     def load_channels(self) -> None:
         """Load all channel data.
 
-        This is the high-level method that invokes all the asyncio stuff in order
-        to fully populate :attr:`~pyskyq.epg.EPG.channels`.
+        This is the high-level method that fully loads all the channel detail.
 
         Returns:
             None
@@ -173,7 +173,10 @@ class EPG:
         Args:
             sid: The sid (service id) of the channel
         Returns:
-            pyskyq.channel.Channel
+            :class:`pyskyq.channel.Channel`: The channel if found.
+
+        Raises:
+            AttributeError: If the channel is not found.
         """
         sid = str(sid)
         for chan in self._channels:

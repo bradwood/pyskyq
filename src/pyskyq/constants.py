@@ -80,4 +80,4 @@ CHANNEL_FIELD_MAP = {
     "name": "t",  # "BBC One Lon",
     "desc": "upgradeMessage",
 }
-"""Dict(str,str): Maps human-friendly property names to Sky's terse field names (where understood)."""
+"""Dict(str,str): Maps human-friendly names to Sky's terse field names (where understood)."""

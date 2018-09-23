@@ -14,8 +14,39 @@ class Channel:
         ``timeshifted`` property whereas regular channels do not.
 
         Finally, in order to present a more human-friendly API the
-        :const:`~constants.CHANNEL_FIELD_MAP` dictionary is used to provide access to
+        :const:`~pyskyq.constants.CHANNEL_FIELD_MAP` dictionary is used to provide access to
         properties using more friendly names.
+
+        Note:
+            These channel attributes could change at any time with a box upgrade. The API will
+            attempt to adapt to ensure the new fields are presented.
+
+        Attributes:
+            c (str): Channel number.
+            dvbtriplet (str):  DVB Triplet (I have no idea what this is)
+            schedule (bool): Is the channel "scheduled" or not?
+            servicetype (str): Where is the channel coming from (e.g., ``DSAT``)
+            sf (str): Quality of the channel (e.g., ``hd``)
+            sg (int): No ideas what this is.
+            sid (str): Channel id (aka ``sid``) in `str` form - the **primary key** for the channel.
+            sk (int): Channel id (aka ``sid``) in `str` form.
+            t (str): Channel name, eg, ``BBC One Lon``
+            xsg (int): No idea what this is.
+            timeshifted (bool): Is this a ``+1``-style channel?
+            upgradeMessage (str): A short description of the channel.
+            isbroadcasting (boo): Is the channel broadcasting currently or not?
+
+        Note:
+            The below are the human-friendly mappings of some of Sky's terser-named
+            attributes.
+
+        Attributes:
+            number (str): Human-friendly version of :attr:`c`.
+            quality (str): Human-friendly version of :attr:`sf`.
+            id (str): Human-friendly version of :attr:`sid`.
+            name (str):Human-friendly version of :attr:`t`.
+            desc (str): Human-friendly version of :attr:`upgradeMessage`.
+
 
     """
 
@@ -26,7 +57,8 @@ class Channel:
         """Initialise Channel Object.
 
         Args:
-            chan_dict (Dict): String with resolvable hostname or IPv4 address to SkyQ box.
+            chan_dict (dict): This dictionary is the payload that comes directly from the
+                ``as/services/`` endpoint.
             logger (logging.Logger, optional): Standard Python logger object which if not
                 passed will instantiate a local logger.
         Returns:
@@ -50,7 +82,7 @@ class Channel:
         if not name.startswith('_') and name != 'logger':
             raise AttributeError(f"Can't modify {name}")
         else:
-            super().__setattr__(name,value)
+            super().__setattr__(name, value)
 
 
     def __delattr__(self, name: str) -> None:
@@ -60,24 +92,13 @@ class Channel:
             super().__delattr__(name)
 
     def add_detail_data(self, detail_dict: Dict) -> None:
-        """Add additional properties obtained from the detail endpoint to the object.
+        """ Add additional properties obtained from the detail endpoint to the object.
+
+            Args:
+                detail_dict (dict): A detail dict that is passed in directly from the
+                    ``as/services/details/<sid>`` endpoint.
+            Returns:
+                None
+
         """
         self._chan_dict.update(detail_dict['details'])
-
-
-# DETAIL payload looks like this -- note that we are not bothering mapping the streaming profiles yet.
-# {
-#     "details": {
-#         "dvbtriplet": "2.2045.6301",
-#         "isbroadcasting": true,
-#         "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
-#     },
-#     "sid": "2002",
-#     "streamingprofiles": [
-#         {
-#             "name": "AnExample",
-#             "suri": "http://10.0.1.6:4730/trans_caption/CHAN%3Alocator%3A5%3A3%3A7D2/profileAnExample.ttml",
-#             "uri": "http://10.0.1.6:4730/trans/CHAN%3Alocator%3A5%3A3%3A7D2/profileAnExample.ts"
-#         }
-#     ]
-# }

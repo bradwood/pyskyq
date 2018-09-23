@@ -11,7 +11,7 @@ Example:
         ``$ pyskyq pause``
 
         ``$ pyskyq play``
-Notes:
+Note:
     The main purpose of this package is to provide the API, so the CLI implementation is really
     more just for my own testing. A much better cli client should probably be built using this
     libary, but that is not the scope of this project.
@@ -22,7 +22,6 @@ import argparse
 import sys
 import logging
 from typing import List
-
 
 from pyskyq import __version__, SkyQ, REMOTE_COMMANDS
 
@@ -91,8 +90,8 @@ def main(args: List[str]):
     setup_logging(pargs.loglevel)
     LOGGER.debug("Starting SkyQ...")
     skyq = SkyQ('skyq')
-    # skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
-    print(skyq.epg.get_channel(2075).desc)
+    skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
+    print(skyq.epg.get_channel(2002).desc)
     LOGGER.info("Script ends here")
 
 
