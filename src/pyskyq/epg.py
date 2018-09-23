@@ -4,10 +4,9 @@ import asyncio
 import logging
 from typing import Any, List, Optional
 
-# import aiohttp
-
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
+from .channel import Channel
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
 
@@ -16,10 +15,8 @@ class EPG:
     """ The top-level class for all EPG data and functions.
 
     EPG implements access to any data and operations related to the SkyQ box's
-    Electronic Programme Guide. Currently, this means the following is made available:
-
-    * Channel listings (note that these are-region sensitive)
-    * Channel detail
+    Electronic Programme Guide. Currently, this means that both summary and detail
+    channel information is aggregated into a :class:`pyskyq.channel.Channel` object.
 
     Attributes:
         host (str): Hostname or IPv4 address of SkyQ Box.
@@ -27,10 +24,7 @@ class EPG:
             Defaults to the standard port used by SkyQ boxes which is 9006.
         logger (logging.Logger): Standard Python logger object which if not passed will
             instantiate a local logger.
-        channels (list): List of channel objects.
 
-    Todos:
-        * define Channel Object.
     """
 
     def __init__(self,
@@ -38,10 +32,10 @@ class EPG:
                  port: int = REST_PORT,
                  logger: Optional[logging.Logger] = None,
                  ) -> None:
-        """Initialise Sky EPG Object
+        """Initialise Sky EPG Object.
 
         This method instantiates the EPG object and populates the
-        :attr:`~pyskyq.epg.EPG.channels` data structure.
+        :attr:`~pyskyq.epg.EPG._channels` data structure.
 
         Args:
             host (str): String with resolvable hostname or IPv4 address to SkyQ box.
@@ -56,7 +50,7 @@ class EPG:
         self.host: str = host
         self.port: int = port
         self.logger: logging.Logger = logging.getLogger(__name__) if not logger else logger
-        self.channels: list = []
+        self._channels: list = []
         self.logger.debug(f"Initialised EPG object object with host={host}, port={port}")
 
         self.load_channels()
@@ -82,8 +76,6 @@ class EPG:
         Returns:
             any: The body of data returned.
 
-        Todos:
-            * improve URL error handling on input
         """
 
         async with session.get(url) as response:
@@ -105,8 +97,6 @@ class EPG:
         Returns:
             List: List of JSON documents for each channel detail fetched.
 
-        Todos:
-            * improve URL error handling on input
         """
 
         urls = [f'http://{self.host}:{self.port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
@@ -116,12 +106,11 @@ class EPG:
         return results
 
 
-    async def _load_channel_list(self,
-                                 ) -> None:
+    async def _load_channel_list(self) -> None:
         """Load channel data into channel property.
 
-        This method fetches the channel list from ``/as/services`` endpoint and assigned it to
-        :attr:`~pyskyq.epg.EPG.channels`
+        This method fetches the channel list from ``/as/services`` endpoint and load
+        :attr:`~pyskyq.epg.EPG._channels`
 
         Returns:
             None
@@ -133,7 +122,8 @@ class EPG:
         async with ClientSession(timeout=timeout) as session:
             chan_payload = await self._fetch(session, url)
 
-        self.channels = chan_payload['services']
+        for channel in chan_payload['services']:
+            self._channels.append(Channel(channel))
 
 
     async def _load_channel_details(self) -> None:
@@ -147,14 +137,12 @@ class EPG:
         Returns:
             None
         """
-        # TODO: error handling on SID.
-        sid_list = [chan['sid'] for chan in self.channels]
+        sid_list = [chan.sid for chan in self._channels]
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
             channels = await self._fetch_all_chan_details(session, sid_list)
-            for channel in channels:
-                #TODO: handle each detail channel
-                print(channel)
+            for channel, sid in zip(channels,sid_list):
+                self.get_channel(sid).add_detail_data(channel)
 
 
     def load_channels(self) -> None:
@@ -175,16 +163,20 @@ class EPG:
         loop.close()
 
     def get_channel(self,
-                    sid: int
-                    ) -> object:
+                    sid: Any
+                    ) -> Channel:
         """Get channel data.
 
-        This method  method that invokes all the asyncio stuff in order
-        to fully populate self.channels.
+        This method returns a :class:`pyskyq.channel.Channel` object when
+        passed in a channel ``sid``.
 
         Args:
-            sid (int): The sid (service id) of the channel
+            sid: The sid (service id) of the channel
         Returns:
             pyskyq.channel.Channel
         """
-        pass
+        sid = str(sid)
+        for chan in self._channels:
+            if chan.sid == sid:
+                return chan
+        raise AttributeError(f"Channel not found. sid = {sid}.")

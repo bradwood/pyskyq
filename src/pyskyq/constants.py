@@ -72,3 +72,12 @@ REST_SERVICES_URL: str = '/as/services'
 
 REST_SERVICE_DETAIL_URL_PREFIX: str = '/as/services/details/'
 """str: REST endpoint for service (channel) details."""
+
+CHANNEL_FIELD_MAP = {
+    "number": "c", # "101",
+    "quality": "sf", # "sd",
+    "id": "sid", # "2002",
+    "name": "t",  # "BBC One Lon",
+    "desc": "upgradeMessage",
+}
+"""Dict(str,str): Maps human-friendly property names to Sky's terse field names (where understood)."""

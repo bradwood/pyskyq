@@ -2,13 +2,15 @@
 prelude: >
     This ia quite a big bump, chiefly because it introduces use of :py:class:`asyncio` and
     other Python 3.7 features. The main addition is the introduction of the :class:`pyskyq.epg.EPG`
-    class, which provides access to channel datails (name, number, HD/SD, description, etc).
+    and :class:`pyskyq.channel.Channel` classes, which provide access to channel datails
+    (name, number, HD/SD, description, etc).
 
     It **does not** (yet) provide the actual EPG programme data.
 features:
+  - Added :class:`pyskyq.channel.Channel` class.
+  - Added :class:`pyskyq.epg.EPG` which contains a list of :class:`~pyskyq.channel.Channel` objects.
   - |
-    Added :class:`pyskyq.epg.EPG` support, specifically, the :attr:`~pyskyq.epg.EPG.channels
-    attribute and data which closes issue 15_
+    Closed issue 15_
 
     .. _15: https://gitlab.com/bradwood/pyskyq/issues/15
 fixes:
