@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 "e1839a8" = {editable = true, path = "."}
+aiohttp = "*"
 
 [dev-packages]
 pytest = "*"
@@ -20,6 +21,9 @@ docutils = "*"
 mypy = "*"
 rope = "*"
 reno = {version = "*", extras = ["sphinx"]}
+asynctest = "*"
+pytest-aiohttp = "*"
+pytest-asyncio = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"

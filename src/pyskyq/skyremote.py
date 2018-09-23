@@ -30,7 +30,7 @@ class SkyRemote:
                  port: int = REMOTE_PORT,
                  logger: Optional[logging.Logger] = None,
                  ) -> None:
-        """Initial Sky Remote Object
+        """Initialise Sky Remote Object
 
         This method instantiates the SkyRemote object.
 

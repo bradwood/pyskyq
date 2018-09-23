@@ -63,3 +63,21 @@ RCMD = RCMDTUPLE(**REMOTE_COMMANDS)  # type: ignore
 """
 Named tuple object with attributes as button names and their values as the associated remote code.
 """  # pylint: disable=W0105
+
+REST_PORT: int = 9006
+"""int: Port number for the REST API."""
+
+REST_SERVICES_URL: str = '/as/services'
+"""str: REST endpoint for list of services (channels)."""
+
+REST_SERVICE_DETAIL_URL_PREFIX: str = '/as/services/details/'
+"""str: REST endpoint for service (channel) details."""
+
+CHANNEL_FIELD_MAP = {
+    "number": "c", # "101",
+    "quality": "sf", # "sd",
+    "id": "sid", # "2002",
+    "name": "t",  # "BBC One Lon",
+    "desc": "upgradeMessage",
+}
+"""Dict(str,str): Maps human-friendly names to Sky's terse field names (where understood)."""

@@ -3,8 +3,9 @@
 import logging
 from typing import Optional
 
-from .constants import REMOTE_PORT
+from .constants import REMOTE_PORT, REST_PORT
 from .skyremote import SkyRemote
+from .epg import EPG
 
 # pylint: disable=too-few-public-methods
 class SkyQ:
@@ -17,6 +18,8 @@ class SkyQ:
         host (str): Hostname or IPv4 address of SkyQ Box.
         remote_port (int): Port number to use to connect to the Remote TCP socket.
             Defaults to the standard port used by SkyQ boxes which is 49160.
+        rest_port (int, optional): Port number to use to connect to the Remote REST API.
+            Defaults to the standard port used by SkyQ boxes which is 9006.
         logger (logging.Logger): Standard Python logger object which if not passed will
             instantiate a local logger.
         remote (SkyRemote): An instance of the SkyRemote class which can be used to
@@ -32,7 +35,9 @@ class SkyQ:
 
     def __init__(self,
                  host: str,
+                 *,
                  remote_port: int = REMOTE_PORT,
+                 rest_port: int = REST_PORT,
                  logger: Optional[logging.Logger] = None,
                  ) -> None:
 
@@ -44,6 +49,8 @@ class SkyQ:
             host (str): String with resolvable hostname or IPv4 address to SkyQ box.
             remote_port (int, optional): Port number to use to connect to the Remote TCP socket.
                 Defaults to the standard port used by SkyQ boxes which is 49160.
+            rest_port (int, optional): Port number to use to connect to the Remote REST API.
+                Defaults to the standard port used by SkyQ boxes which is 9006.
             logger (logging.Logger, optional): Standard Python logger object which if not passed
                 will instantiate a local logger.
         Returns:
@@ -52,7 +59,9 @@ class SkyQ:
         """
         self.host = host
         self.remote_port = remote_port
+        self.rest_port = rest_port
         self.logger = logging.getLogger(__name__) if not logger else logger
-
-        self.logger.debug(f"Initialised SkyQ object with host={host}, remote_port={remote_port}")
         self.remote = SkyRemote(self.host, self.remote_port, self.logger)
+        self.epg = EPG(self.host, self.rest_port, self.logger)
+
+        self.logger.debug(f"Initialised SkyQ object with host={host}.")

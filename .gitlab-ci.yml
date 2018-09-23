@@ -1,4 +1,4 @@
-image: python:3.6.5
+image: python:3.7
 
 variables:
   GIT_STRATEGY: fetch
@@ -38,9 +38,6 @@ unit testing and coverage:
     expire_in: 1 day
     reports:
       junit: junit.xml
-  except:
-  - master
-
 
 
 # TODO: Add something like this to enable dir listing https://stackoverflow.com/questions/21395159/shell-script-to-create-a-static-html-directory-listing
@@ -54,8 +51,6 @@ pages:
   artifacts:
     paths:
     - public
-  except:
-  - master
 
 
 static_type_checking:
@@ -63,16 +58,12 @@ static_type_checking:
   script:
   - pipenv install --dev --ignore-pipfile
   - pipenv run mypy src --quick-and-dirty --verbose
-  except:
-    - master
 
 pylint:
   stage: Linting
   script:
   - pipenv install --dev --ignore-pipfile
   - pipenv run pylint src
-  except:
-  - master
 
 package:
   stage: Package
