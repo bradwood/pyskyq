@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, List, Optional
+from typing import Any, List
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
@@ -10,6 +10,7 @@ from .channel import Channel
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
 
+LOGGER = logging.getLogger(__name__)
 
 class EPG:
     """ The top-level class for all EPG data and functions.
@@ -22,15 +23,12 @@ class EPG:
         host (str): Hostname or IPv4 address of SkyQ Box.
         port (int): Port number to use to connect to the REST HTTP server.
             Defaults to the standard port used by SkyQ boxes which is 9006.
-        logger (logging.Logger): Standard Python logger object which if not passed will
-            instantiate a local logger.
 
     """
 
     def __init__(self,
                  host: str,
                  port: int = REST_PORT,
-                 logger: Optional[logging.Logger] = None,
                  ) -> None:
         """Initialise Sky EPG Object.
 
@@ -42,17 +40,14 @@ class EPG:
             host (str): String with resolvable hostname or IPv4 address to SkyQ box.
             port (int, optional): Port number to use to connect to the Remote REST API.
                 Defaults to the standard port used by SkyQ boxes which is 9006.
-            logger (logging.Logger, optional): Standard Python logger object which if not
-                passed will instantiate a local logger.
         Returns:
             None
         """
 
         self.host: str = host
         self.port: int = port
-        self.logger: logging.Logger = logging.getLogger(__name__) if not logger else logger
         self._channels: list = []
-        self.logger.debug(f"Initialised EPG object object with host={host}, port={port}")
+        LOGGER.debug(f"Initialised EPG object object with host={host}, port={port}")
 
         self.load_channels()
 
@@ -116,7 +111,7 @@ class EPG:
         Returns:
             None
         """
-        self.logger.debug('Fetching channel list')
+        LOGGER.debug('Fetching channel list')
         url = f'http://{self.host}:{self.port}{REST_SERVICES_URL}'
 
         timeout = ClientTimeout(total=60)

@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Overhauled the logging implementation for a library. See issue 17_ for details,
+    but essentially, we are no longer passing loggers around, but instead instantiating
+    module_local loggers, but with a `NullHandler` so that the calling code can fully
+    control the log management, level, etc.
+
+    .. _17: https://gitlab.com/bradwood/pyskyq/issues/17
