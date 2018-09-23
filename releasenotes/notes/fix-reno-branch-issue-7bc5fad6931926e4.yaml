@@ -5,6 +5,7 @@ prelude: >
     and :class:`pyskyq.channel.Channel` classes, which provide access to channel datails
     (name, number, HD/SD, description, etc).
 
+
     It **does not** (yet) provide the actual EPG programme data.
 features:
   - Added :class:`pyskyq.channel.Channel` class.
@@ -21,5 +22,5 @@ upgrade:
 other:
   - tidied up some of the tests, including mocking the SkyQ Box REST API
   - fixed up all the tests that were breaking due to missing mocks on the REST API
-  - changed the call signature for :meth:`pyskyq.SkyQ.__init__` to force use of keyword arguments
+  - changed the call signature for :meth:`pyskyq.skyq.SkyQ.__init__` to force use of keyword arguments
     for optional parameters.
