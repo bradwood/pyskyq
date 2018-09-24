@@ -15,6 +15,7 @@ pyskyq
 
 A Python library for controlling a SkyQ Box.
 
+
 Installing
 ==========
 
@@ -23,6 +24,7 @@ To install:
 .. code:: bash
 
     pip install pyskyq
+
 
 Using the cli
 =============
@@ -48,7 +50,9 @@ The below snippet gives an example of usage:
     from pyskyq import SkyQ
 
     skyq = SkyQ('1.2.3.4')
-    skyq.remote.send_command(RCMD.play)
+    skyq.remote.send_command(RCMD.play) # press play on the remote
+    print(skyq.epg.get_channel(2002).desc) # print the description of of channel with sid=2002
+
 
 Documentation
 =============

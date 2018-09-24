@@ -1,8 +1,10 @@
 """This module implements the Channel class"""
 import logging
-from typing import Dict, Optional, Any
+from typing import Dict, Any
 
 from .constants import CHANNEL_FIELD_MAP
+
+LOGGER = logging.getLogger(__name__)
 
 class Channel:
     """ This class holds channel data and methods for manipulating the channel.
@@ -52,23 +54,18 @@ class Channel:
 
     def __init__(self,
                  chan_dict: Dict,
-                 logger: Optional[logging.Logger] = None,
                  ) -> None:
         """Initialise Channel Object.
 
         Args:
             chan_dict (dict): This dictionary is the payload that comes directly from the
                 ``as/services/`` endpoint.
-            logger (logging.Logger, optional): Standard Python logger object which if not
-                passed will instantiate a local logger.
         Returns:
             None
 
         """
         self._chan_dict = chan_dict
-        self.logger = logger
-        if self.logger:
-            self.logger.debug(f"Channel {self._chan_dict['t']} instantiated.")
+        LOGGER.debug(f"Channel {self._chan_dict['t']} instantiated.")
 
     def __getattr__(self, name: str) -> Any:
         if name in self._chan_dict.keys():
@@ -79,7 +76,7 @@ class Channel:
 
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if not name.startswith('_') and name != 'logger':
+        if not name.startswith('_'):
             raise AttributeError(f"Can't modify {name}")
         else:
             super().__setattr__(name, value)
