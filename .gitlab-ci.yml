@@ -6,7 +6,7 @@ variables:
   PIPENV_CACHE_DIR: "$CI_PROJECT_DIR/.pipenvcache"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pipcache"
 stages:
-  - Unit tests & Coverage
+  - Testing and Coverage
   - Coverage Reporting
   - Linting
   - Package
@@ -28,7 +28,7 @@ before_script:
   - pip install pipenv
 
 unit testing and coverage:
-  stage: Unit tests & Coverage
+  stage: Testing and Coverage
   script:
   - pipenv install --dev --ignore-pipfile
   - pipenv run python setup.py test
@@ -44,6 +44,8 @@ unit testing and coverage:
 # TODO: Add something like this to enable dir listing https://stackoverflow.com/questions/21395159/shell-script-to-create-a-static-html-directory-listing
 pages:
   stage: Coverage Reporting
+  variables:
+    GIT_STRATEGY: none  # no git data needed, as just working with artifacts.
   script:
     - mkdir -p public/coverage/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/
     - cp -fr htmlcov/* public/coverage/$CI_COMMIT_REF_NAME/$CI_COMMIT_SHA/
@@ -52,7 +54,6 @@ pages:
   artifacts:
     paths:
     - public
-
 
 static_type_checking:
   stage: Linting
@@ -83,6 +84,8 @@ package:
 
 deploy_to_test_pypi:
   stage: Release to Test PyPI
+  variables:
+    GIT_STRATEGY: none  # no git data needed, as just working with artifacts.
   environment:
     name: Test PyPI
     url: https://test.pypi.org/project/pyskyq
@@ -108,6 +111,8 @@ deploy_to_test_pypi:
 
 pages:
   stage: Publish Docs
+  variables:
+    GIT_STRATEGY: clone  # needs the full repo as reno needs to read the git history to build renotes.
   script:
     - pipenv install --dev --ignore-pipfile
     - pipenv run python setup.py docs
@@ -122,6 +127,8 @@ pages:
 
 deploy_to_live_pypi:
   stage: Release to Live PyPI
+  variables:
+    GIT_STRATEGY: none  # no git data needed, as just working with artifacts.
   environment:
     name: Live PyPI
     url: https://pypi.org/project/pyskyq
