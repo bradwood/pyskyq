@@ -4,9 +4,6 @@
 .. image:: https://badge.fury.io/py/pyskyq.svg
     :target: https://badge.fury.io/py/pyskyq
 
-.. image:: https://img.shields.io/readthedocs/pip.svg
-   :target: https://pyskyq.readthedocs.io/en/latest/
-
 
 ======
 pyskyq
@@ -57,9 +54,12 @@ The below snippet gives an example of usage:
 Documentation
 =============
 
-Please refer to the documentation at pyskyq.readthedocs.io_.
+Please refer to the documentation at https://bradwood.gitlab.io/pyskyq/latest/.
 
-.. _pyskyq.readthedocs.io: https://pyskyq.readthedocs.io/en/latest/
+Replace ``latest`` with an ``x.y.z.`` version number for docs for earlier versions.
+
+
+.. _https://bradwood.gitlab.io/pyskyq/latest/: https://bradwood.gitlab.io/pyskyq/latest/
 
 
 Contributions

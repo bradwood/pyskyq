@@ -116,14 +116,16 @@ pages:
   script:
     - pipenv install --dev --ignore-pipfile
     - pipenv run python setup.py docs
+    - rm -rf public/latest/
     - mkdir -p public/$CI_COMMIT_TAG/
+    - mkdir -p public/latest/
     - cp -fr build/sphinx/html/* public/$CI_COMMIT_TAG/
+    - cp -fr build/sphinx/html/* public/latest/
   artifacts:
     paths:
     - public
   only:
   - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
-
 
 deploy_to_live_pypi:
   stage: Release to Live PyPI
