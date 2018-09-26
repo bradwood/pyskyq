@@ -19,11 +19,12 @@ Note:
 """
 
 import argparse
-import sys
 import logging
+import sys
 from typing import List
+import time
 
-from pyskyq import __version__, SkyQ, REMOTE_COMMANDS
+from pyskyq import REMOTE_COMMANDS, SkyQ, __version__
 
 __author__ = "Bradley Wood"
 __copyright__ = "Bradley Wood"
@@ -86,13 +87,22 @@ def main(args: List[str]):
     Args:
       args ([str]): command line parameter list
     """
-    pargs = parse_args(args)
-    setup_logging(pargs.loglevel)
-    LOGGER.debug("Starting SkyQ...")
-    skyq = SkyQ('skyq')
-    skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
-    print(skyq.epg.get_channel(2002).desc)
-    LOGGER.info("Script ends here")
+    try:
+        pargs = parse_args(args)
+        setup_logging(pargs.loglevel)
+        LOGGER.debug("Starting SkyQ...")
+        skyq = SkyQ('skyq')
+        skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
+        # print(skyq.epg.get_channel(2002).desc)
+        LOGGER.debug("Starting 10 second sleep, keep powercycling skybox ")
+        time.sleep(10)
+        LOGGER.debug("Sleep finished...")
+        skyq.status.shudown_event_listener()
+        LOGGER.debug("listener shut down...")
+
+        LOGGER.info("Script ends here")
+    except KeyboardInterrupt:
+        print('INTERRUPT!!')
 
 
 def run():

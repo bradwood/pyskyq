@@ -70,6 +70,9 @@ REST_PORT: int = 9006
 REST_SERVICES_URL: str = '/as/services'
 """str: REST endpoint for list of services (channels)."""
 
+REST_STATUS_URL: str = '/as/system/status'
+"""str: REST web-socket endpoint for box status/"""
+
 REST_SERVICE_DETAIL_URL_PREFIX: str = '/as/services/details/'
 """str: REST endpoint for service (channel) details."""
 

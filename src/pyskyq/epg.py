@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, List
+from typing import Any, List, Dict
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
@@ -59,7 +59,7 @@ class EPG:
     @staticmethod
     async def _fetch(session: ClientSession,
                      url: str
-                     ) -> Any:
+                     ) -> Dict:
         """Fetch data from URL asynchronously.
 
         This helper method fetches data from a URL asynchronously. It is used to fetch EPG
@@ -70,7 +70,7 @@ class EPG:
             url (str): URL to fetch.
 
         Returns:
-            any: The body of data returned.
+            dict: The body of data returned.
 
         """
 

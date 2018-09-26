@@ -4,6 +4,7 @@ import logging
 from .constants import REMOTE_PORT, REST_PORT
 from .skyremote import SkyRemote
 from .epg import EPG
+from .status import Status
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ class SkyQ:
         self.remote_port = remote_port
         self.rest_port = rest_port
         self.remote = SkyRemote(self.host, self.remote_port)
-        self.epg = EPG(self.host, self.rest_port)
+        # self.epg = EPG(self.host, self.rest_port)
+        self.status = Status(self.host)
 
         LOGGER.debug(f"Initialised SkyQ object with host={host}.")
