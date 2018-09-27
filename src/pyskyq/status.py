@@ -179,7 +179,9 @@ class Status:
                                        ) -> None:
         """Shut down event loop cleanly"""
 
-        LOGGER.info(f'Caught signal')
+
+        # mypy gets confused wit IntEnums
+        LOGGER.info(f'Caught {sig.name} signal')  # type: ignore
         self._shutdown_sentinel = True  # trigger websocked to shutdown cleanly.
         tasks = [task for task in asyncio.Task.all_tasks() if task is not
                  asyncio.tasks.Task.current_task()]
