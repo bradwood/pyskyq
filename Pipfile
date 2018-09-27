@@ -25,6 +25,7 @@ reno = {version = "*", extras = ["sphinx"]}
 asynctest = "*"
 pytest-aiohttp = "*"
 pytest-asyncio = "*"
+pyscaffold = "*"
 
 [requires]
 python_version = "3.7"

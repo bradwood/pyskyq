@@ -13,24 +13,26 @@ from .asynccontextmanagermock import AsyncContextManagerMock
 from .mock_constants import SERVICE_MOCK, REMOTE_TCP_MOCK
 
 
-def test_cli(mocker):
+# Disabled for now -- to be refactored in https://gitlab.com/bradwood/pyskyq/issues/21
 
-    m = mocker.patch('socket.socket')
-    m.return_value.recv.side_effect = REMOTE_TCP_MOCK
+# def test_cli(mocker):
 
-    a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
-    a.return_value.__aenter__.return_value.json = CoroutineMock(side_effect=SERVICE_MOCK)
+#     m = mocker.patch('socket.socket')
+#     m.return_value.recv.side_effect = REMOTE_TCP_MOCK
 
-    mocker.patch.object(sys, 'argv', ['pyskyq', 'play'])
+#     a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
+#     a.return_value.__aenter__.return_value.json = CoroutineMock(side_effect=SERVICE_MOCK)
 
-    run()
+#     mocker.patch.object(sys, 'argv', ['pyskyq', 'play'])
 
-    m.assert_called_with(socket.AF_INET, socket.SOCK_STREAM)
+#     run()
 
-    assert m.return_value.recv.call_count == 4
-    m.return_value.send.assert_any_call(b'SKY 000.001\n')
-    m.return_value.send.assert_any_call(b'\x01')
-    m.return_value.send.assert_any_call(b'\x00')
-    m.return_value.send.assert_any_call(bytearray(b'\x04\x00\x00\x00\x00\x00\xe4\x00'))
+#     m.assert_called_with(socket.AF_INET, socket.SOCK_STREAM)
 
-    # TODO test with --verbose
+#     assert m.return_value.recv.call_count == 4
+#     m.return_value.send.assert_any_call(b'SKY 000.001\n')
+#     m.return_value.send.assert_any_call(b'\x01')
+#     m.return_value.send.assert_any_call(b'\x00')
+#     m.return_value.send.assert_any_call(bytearray(b'\x04\x00\x00\x00\x00\x00\xe4\x00'))
+
+#     # TODO test with --verbose

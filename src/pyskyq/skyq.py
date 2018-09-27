@@ -52,7 +52,7 @@ class SkyQ:
         self.remote_port = remote_port
         self.rest_port = rest_port
         self.remote = SkyRemote(self.host, self.remote_port)
-        # self.epg = EPG(self.host, self.rest_port)
+        self.epg = EPG(self.host, self.rest_port)
         self.status = Status(self.host)
 
         LOGGER.debug(f"Initialised SkyQ object with host={host}.")

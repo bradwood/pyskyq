@@ -78,7 +78,10 @@ def setup_logging(loglevel: int):
     """
     logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
     logging.basicConfig(level=loglevel, stream=sys.stdout,
-                        format=logformat, datefmt="%Y-%m-%d %H:%M:%S")
+                        format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
+
+
+
 
 
 def main(args: List[str]):
@@ -93,16 +96,17 @@ def main(args: List[str]):
         LOGGER.debug("Starting SkyQ...")
         skyq = SkyQ('skyq')
         skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
-        # print(skyq.epg.get_channel(2002).desc)
-        LOGGER.debug("Starting 10 second sleep, keep powercycling skybox ")
-        time.sleep(10)
+        print(skyq.epg.get_channel(2002).desc)
+        LOGGER.debug("Starting 60 second sleep, keep powercycling skybox ")
+        time.sleep(60)
         LOGGER.debug("Sleep finished...")
         skyq.status.shudown_event_listener()
         LOGGER.debug("listener shut down...")
 
         LOGGER.info("Script ends here")
     except KeyboardInterrupt:
-        print('INTERRUPT!!')
+        LOGGER.info('KeyboardInterrupt - shutting down event listener.')
+        skyq.status.shudown_event_listener()
 
 
 def run():

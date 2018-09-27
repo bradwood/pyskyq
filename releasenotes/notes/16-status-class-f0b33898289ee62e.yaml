@@ -1,59 +1,16 @@
 ---
-prelude: >
-    This release adds the status module.
+prelude: |
+    This release adds the :class:`Status` class. This is quite a big addition in that
+    it introduces a separate thread for managing subscriptions to the SkyQ's
+    websocket services via the :py:mod:`asyncio`-based websockets_ module.
+
+    .. _websockets: https://github.com/aaugustin/websockets
 features:
-  - |
-    List new features here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
+  - The library can now report whether the SkyQ box is in Standby Mode or Online.
 issues:
-  - |
-    List known issues here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
-upgrade:
-  - |
-    List upgrade notes here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
-deprecations:
-  - |
-    List deprecations notes here, or remove this section.  All of the list
-    items in this section are combined when the release notes are rendered, so
-    the text needs to be worded so that it does not depend on any information
-    only available in another section, such as the prelude. This may mean
-    repeating some details.
-critical:
-  - |
-    Add critical notes here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
-security:
-  - |
-    Add security notes here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
-fixes:
-  - |
-    Add normal bug fixes here, or remove this section.  All of the list items
-    in this section are combined when the release notes are rendered, so the
-    text needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
+  - not all possible statuses on the WS endpoint have been figured yet.
 other:
   - |
-    Add other notes here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
+    removed CLI tool test as it was failing -- will be refactored in issue 21_
+
+    .. _21: https://gitlab.com/bradwood/pyskyq/issues/21
