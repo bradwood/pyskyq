@@ -75,7 +75,6 @@ class Status:
         self._shutdown_sentinel: bool = False # used to trigger a clean shutdown.
         self._ws_timeout: int = ws_timeout
         self._ping_timeout: int = ping_timeout
-        self.create_event_listener()
         LOGGER.debug(f"Initialised Status object object with host={host}, port={port}")
 
 
@@ -90,16 +89,17 @@ class Status:
 
         while not self._shutdown_sentinel:  # while not being told to shut down
         # outer loop that will restart every time the connection fails (if sentinel says its okay)
-            LOGGER.debug('No shutdown sentinel received, so (re)-starting websocket connection.')
+            LOGGER.debug('No shutdown sentinel set, so (re)-starting websocket connection.')
             try:
                 async with websockets.connect(self.ws_url) as ws:
 
                     while not self._shutdown_sentinel:
                         # listener loop
-                        LOGGER.debug('Listening for data on websocket..')
+                        LOGGER.debug('Starting websocket listener loop iteration...')
                         try:
+                            LOGGER.debug('Waiting for data...')
                             payload = await asyncio.wait_for(ws.recv(), timeout=self._ws_timeout)
-                            LOGGER.debug('Web-socket data received.')
+                            LOGGER.debug(f'Web-socket data received. size = {len(payload)}')
                         except (asyncio.TimeoutError,
                                 websockets.exceptions.ConnectionClosed) as err:
                             LOGGER.debug(f'Websocket timed out or was closed. Error = {err}')
@@ -116,7 +116,11 @@ class Status:
                                 LOGGER.debug(f'Ping timeout - retrying...')
                                 #await asyncio.sleep(1)
                                 break # inner listener loop
+                        # except Exception as catchall:
+                        #     LOGGER.debug(f'There was some other exception: {catchall}')
+
                         # process payload
+                        LOGGER.debug(f'Invoking payload handler on received message...')
                         asyncio.create_task(self._handle(json.loads(payload)))
 
             except (socket.gaierror, ConnectionRefusedError) as sc_err:
@@ -161,10 +165,17 @@ class Status:
         self._event_thread = Thread(target=_start_event_loop_thread, daemon=True)
         self._event_thread.start()
 
+        # asyncio.run_coroutine_threadsafe(
+        #     self._ws_subscribe(),
+        #     self._event_loop
+        # ).add_done_callback(lambda future: print(future.result()))  # type: ignore
+
         asyncio.run_coroutine_threadsafe(
             self._ws_subscribe(),
             self._event_loop
-        ).add_done_callback(lambda future: print(future.result()))  # type: ignore
+        )
+
+
 
     async def _handle(self,
                       payload: Dict,

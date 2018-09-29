@@ -26,6 +26,7 @@ asynctest = "*"
 pytest-aiohttp = "*"
 pytest-asyncio = "*"
 pyscaffold = "*"
+mock = "*"
 
 [requires]
 python_version = "3.7"

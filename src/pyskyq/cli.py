@@ -95,6 +95,8 @@ def main(args: List[str]):
         setup_logging(pargs.loglevel)
         LOGGER.debug("Starting SkyQ...")
         skyq = SkyQ('skyq')
+        skyq.status.create_event_listener()
+
         skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
         print(skyq.epg.get_channel(2002).desc)
         LOGGER.debug("Starting 60 second sleep, keep powercycling skybox ")

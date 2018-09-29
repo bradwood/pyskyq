@@ -1,3 +1,6 @@
+
+#TODO -- turn these into proper JSON strings, not python Dicts!!
+
 SERVICE_SUMMARY_MOCK = {
     "documentId": "683",
     "services": [
@@ -68,3 +71,93 @@ REMOTE_TCP_MOCK = [  # set up the data to be returned on each successive call of
     b'\x00\x00\x00\x00',
     b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
 ]
+
+
+WS_STATUS_MOCK = """
+{
+   "camessage" : {
+      "reason" : "no message",
+      "state" : "unavailable"
+   },
+   "drmstatus" : {
+      "state" : "available"
+   },
+   "entitlements" : [
+      "ANALYTICS",
+      "BIGBASIC",
+      "ETHAN_APP_1",
+      "HD",
+      "PDL",
+      "SKY_DRM_CE",
+      "SKY_DRM_MR",
+      "SKY_IPPV",
+      "ULTRA+",
+      "SKY+",
+      "GATEWAYENABLER",
+      "SIDELOAD"
+   ],
+   "epginfobits" : {
+      "epginfobits" : "0xFDE5FFC0",
+      "mask" : "0x5FFA003F",
+      "state" : "available"
+   },
+   "gatewayservices" : {
+      "state" : "available"
+   },
+   "hdmi" : {
+      "2160p10bitCapable" : false,
+      "authenticatedHDCP" : "NONE",
+      "reason" : "HDMI output port is disabled",
+      "sinkHDCP" : "NONE",
+      "sinkHLG" : false,
+      "sinkUHD" : false,
+      "state" : "unavailable",
+      "uhdConfigured" : false
+   },
+   "network" : {
+      "state" : "available"
+   },
+   "nssplayback" : {
+      "state" : "available"
+   },
+   "pvr" : {
+      "state" : "available"
+   },
+   "schedule" : {
+      "lastdate" : "20181005",
+      "state" : "available"
+   },
+   "servicelist" : {
+      "state" : "available"
+   },
+   "smartcard" : {
+      "active" : true,
+      "bouquet" : "4101",
+      "countryCode" : "GBR",
+      "currency" : "GBP",
+      "cwe" : true,
+      "householdid" : "10947783",
+      "paired" : true,
+      "state" : "available",
+      "subbouquet" : "1",
+      "transactionlimit" : 65535,
+      "viewingCardNumber" : "725 325 260"
+   },
+   "swupdate" : {
+      "reason" : "IDLE",
+      "state" : "unavailable"
+   },
+   "systemupdates" : {
+      "entitlements" : 2,
+      "install" : 1,
+      "servicegenres" : 1,
+      "smartcard" : 1
+   },
+   "updatetask" : {
+      "reason" : "no update",
+      "state" : "unavailable"
+   }
+}
+
+
+"""
