@@ -16,35 +16,71 @@ logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
+logging.getLogger().setLevel(logging.DEBUG)
+
+def serve_ws_json_with_detail():
+    time.sleep(0.2)
+    return WS_STATUS_MOCK
+
 
 def test_status(mocker):
     a = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
-    a.return_value.__aenter__.return_value.recv = CoroutineMock(return_value=WS_STATUS_MOCK)
-    b = a.start()
+    a.return_value.__aenter__.return_value.recv = \
+        CoroutineMock(side_effect=serve_ws_json_with_detail)
 
 
     stat = Status('some_host')
     stat.create_event_listener()
 
-    time.sleep(1) # allow time for awaiting, etc.
+    time.sleep(0.5) # allow time for awaiting, etc.
     assert stat.standby is True
 
-# def wait_beyond_timeout_then_serve_json():
-#     time.sleep(3)
-#     raise websockets.exceptions.ConnectionClosed
-#     #return WS_STATUS_MOCK
+    stat.shudown_event_listener()
+
+    time.sleep(0.5)  # allow time to shutdown
 
 
-# def test_status_timeout(mocker):
-#     mocker.stopall()
-#     b = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
-#     b.return_value.__aenter__.return_value.recv = CoroutineMock(side_effect=wait_beyond_timeout_then_serve_json)
-#     b.start()
-#     stat = Status('timeout_host', ws_timeout=2)
+timeout_test_call_count :int
 
-#     logging.getLogger().setLevel(logging.DEBUG)
+def wait_beyond_timeout_then_serve_json():
+    global timeout_test_call_count
+    timeout_test_call_count += 1
+    print(timeout_test_call_count)
+    time.sleep(0.2)
+    if timeout_test_call_count > 5:
+        raise websockets.exceptions.ConnectionClosed
+    else:
+        return WS_STATUS_MOCK
 
-#     time.sleep(1)
-#     with pytest.raises(asyncio.TimeoutError):
-#         stat.create_event_listener()
-#     b.stop()
+
+def test_status_timeout(mocker):
+    global timeout_test_call_count
+    timeout_test_call_count = 0
+    a = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
+    a.return_value.__aenter__.return_value.recv = \
+        CoroutineMock(side_effect=wait_beyond_timeout_then_serve_json)
+
+    stat = Status('timeout_host', ws_timeout=2)
+    stat.create_event_listener()
+
+    time.sleep(2)
+
+    assert stat.standby is True
+
+    stat.shudown_event_listener()
+
+
+def test_status_shutdown_sentinel(mocker):
+    global timeout_test_call_count
+    timeout_test_call_count = 0
+    a = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
+    a.return_value.__aenter__.return_value.recv = \
+        CoroutineMock(side_effect=wait_beyond_timeout_then_serve_json)
+
+    stat = Status('shutdown_host')
+    stat.create_event_listener()
+    time.sleep(1)
+    stat.shudown_event_listener()
+    assert stat._shutdown_sentinel is True
+    time.sleep(2)
+    assert stat.standby is True

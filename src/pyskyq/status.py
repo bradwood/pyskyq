@@ -100,8 +100,7 @@ class Status:
                             LOGGER.debug('Waiting for data...')
                             payload = await asyncio.wait_for(ws.recv(), timeout=self._ws_timeout)
                             LOGGER.debug(f'Web-socket data received. size = {len(payload)}')
-                        except (asyncio.TimeoutError,
-                                websockets.exceptions.ConnectionClosed) as err:
+                        except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed) as err:  # pylint: disable=line-too-long
                             LOGGER.debug(f'Websocket timed out or was closed. Error = {err}')
                             try:
                                 if self._shutdown_sentinel:
@@ -114,11 +113,7 @@ class Status:
                                     LOGGER.debug(f'Ping OK, keeping connection alive.')
                             except:  # pylint: disable=bare-except
                                 LOGGER.debug(f'Ping timeout - retrying...')
-                                #await asyncio.sleep(1)
                                 break # inner listener loop
-                        # except Exception as catchall:
-                        #     LOGGER.debug(f'There was some other exception: {catchall}')
-
                         # process payload
                         LOGGER.debug(f'Invoking payload handler on received message...')
                         asyncio.create_task(self._handle(json.loads(payload)))
@@ -165,22 +160,16 @@ class Status:
         self._event_thread = Thread(target=_start_event_loop_thread, daemon=True)
         self._event_thread.start()
 
-        # asyncio.run_coroutine_threadsafe(
-        #     self._ws_subscribe(),
-        #     self._event_loop
-        # ).add_done_callback(lambda future: print(future.result()))  # type: ignore
-
         asyncio.run_coroutine_threadsafe(
             self._ws_subscribe(),
             self._event_loop
         )
 
 
-
     async def _handle(self,
                       payload: Dict,
                       ) -> None:
-        """Update status properties with payload"""
+        """Update status properties with payload."""
         self.standby = payload['hdmi']['state'] != 'available'
         LOGGER.info(f'standby =  {str(self.standby)}')
 
@@ -188,7 +177,7 @@ class Status:
     async def _shutdown_signal_handler(self,
                                        sig: int,
                                        ) -> None:
-        """Shut down event loop cleanly"""
+        """Shut down event loop cleanly."""
 
 
         # mypy gets confused wit IntEnums
