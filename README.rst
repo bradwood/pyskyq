@@ -4,6 +4,10 @@
 .. image:: https://badge.fury.io/py/pyskyq.svg
     :target: https://badge.fury.io/py/pyskyq
 
+.. image:: https://readthedocs.org/projects/pyskyq/badge/?version=latest
+    :target: https://pyskyq.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 
 ======
 pyskyq
