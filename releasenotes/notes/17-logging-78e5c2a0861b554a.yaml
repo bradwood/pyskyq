@@ -5,7 +5,7 @@ features:
 
     See issue 17_ for details, but essentially, we are no longer passing loggers
     around, but instead instantiating module-local loggers.
-    The the top-level `__init__.py` sets up a :py:method:`logging.NullHandler`
+    The the top-level `__init__.py` sets up a :py:class:`logging.NullHandler`
     so that logs are suppressed by default unless the calling application sets up
     a more verbose handler after the point at which this package is imported.
 

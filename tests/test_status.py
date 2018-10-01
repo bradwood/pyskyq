@@ -28,7 +28,6 @@ def test_status(mocker):
     a.return_value.__aenter__.return_value.recv = \
         CoroutineMock(side_effect=serve_ws_json_with_detail)
 
-
     stat = Status('some_host')
     stat.create_event_listener()
 
@@ -37,12 +36,10 @@ def test_status(mocker):
 
     stat.shudown_event_listener()
 
-    time.sleep(0.5)  # allow time to shutdown
 
+timeout_test_call_count :int  # global var to could calls.
 
-timeout_test_call_count :int
-
-def wait_beyond_timeout_then_serve_json():
+def server_then_close():
     global timeout_test_call_count
     timeout_test_call_count += 1
     print(timeout_test_call_count)
@@ -58,7 +55,7 @@ def test_status_timeout(mocker):
     timeout_test_call_count = 0
     a = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
     a.return_value.__aenter__.return_value.recv = \
-        CoroutineMock(side_effect=wait_beyond_timeout_then_serve_json)
+        CoroutineMock(side_effect=server_then_close)
 
     stat = Status('timeout_host', ws_timeout=2)
     stat.create_event_listener()
@@ -75,7 +72,7 @@ def test_status_shutdown_sentinel(mocker):
     timeout_test_call_count = 0
     a = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
     a.return_value.__aenter__.return_value.recv = \
-        CoroutineMock(side_effect=wait_beyond_timeout_then_serve_json)
+        CoroutineMock(side_effect=server_then_close)
 
     stat = Status('shutdown_host')
     stat.create_event_listener()
