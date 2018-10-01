@@ -1,0 +1,27 @@
+---
+prelude: |
+    This release adds the :class:`~pyskyq.status.Status` class. This is quite a big addition in that
+    it introduces a separate thread for managing subscriptions to the SkyQ's
+    websocket services via the :py:mod:`asyncio`-based websockets_ module.
+
+    .. _websockets: https://github.com/aaugustin/websockets
+features:
+  - The library can now report whether the SkyQ box is in Standby Mode or Online.
+issues:
+  - not all possible statuses on the WS endpoint have been figured out yet.
+  - this is really an *extremely minimal* implementation from a feature standpoint, but it at least proves
+    the async-cum-thread design works. More work is needed to subscribe to other webocket- and uPNP-based event
+    streams.
+  - |
+    test coverage of :class:`~pyskyq.status.Status` is not great due to the difficulty in mocking
+    all the various websocket protocol events. A separate issue (27_) has been opend to follow up on this,
+    but in the interests of making progress, we are proceeding with this inferior test coverage.
+
+    .. _27: https://gitlab.com/bradwood/pyskyq/issues/27
+
+
+other:
+  - |
+    removed CLI tool test as it was failing -- will be refactored in issue 21_
+
+    .. _21: https://gitlab.com/bradwood/pyskyq/issues/21

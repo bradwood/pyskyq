@@ -36,6 +36,8 @@ This will press the "play" button on your Sky Q Remote. See constants.py_ for a 
 
 .. _constants.py: https://gitlab.com/bradwood/pyskyq/blob/master/src/pyskyq/constants.py
 
+.. Note::
+    The CLI tool is more a testing toy than a real client. You have been warned!
 
 Using the library
 =================
@@ -54,12 +56,7 @@ The below snippet gives an example of usage:
 Documentation
 =============
 
-Please refer to the documentation at https://bradwood.gitlab.io/pyskyq/latest/.
-
-Replace ``latest`` with an ``x.y.z.`` version number for docs for earlier versions.
-
-
-.. _https://bradwood.gitlab.io/pyskyq/latest/: https://bradwood.gitlab.io/pyskyq/latest/
+Please refer to the documentation at https://pyskyq.readthedocs.io/.
 
 
 Contributions

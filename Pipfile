@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 "e1839a8" = {editable = true, path = "."}
 aiohttp = "*"
+websockets = "*"
 
 [dev-packages]
 pytest = "*"
@@ -24,6 +25,8 @@ reno = {version = "*", extras = ["sphinx"]}
 asynctest = "*"
 pytest-aiohttp = "*"
 pytest-asyncio = "*"
+pyscaffold = "*"
+mock = "*"
 
 [requires]
 python_version = "3.7"

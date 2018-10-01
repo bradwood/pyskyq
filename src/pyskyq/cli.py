@@ -19,11 +19,12 @@ Note:
 """
 
 import argparse
-import sys
 import logging
+import sys
 from typing import List
+import time
 
-from pyskyq import __version__, SkyQ, REMOTE_COMMANDS
+from pyskyq import REMOTE_COMMANDS, SkyQ, __version__
 
 __author__ = "Bradley Wood"
 __copyright__ = "Bradley Wood"
@@ -77,7 +78,10 @@ def setup_logging(loglevel: int):
     """
     logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
     logging.basicConfig(level=loglevel, stream=sys.stdout,
-                        format=logformat, datefmt="%Y-%m-%d %H:%M:%S")
+                        format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
+
+
+
 
 
 def main(args: List[str]):
@@ -86,13 +90,25 @@ def main(args: List[str]):
     Args:
       args ([str]): command line parameter list
     """
-    pargs = parse_args(args)
-    setup_logging(pargs.loglevel)
-    LOGGER.debug("Starting SkyQ...")
-    skyq = SkyQ('skyq')
-    skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
-    print(skyq.epg.get_channel(2002).desc)
-    LOGGER.info("Script ends here")
+    try:
+        pargs = parse_args(args)
+        setup_logging(pargs.loglevel)
+        LOGGER.debug("Starting SkyQ...")
+        skyq = SkyQ('skyq')
+        skyq.status.create_event_listener()
+
+        skyq.remote.send_command(REMOTE_COMMANDS[pargs.cmd])
+        print(skyq.epg.get_channel(2002).desc)
+        LOGGER.debug("Starting 60 second sleep, keep powercycling skybox ")
+        time.sleep(60)
+        LOGGER.debug("Sleep finished...")
+        skyq.status.shudown_event_listener()
+        LOGGER.debug("listener shut down...")
+
+        LOGGER.info("Script ends here")
+    except KeyboardInterrupt:
+        LOGGER.info('KeyboardInterrupt - shutting down event listener.')
+        skyq.status.shudown_event_listener()
 
 
 def run():
