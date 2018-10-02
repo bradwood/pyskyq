@@ -14,7 +14,7 @@ import argparse
 import sys
 from typing import List
 
-from pyskyq import REMOTE_COMMANDS, press_remote
+from pyskyq import RCMD, press_remote
 
 
 def parse_args(args: List[str]) -> argparse.Namespace:
@@ -34,7 +34,7 @@ def main(args: List[str]):
 
     pargs = parse_args(args)
     # replace 'skyq' with hostname / IP of your Sky box
-    press_remote('skyq', REMOTE_COMMANDS[pargs.cmd])
+    press_remote('skyq', getattr(RCMD, pargs.cmd))
 
 
 if __name__ == "__main__":

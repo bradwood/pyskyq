@@ -42,7 +42,7 @@ the various buttons that can be pressed.
 
     from pyskyq import Remote, RCMD
 
-    press_remote('1.2.3.4', RCMD.play)
+        press_remote('skyq', getattr(RCMD, pargs.cmd))
 
 Logging and reacting to status changes on the box
 -------------------------------------------------
