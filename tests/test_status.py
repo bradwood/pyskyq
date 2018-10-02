@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 import asyncio
 import logging
 import sys
