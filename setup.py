@@ -1,14 +1,6 @@
 #!/usr/bin/env python
 # pylint: skip-file
 
-"""
-    Setup file for pyskyq.
-
-    This file was generated with PyScaffold 3.0.3.
-    PyScaffold helps you to put up the scaffold of your new Python project.
-    Learn more under: http://pyscaffold.org/
-"""
-
 import sys
 from setuptools import setup
 
