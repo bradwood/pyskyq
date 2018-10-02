@@ -1,6 +1,5 @@
 """Constants for button codes, ports, and so on"""
 from enum import IntEnum
-from typing import Dict
 
 REMOTE_LEGACY_PORT: int = 5900
 """int: Legacy port number for older Sky Boxes."""
