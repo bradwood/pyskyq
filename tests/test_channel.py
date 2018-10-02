@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 
 from pyskyq.channel import Channel

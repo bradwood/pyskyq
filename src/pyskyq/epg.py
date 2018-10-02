@@ -49,6 +49,7 @@ class EPG:
         self._channels: list = []
         LOGGER.debug(f"Initialised EPG object object with host={host}, port={port}")
 
+        # TODO: delete the below, and have the client call this method.
         self.load_channels()
 
 
