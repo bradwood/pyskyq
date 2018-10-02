@@ -33,7 +33,8 @@ def main(args: List[str]):
     """Main entry point."""
 
     pargs = parse_args(args)
-    press_remote('skyq', REMOTE_COMMANDS[pargs.cmd])  # replace 'skyq' with hostname / IP of your Sky box
+    # replace 'skyq' with hostname / IP of your Sky box
+    press_remote('skyq', REMOTE_COMMANDS[pargs.cmd])
 
 
 if __name__ == "__main__":

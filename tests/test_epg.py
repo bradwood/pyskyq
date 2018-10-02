@@ -17,6 +17,7 @@ def test_EPG(mocker):
     asyncio.set_event_loop(asyncio.new_event_loop())
 
     epg = EPG('host')
+    epg.load_channel_data()
 
     assert isinstance(epg, EPG)
     assert len(epg._channels) == 2

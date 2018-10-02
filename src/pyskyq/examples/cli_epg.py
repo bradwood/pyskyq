@@ -32,6 +32,7 @@ def main(args: List[str]):
     """Main entry point allowing external calls"""
     pargs = parse_args(args)
     epg = EPG('skyq')  # replace with hostname / IP of your Sky box
+    epg.load_channel_data() # load channel listing from Box.
 
     print(epg.get_channel(pargs.sid).desc)
 

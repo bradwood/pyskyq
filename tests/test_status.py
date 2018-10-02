@@ -7,7 +7,7 @@ import pytest
 import websockets
 from asynctest import CoroutineMock, MagicMock
 
-from pyskyq.status import Status
+from pyskyq import Status
 
 from .asynccontextmanagermock import AsyncContextManagerMock
 from .mock_constants import WS_STATUS_MOCK

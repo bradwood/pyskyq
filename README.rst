@@ -27,34 +27,63 @@ To install:
     pip install pyskyq
 
 
-Using the cli
-=============
+Usage
+=====
 
-You can use the cli tool like this:
+There are currently three main capabilities provided by the library.
 
-.. code:: bash
+Pressing buttons on the remote
+------------------------------
 
-    pyskyq play
-
-This will press the "play" button on your Sky Q Remote. See constants.py_ for a list of the commands that can be passed.
-
-.. _constants.py: https://gitlab.com/bradwood/pyskyq/blob/master/src/pyskyq/constants.py
-
-.. Note::
-    The CLI tool is more a testing toy than a real client. You have been warned!
-
-Using the library
-=================
-
-The below snippet gives an example of usage:
+Here is how to emulate a button-press on the SkyQ Remote. See :class:`~pyskyq.constants.RCMD` for
+the various buttons that can be pressed.
 
 .. code:: python
 
-    from pyskyq import SkyQ
+    from pyskyq import Remote, RCMD
 
-    skyq = SkyQ('1.2.3.4')
-    skyq.remote.send_command(RCMD.play) # press play on the remote
-    print(skyq.epg.get_channel(2002).desc) # print the description of of channel with sid=2002
+    press_remote('1.2.3.4', RCMD.play)
+
+Logging and reacting to status changes on the box
+-------------------------------------------------
+
+Here is how to set up an event listener that can be polled for box status changes.
+
+.. code:: python
+
+    from pyskyq import Status
+
+
+    stat = Status('1.2.3.4')  # replace with hostname / IP of your Sky box
+    stat.create_event_listener()  # set up listener thread.
+
+    # do other stuff.
+
+    # standby property will be updated asynchronously when the box is turned on or off.
+    if stat.standby:
+        print('The SkyQ Box is in Standby Mode')
+    else:
+        print('The SkyQ Box is in Online Mode')
+
+    stat.shudown_event_listener()  # shut down listener thread.
+
+
+Loading and interrogating channel data
+--------------------------------------
+
+Getting access to channel data requires initialising an :class:`~pyskyq.epg.EPG` object. Once
+this is done, you need to load the channel data from the box using :meth:`pyskyq.epg.EPG.load_channel_data()`.
+
+To access this data use :meth:`pyskyq.epg.EPG.get_channel()`. See the method's documentation for the
+full list of available attributes.
+
+.. code:: python
+
+    from pyskyq import EPG
+
+    epg = EPG(('1.2.3.4')  # replace with hostname / IP of your Sky box
+    epg.load_channel_data() # load channel listing from Box.
+    print(epg.get_channel(2002).desc) # print out the description of channel with sid = 2002
 
 
 Documentation
