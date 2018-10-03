@@ -103,6 +103,8 @@ deploy_to_test_pypi:
   - echo "${PYPI_USER}" >> ~/.pypirc
   - echo "${PYPI_PASSWORD}" >> ~/.pypirc
   - ls -la dist/
+  - pipenv run python setup.py check --restructuredtext --strict  # make sure README.rst parses okay.
+  - pipenv run python python setup.py check --metadata --strict # check metadata for correctness.
   - pipenv run twine upload dist/*
   only:
   - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1

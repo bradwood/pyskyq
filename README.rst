@@ -35,7 +35,7 @@ There are currently three main capabilities provided by the library.
 Pressing buttons on the remote
 ------------------------------
 
-Here is how to emulate a button-press on the SkyQ Remote. See :class:`~pyskyq.constants.RCMD` for
+Here is how to emulate a button-press on the SkyQ Remote. See the documentation for :class:`RCMD` for
 the various buttons that can be pressed.
 
 .. code:: python
@@ -71,10 +71,10 @@ Here is how to set up an event listener that can be polled for box status change
 Loading and interrogating channel data
 --------------------------------------
 
-Getting access to channel data requires initialising an :class:`~pyskyq.epg.EPG` object. Once
-this is done, you need to load the channel data from the box using :meth:`pyskyq.epg.EPG.load_channel_data()`.
+Getting access to channel data requires initialising an ``EPG`` object. Once
+this is done, you need to load the channel data from the box using the ``EPG.load_channel_data()`` method.
 
-To access this data use :meth:`pyskyq.epg.EPG.get_channel()`. See the method's documentation for the
+To access this data use ``EPG.get_channel()``. See the method's documentation for the
 full list of available attributes.
 
 .. code:: python
