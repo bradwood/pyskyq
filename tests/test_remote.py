@@ -1,23 +1,20 @@
-import pytest
+# pylint: skip-file
+
 import socket
 
-from pyskyq import SkyQ, SkyRemote, RCMD
+import pytest
+
+from pyskyq import RCMD, press_remote
 
 from .mock_constants import REMOTE_TCP_MOCK
 
-def test_sky_remote_init():
-    skyq_remote = SkyRemote('blah')
-    assert isinstance(skyq_remote, SkyRemote)
-    assert skyq_remote.host == 'blah'
 
 def test_sky_remote_send_command(mocker):
 
     m = mocker.patch('socket.socket')
     m.return_value.recv.side_effect = REMOTE_TCP_MOCK
 
-    skyrem = SkyRemote('blah')
-
-    skyrem.send_command(RCMD.play)
+    press_remote('some_host', RCMD.play)
 
     m.assert_called_with(socket.AF_INET, socket.SOCK_STREAM)
 

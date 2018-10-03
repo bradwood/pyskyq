@@ -9,9 +9,9 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
-   Readme <readme>
+   Quickstart <readme>
    License <license>
    Authors <authors>
    Release Notes <changelog>

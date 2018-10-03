@@ -28,13 +28,12 @@ class EPG:
 
     def __init__(self,
                  host: str,
+                 *,
                  port: int = REST_PORT,
                  ) -> None:
         """Initialise Sky EPG Object.
 
-        This method instantiates the EPG object and populates it with:
-
-        - Channel data
+        This method instantiates the EPG object.
 
         Args:
             host (str): String with resolvable hostname or IPv4 address to SkyQ box.
@@ -49,12 +48,6 @@ class EPG:
         self._channels: list = []
         LOGGER.debug(f"Initialised EPG object object with host={host}, port={port}")
 
-        self.load_channels()
-
-
-        # get list of channels from channel URL
-        # get detail's metadata for channels URL
-        # create channel's list (in panda's)
 
     @staticmethod
     async def _fetch(session: ClientSession,
@@ -141,7 +134,7 @@ class EPG:
                 self.get_channel(sid).add_detail_data(channel)
 
 
-    def load_channels(self) -> None:
+    def load_channel_data(self) -> None:
         """Load all channel data.
 
         This is the high-level method that fully loads all the channel detail.
@@ -177,4 +170,4 @@ class EPG:
         for chan in self._channels:
             if chan.sid == sid:
                 return chan
-        raise AttributeError(f"Channel not found. sid = {sid}.")
+        raise AttributeError(f"Channel not found. sid = {sid}. Did you call load_channel_data()?")

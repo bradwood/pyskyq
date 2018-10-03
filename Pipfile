@@ -25,7 +25,6 @@ reno = {version = "*", extras = ["sphinx"]}
 asynctest = "*"
 pytest-aiohttp = "*"
 pytest-asyncio = "*"
-pyscaffold = "*"
 mock = "*"
 
 [requires]

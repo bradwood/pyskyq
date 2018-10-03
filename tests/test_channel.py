@@ -1,5 +1,4 @@
-import asyncio
-
+# pylint: skip-file
 import pytest
 
 from pyskyq.channel import Channel

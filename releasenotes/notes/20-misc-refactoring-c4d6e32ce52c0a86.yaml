@@ -1,0 +1,16 @@
+---
+prelude: >
+    Substantial refactoring and removal of code-bloat.
+features:
+  - Added ``examples`` directory with a few simple example scripts included.
+  - |
+    Added the :func:`pyskyq.remote.press_remote` function as a replacement for
+    the deprecated ``SkyRemote`` class.
+deprecations:
+  - |
+    Removed the ``skyq`` object as it is just a container for the other classes and
+    *Flat is better than nested*.
+  - Removed the ``setup.py`` generated cli entry-point and migrated the cli tool
+    previously shipped to an example script.
+  - Removed the ``SkyRemote`` class as it's a class with just one method, so really,
+    it should just be a function.

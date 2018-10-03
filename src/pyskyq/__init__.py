@@ -1,10 +1,10 @@
 """Import and merge all modules in this package."""
 import logging
 
-from .skyq import SkyQ
-from .constants import RCMD, REMOTE_COMMANDS
+from .constants import RCMD
 from ._version import __version__
-from .skyremote import SkyRemote
+from .remote import press_remote
 from .epg import EPG
+from .status import Status
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

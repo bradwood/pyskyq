@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 import asyncio
 import socket
 import sys
@@ -7,7 +9,7 @@ import pytest
 from asynctest import CoroutineMock, MagicMock
 
 from pyskyq import RCMD
-from pyskyq.cli import run
+#from pyskyq.cli import run
 
 from .asynccontextmanagermock import AsyncContextManagerMock
 from .mock_constants import SERVICE_MOCK, REMOTE_TCP_MOCK
