@@ -1,6 +1,6 @@
 # pylint: skip-file
 import pytest
-
+import json
 from pyskyq.channel import Channel
 
 from .mock_constants import SERVICE_DETAIL_1, SERVICE_SUMMARY_MOCK
@@ -9,7 +9,7 @@ from .mock_constants import SERVICE_DETAIL_1, SERVICE_SUMMARY_MOCK
 def test_channel():
 
 
-    chan = Channel(SERVICE_SUMMARY_MOCK['services'][0])
+    chan = Channel(json.loads(SERVICE_SUMMARY_MOCK)['services'][0])
 
     assert isinstance(chan, Channel)
     assert chan.c == "101"
@@ -26,7 +26,7 @@ def test_channel():
         chan.isbroadcasting
 
 
-    chan.add_detail_data(SERVICE_DETAIL_1)
+    chan.add_detail_data(json.loads(SERVICE_DETAIL_1))
 
     assert chan.isbroadcasting
 

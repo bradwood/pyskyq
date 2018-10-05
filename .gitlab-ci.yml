@@ -24,8 +24,12 @@ cache:
   - "$CI_PROJECT_DIR/.pytest_cache"
 
 before_script:
-  - pip install --upgrade pip
-  - pip install pipenv
+  # - pip install --upgrade pip
+  # - pip install pipenv
+  # pinned the below versions to do a bug with pip/pipenv.
+  # See https://github.com/pypa/pipenv/issues/2871
+  - pip install pipenv==2018.6.25
+  - pip install pip==18.0
 
 unit testing and coverage:
   stage: Testing and Coverage

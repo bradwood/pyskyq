@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Optional
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
@@ -16,8 +16,16 @@ class EPG:
     """ The top-level class for all EPG data and functions.
 
     EPG implements access to any data and operations related to the SkyQ box's
-    Electronic Programme Guide. Currently, this means that both summary and detail
-    channel information is aggregated into a :class:`pyskyq.channel.Channel` object.
+    Electronic Programme Guide through a REST endpoint exposed on the box.
+    Specifically, it fetches both summary and detail channel information from
+    two different endpoints from the box and aggregates this data into a list of
+    :class:`pyskyq.channel.Channel` objects.
+
+    This channel data is then *augmented* with data from www.xmltv.co.uk which provides
+    an XML file which follows the ``xmltv`` DTD.
+
+    It also used the ``xmltv`` file to load **listings** data to enable the querying of
+    programmes that are scheduled on the channels.
 
     Attributes:
         host (str): Hostname or IPv4 address of SkyQ Box.
@@ -29,7 +37,7 @@ class EPG:
     def __init__(self,
                  host: str,
                  *,
-                 port: int = REST_PORT,
+                 rest_port: int = REST_PORT,
                  ) -> None:
         """Initialise Sky EPG Object.
 
@@ -37,16 +45,19 @@ class EPG:
 
         Args:
             host (str): String with resolvable hostname or IPv4 address to SkyQ box.
-            port (int, optional): Port number to use to connect to the Remote REST API.
-                Defaults to the standard port used by SkyQ boxes which is 9006.
+            rest_port (int): Defaults to the SkyQ REST port which is 9006,
+
         Returns:
             None
         """
 
         self.host: str = host
-        self.port: int = port
-        self._channels: list = []
-        LOGGER.debug(f"Initialised EPG object object with host={host}, port={port}")
+        self.rest_port: int = rest_port
+        self._xmltv_urls: set = set() # holds set of xmltv URLs for populatating listings data.
+
+        self._channels: list = [] # holds list of Channel objects
+
+        LOGGER.debug(f"Initialised EPG object using SkyQ box={self.host}")
 
 
     @staticmethod
@@ -66,15 +77,15 @@ class EPG:
             dict: The body of data returned.
 
         """
-
-        async with session.get(url) as response:
-            #TODO add validation etc.
-            return await response.json()
+        return await session.get(url)
+        # async with session.get(url) as response:
+        #     #TODO add validation etc.
+        #     return await response
 
     async def _fetch_all_chan_details(self,
                                       session: ClientSession,
                                       sid_list: List[int]
-                                      ) -> List:
+                                      ) -> List[str]:
         """Fetch channel detail data from SkyQ box asynchronously.
 
         This method fetches the channel list from ``/as/services/detail/<sid>`` endpoint.
@@ -88,7 +99,7 @@ class EPG:
 
         """
 
-        urls = [f'http://{self.host}:{self.port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
+        urls = [f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
                 for sid in sid_list]
         results = await asyncio.gather(*[asyncio.create_task(self._fetch(session, url))
                                          for url in urls])
@@ -105,11 +116,12 @@ class EPG:
             None
         """
         LOGGER.debug('Fetching channel list')
-        url = f'http://{self.host}:{self.port}{REST_SERVICES_URL}'
+        url = f'http://{self.host}:{self.rest_port}{REST_SERVICES_URL}'
 
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
-            chan_payload = await self._fetch(session, url)
+            chan_payload_json = await self._fetch(session, url)
+            chan_payload = await chan_payload_json.json()
 
         for channel in chan_payload['services']:
             self._channels.append(Channel(channel))
@@ -131,11 +143,12 @@ class EPG:
         async with ClientSession(timeout=timeout) as session:
             channels = await self._fetch_all_chan_details(session, sid_list)
             for channel, sid in zip(channels, sid_list):
-                self.get_channel(sid).add_detail_data(channel)
+                json_dict = await channel.json()
+                self.get_channel(sid).add_detail_data(json_dict)
 
 
     def load_channel_data(self) -> None:
-        """Load all channel data.
+        """Load all channel data from the SkyQ REST Service
 
         This is the high-level method that fully loads all the channel detail.
 
