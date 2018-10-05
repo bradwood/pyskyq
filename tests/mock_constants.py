@@ -1,13 +1,12 @@
 
-#TODO -- turn these into proper JSON strings, not python Dicts!!
-
-SERVICE_SUMMARY_MOCK = {
+SERVICE_SUMMARY_MOCK = """
+{
     "documentId": "683",
     "services": [
         {
             "c": "101",
             "dvbtriplet": "2.2045.6301",
-            "schedule": True,
+            "schedule": "true",
             "servicetype": "DSAT",
             "sf": "sd",
             "sg": 12,
@@ -30,11 +29,13 @@ SERVICE_SUMMARY_MOCK = {
     ],
     "version": 3
 }
+"""
 
-SERVICE_DETAIL_1 = {
+SERVICE_DETAIL_1 = """
+{
     "details": {
         "dvbtriplet": "2.2045.6301",
-        "isbroadcasting": True,
+        "isbroadcasting": true,
         "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
     },
     "sid": "2002",
@@ -46,11 +47,13 @@ SERVICE_DETAIL_1 = {
         }
     ]
 }
+"""
 
-SERVICE_DETAIL_2 = {
+SERVICE_DETAIL_2 = """
+{
     "details": {
         "dvbtriplet": "2.2095.55128",
-        "isbroadcasting": True,
+        "isbroadcasting": true,
         "upgradeMessage": "A channel for God's Peace."
     },
     "sid": "2862",
@@ -62,8 +65,7 @@ SERVICE_DETAIL_2 = {
         }
     ]
 }
-
-SERVICE_MOCK = [SERVICE_SUMMARY_MOCK,SERVICE_DETAIL_1,SERVICE_DETAIL_2]
+"""
 
 REMOTE_TCP_MOCK = [  # set up the data to be returned on each successive call of socket.recv()
     b'SKY 000.001\n',
