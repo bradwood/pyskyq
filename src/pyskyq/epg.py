@@ -108,8 +108,8 @@ class EPG:
 
         urls = [f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
                 for sid in sid_list]
-        results = await asyncio.gather(*[asyncio.create_task(session.get(url))
-                                         for url in urls])
+        results = await asyncio.gather(*[session.get(url) for url in urls])
+
         return results
 
 
