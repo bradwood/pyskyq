@@ -18,7 +18,7 @@ logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
-logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logging.DEBUG)
 
 def serve_ws_json_with_detail():
     time.sleep(0.2)
@@ -39,12 +39,12 @@ def test_status(mocker):
     stat.shudown_event_listener()
 
 
-timeout_test_call_count :int  # global var to could calls.
+timeout_test_call_count :int  # global var to count calls.
 
 def server_then_close():
     global timeout_test_call_count
     timeout_test_call_count += 1
-    print(timeout_test_call_count)
+    # print(timeout_test_call_count)
     time.sleep(0.2)
     if timeout_test_call_count > 5:
         raise websockets.exceptions.ConnectionClosed

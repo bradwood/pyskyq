@@ -60,28 +60,11 @@ class EPG:
         LOGGER.debug(f"Initialised EPG object using SkyQ box={self.host}")
 
 
-    async def _fetch_all_chan_details(self,
-                                      session: ClientSession,
-                                      sid_list: List[int]
-                                      ) -> List[str]:
-        """Fetch channel detail data from SkyQ box asynchronously.
+    def __repr__(self):
+        """Print a human-friendly representation of this object."""
 
-        This method fetches the channel list from ``/as/services/detail/<sid>`` endpoint.
-
-        Args:
-            session (aiohttp.ClientSession): Session to use when fetching the data.
-            sid_list (list): List of Channel SID's to fetch.
-
-        Returns:
-            List: List of JSON documents for each channel detail fetched.
-
-        """
-
-        urls = [f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
-                for sid in sid_list]
-        results = await asyncio.gather(*[asyncio.create_task(session.get(url))
-                                         for url in urls])
-        return results
+        return f"<EPG: host={self.host}, rest_port={self.rest_port}, " + \
+            f"len(_channels)={len(self._channels)}, len(_xmltv_urls)={len(self._channels)}>"
 
 
     async def _load_channel_list(self) -> None:
@@ -104,6 +87,30 @@ class EPG:
 
         for channel in chan_payload['services']:
             self._channels.append(Channel(channel))
+
+
+    async def _fetch_all_chan_details(self,
+                                      session: ClientSession,
+                                      sid_list: List[int]
+                                      ) -> List[str]:
+        """Fetch channel detail data from SkyQ box asynchronously.
+
+        This method fetches the channel list from ``/as/services/detail/<sid>`` endpoint.
+
+        Args:
+            session (aiohttp.ClientSession): Session to use when fetching the data.
+            sid_list (list): List of Channel SID's to fetch.
+
+        Returns:
+            List: List of JSON documents for each channel detail fetched.
+
+        """
+
+        urls = [f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
+                for sid in sid_list]
+        results = await asyncio.gather(*[asyncio.create_task(session.get(url))
+                                         for url in urls])
+        return results
 
 
     async def _load_channel_details(self) -> None:
