@@ -60,28 +60,6 @@ class EPG:
         LOGGER.debug(f"Initialised EPG object using SkyQ box={self.host}")
 
 
-    @staticmethod
-    async def _fetch(session: ClientSession,
-                     url: str
-                     ) -> Dict:
-        """Fetch data from URL asynchronously.
-
-        This helper method fetches data from a URL asynchronously. It is used to fetch EPG
-        data from the SkyQ box, including calling the detail endpoint for each channel.
-
-        Args:
-            session (aiohttp.ClientSession): Session to use when fetching the data.
-            url (str): URL to fetch.
-
-        Returns:
-            dict: The body of data returned.
-
-        """
-        return await session.get(url)
-        # async with session.get(url) as response:
-        #     #TODO add validation etc.
-        #     return await response
-
     async def _fetch_all_chan_details(self,
                                       session: ClientSession,
                                       sid_list: List[int]
@@ -101,7 +79,7 @@ class EPG:
 
         urls = [f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
                 for sid in sid_list]
-        results = await asyncio.gather(*[asyncio.create_task(self._fetch(session, url))
+        results = await asyncio.gather(*[asyncio.create_task(session.get(url))
                                          for url in urls])
         return results
 
@@ -115,12 +93,13 @@ class EPG:
         Returns:
             None
         """
+
         LOGGER.debug('Fetching channel list')
         url = f'http://{self.host}:{self.rest_port}{REST_SERVICES_URL}'
 
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
-            chan_payload_json = await self._fetch(session, url)
+            chan_payload_json = await session.get(url)
             chan_payload = await chan_payload_json.json()
 
         for channel in chan_payload['services']:
@@ -138,6 +117,7 @@ class EPG:
         Returns:
             None
         """
+
         sid_list = [chan.sid for chan in self._channels]
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
