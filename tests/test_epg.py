@@ -88,22 +88,16 @@ def test_load_channel_details(mocker):
         epg.get_channel(2862).upgradeMessage
 
 
-def tdest_EPG(mocker):
-
-    # SERVICE_MOCK = [json.loads(SERVICE_SUMMARY_MOCK), json.loads(SERVICE_DETAIL_1), json.loads(SERVICE_DETAIL_2)]
-
-    # SERVICE_MOCK = [1, 2, 3]
-
-    a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
+def test_EPG(mocker):
 
     jsonmock_invocation_count = 0
+
+
     class jsonmock:
         @staticmethod
         async def json():
             nonlocal jsonmock_invocation_count
             jsonmock_invocation_count += 1
-            print(jsonmock_invocation_count)
-
             if jsonmock_invocation_count == 1:
                 return json.loads(SERVICE_SUMMARY_MOCK)
             if jsonmock_invocation_count == 2:
@@ -115,9 +109,9 @@ def tdest_EPG(mocker):
     client_response = asyncio.Future()
     client_response.set_result(jsonmock)
 
+    a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
     a.return_value = client_response
 
-    loop = asyncio.get_event_loop()
     epg = EPG('test_load_channel_list_fake_host')
     epg.load_channel_data()
 
@@ -129,6 +123,13 @@ def tdest_EPG(mocker):
     assert epg.get_channel('2002').c == "101"
     assert epg.get_channel('2002').t == "BBC One Lon"
     assert epg.get_channel('2002').name == "BBC One Lon"
+
+    assert epg.get_channel(2002).isbroadcasting is True
+    assert "BBC ONE for Greater London and the surrounding area." in \
+        epg.get_channel(2002).upgradeMessage
+
+    assert "A channel for God's Peace." in \
+        epg.get_channel(2862).upgradeMessage
 
     with pytest.raises(AttributeError, match='Channel not found. sid = 1234567.'):
         epg.get_channel(1234567)
