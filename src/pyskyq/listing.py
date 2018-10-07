@@ -37,21 +37,24 @@ class Listing(Hashable):
         # Validate path
         if not isinstance(path, Path) and not isinstance(path, str):
             raise TypeError('path must be a string or Path object.')
+
+        # coerce it to a Path if it's a string
         if isinstance(path, str):
             self._path = Path(path)
         else:
             self._path = path
 
-        if not path.is_dir():
-            path.mkdir()
+        if not self._path.is_dir():
+            self._path.mkdir()
 
-        str_binary = str(self.__hash__()).encode('utf8')
-        self._filename = self._path.joinpath(f'{hashlib.sha256(str_binary).hexdigest()}.xml')
+        str_binary = str(self._url.lower()).encode('utf8')
+        self._hashobj = hashlib.sha256(str_binary)
+        self._filename = f'{self._hashobj.hexdigest()}.xml'
 
 
     def __hash__(self) -> int:
         """Define hash function for a Hashable object."""
-        return hash(self._url)
+        return int.from_bytes(self._hashobj.digest(), 'big')
 
 
     def __eq__(self, other) -> bool:
@@ -59,11 +62,14 @@ class Listing(Hashable):
         # relying on lazy boolean evaluation here.
         return isinstance(other, Listing) and hash(other._url) == hash(self._url)  # pylint: disable=protected-access
 
+    def __repr__(self):
+        """Print a human-friendly representation of this object."""
+        return f"<List: url='{self._url}', path='{self._path}', filename='{self._filename}'>"
 
     async def fetch(self,
                     *,
-                    timeout: int = 60,
-                    chunk_size: int = 1048576  # = 1 Mb
+                    timeout: int = 60, # sec
+                    chunk_size: int = 1048576 # = 1 Mb
                     ) -> None:
         """Fetch the Listings XML file."""
         to_ = ClientTimeout(total=timeout)

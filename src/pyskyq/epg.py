@@ -62,7 +62,7 @@ class EPG:
         # TODO:
         # - set up eventloop
         # - pass it into a separate thread
-        # - loop through listiners and call fetch when scheduled.
+        # - loop through listings and call fetch when scheduled.
 
     def __repr__(self):
         """Print a human-friendly representation of this object."""
