@@ -50,6 +50,9 @@ class Listing(Hashable):
         str_binary = str(self._url.lower()).encode('utf8')
         self._hashobj = hashlib.sha256(str_binary)
         self._filename = f'{self._hashobj.hexdigest()}.xml'
+        self._full_path = self._path.joinpath(self._filename)
+
+        LOGGER.debug(f'Listing initialised: {self}')
 
 
     def __hash__(self) -> int:
@@ -66,21 +69,31 @@ class Listing(Hashable):
         """Print a human-friendly representation of this object."""
         return f"<List: url='{self._url}', path='{self._path}', filename='{self._filename}'>"
 
+    # TODO - add aiofiles support HERE!
     async def fetch(self,
                     *,
                     timeout: int = 60, # sec
                     chunk_size: int = 1048576 # = 1 Mb
                     ) -> None:
         """Fetch the Listings XML file."""
+        LOGGER.debug(f'Fetch({self}) called started.')
         to_ = ClientTimeout(total=timeout)
         async with ClientSession(timeout=to_) as session:
+            LOGGER.debug(f'Fetch: Inside ClientSession()')
+            LOGGER.debug(f'Fetch: About to fetch url={self._url}')
             async with session.get(self._url) as resp:
-                with open(self._filename, 'wb') as file_desc:
+                LOGGER.debug(f'Fetch: Inside session.get(url={self._url})')
+                with open(self._full_path, 'wb') as file_desc:
                     while True:
+                        LOGGER.debug(f'Fetch: Inside file writing loop. filename={self._full_path}')
                         chunk = await resp.content.read(chunk_size)
                         if not chunk:
                             break
+                        LOGGER.debug('Fetch: Got a chunk')
                         file_desc.write(chunk)
+                        LOGGER.debug('Fetch: Wrote the chunk')
+
+        LOGGER.debug(f'Fetch() call finished on {self}')
 
 
     def parse(self, parser) -> Dict:
