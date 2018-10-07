@@ -26,6 +26,8 @@ asynctest = "*"
 pytest-aiohttp = "*"
 pytest-asyncio = "*"
 mock = "*"
+pydocstyle = "*"
+prospector = "*"
 
 [requires]
 python_version = "3.7"

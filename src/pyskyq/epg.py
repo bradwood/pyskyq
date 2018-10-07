@@ -1,8 +1,8 @@
-"""This module implements the EPG class"""
+"""This module implements the EPG class."""
 
 import asyncio
 import logging
-from typing import Any, List, Dict, Optional
+from typing import Any, List, Tuple
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
@@ -10,10 +10,12 @@ from .channel import Channel
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
 
+from .listing import Listing
+
 LOGGER = logging.getLogger(__name__)
 
 class EPG:
-    """ The top-level class for all EPG data and functions.
+    """The top-level class for all EPG data and functions.
 
     EPG implements access to any data and operations related to the SkyQ box's
     Electronic Programme Guide through a REST endpoint exposed on the box.
@@ -45,24 +47,25 @@ class EPG:
 
         Args:
             host (str): String with resolvable hostname or IPv4 address to SkyQ box.
-            rest_port (int): Defaults to the SkyQ REST port which is 9006,
+            rest_port (int): Defaults to the SkyQ REST port which is 9006.
 
         Returns:
             None
-        """
 
+        """
         self.host: str = host
         self.rest_port: int = rest_port
-        self._xmltv_urls: set = set() # holds set of xmltv URLs for populatating listings data.
-
-        self._channels: list = [] # holds list of Channel objects
-
+        self._channels: list = []
+        self._listings: list = []
         LOGGER.debug(f"Initialised EPG object using SkyQ box={self.host}")
 
+        # TODO:
+        # - set up eventloop
+        # - pass it into a separate thread
+        # - loop through listiners and call fetch when scheduled.
 
     def __repr__(self):
         """Print a human-friendly representation of this object."""
-
         return f"<EPG: host={self.host}, rest_port={self.rest_port}, " + \
             f"len(_channels)={len(self._channels)}, len(_xmltv_urls)={len(self._channels)}>"
 
@@ -75,10 +78,10 @@ class EPG:
 
         Returns:
             None
-        """
 
-        LOGGER.debug('Fetching channel list')
+        """
         url = f'http://{self.host}:{self.rest_port}{REST_SERVICES_URL}'
+        LOGGER.debug('Fetching channel list from {url}')
 
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
@@ -92,7 +95,7 @@ class EPG:
     async def _fetch_all_chan_details(self,
                                       session: ClientSession,
                                       sid_list: List[int]
-                                      ) -> List[str]:
+                                      ) -> Tuple:
         """Fetch channel detail data from SkyQ box asynchronously.
 
         This method fetches the channel list from ``/as/services/detail/<sid>`` endpoint.
@@ -105,7 +108,6 @@ class EPG:
             List: List of JSON documents for each channel detail fetched.
 
         """
-
         urls = [f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
                 for sid in sid_list]
         results = await asyncio.gather(*[session.get(url) for url in urls])
@@ -119,12 +121,12 @@ class EPG:
         This method is a wrapper which calls :meth:`~pyskyq.epg.EPG._fetch_all_chan_details`
         to get the details about each channel from it's detail endpoint
         ``/as/services/details/<sid>`` and then adds it to the list data
-        on :attr:`~pyskyq.epg.EPG.channels`.
+        on :attr:`~pyskyq.epg.EPG._channels`.
 
         Returns:
             None
-        """
 
+        """
         sid_list = [chan.sid for chan in self._channels]
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
@@ -135,14 +137,14 @@ class EPG:
 
 
     def load_channel_data(self) -> None:
-        """Load all channel data from the SkyQ REST Service
+        """Load all channel data from the SkyQ REST Service.
 
         This is the high-level method that fully loads all the channel detail.
 
         Returns:
             None
-        """
 
+        """
         loop = asyncio.get_event_loop()
 
         loop.run_until_complete(self._load_channel_list())
@@ -160,14 +162,42 @@ class EPG:
 
         Args:
             sid: The sid (service id) of the channel
+
         Returns:
             :class:`pyskyq.channel.Channel`: The channel if found.
 
         Raises:
             AttributeError: If the channel is not found.
+
         """
         sid = str(sid)
         for chan in self._channels:
             if chan.sid == sid:
                 return chan
-        raise AttributeError(f"Channel not found. sid = {sid}. Did you call load_channel_data()?")
+        raise AttributeError(f"Sid:{sid} not found.")
+
+    def add_listing_schedule(self,
+                             *,
+                             listing: Listing,
+                             schedule=None,
+                             ) -> None:
+        """Add a listing schedule to the EPG.
+
+        This method will add a :class:`~pyskyq.listing.Listing` to the EPG object,
+        which will then takecare of downloading the listing data and updating the EPG
+        object with it according to the passed download shedule.
+
+        Args:
+            listing (Listing): a :class:`~pyskyq.listing.Listing` object to add to the EPG.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: Raised if this listing is already added to the EPG.
+
+        """
+        if listing not in self._listings:
+            self._listings.append(listing)
+        else:
+            raise ValueError('Listing already added.')

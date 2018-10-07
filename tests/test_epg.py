@@ -131,5 +131,5 @@ def test_EPG(mocker):
     assert "A channel for God's Peace." in \
         epg.get_channel(2862).upgradeMessage
 
-    with pytest.raises(AttributeError, match='Channel not found. sid = 1234567.'):
+    with pytest.raises(AttributeError, match='Sid:1234567 not found.'):
         epg.get_channel(1234567)

@@ -3,12 +3,7 @@ prelude: >
     This release adds much better EPG support through the addition of channel
     and programme data from www.xmltv.co.uk.
 features:
-  - |
-    List new features here, or remove this section.  All of the list items in
-    this section are combined when the release notes are rendered, so the text
-    needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
+  - Added the :class:`~pyskyq.listing.Listing` class to download and parse XMLTV feeds.
 issues:
   - |
     List known issues here, or remove this section.  All of the list items in
@@ -45,12 +40,10 @@ security:
     available in another section, such as the prelude. This may mean repeating
     some details.
 fixes:
-  - |
-    Add normal bug fixes here, or remove this section.  All of the list items
-    in this section are combined when the release notes are rendered, so the
-    text needs to be worded so that it does not depend on any information only
-    available in another section, such as the prelude. This may mean repeating
-    some details.
+  - Massively improved test coverage for :class:`~pyskyq.epg.EPG` and made the
+    tests more granular.
+  - Made a better ``__repr__()`` for EPG to make debugging easier.
+
 other:
   - |
     Add other notes here, or remove this section.  All of the list items in
