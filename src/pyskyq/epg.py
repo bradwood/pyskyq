@@ -79,8 +79,6 @@ class EPG:
         Returns:
             None
 
-        Returns:
-            None
         """
         url = f'http://{self.host}:{self.rest_port}{REST_SERVICES_URL}'
         LOGGER.debug('Fetching channel list from {url}')
@@ -182,7 +180,7 @@ class EPG:
     def add_listing_schedule(self,
                              *,
                              listing: Listing,
-                             schedule=None,
+                             # schedule=None,
                              ) -> None:
         """Add a listing schedule to the EPG.
 

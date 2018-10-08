@@ -74,6 +74,8 @@ def test_load_channel_details(mocker):
         epg._channels.append(Channel(channel))
 
     # we can now test the loading of channel details as we have the summary data already loaded.
+
+    # TODO use asyncio.run() below
     loop = asyncio.get_event_loop()
     loop.run_until_complete(epg._load_channel_details())
 

@@ -1,11 +1,12 @@
 import asyncio
+import aiohttp
 import logging
 import sys
 from pathlib import Path
 import pytest
 from aiohttp import MultipartWriter
 
-from pyskyq.listing import Listing
+from pyskyq import Listing
 
 from .isloated_filesystem import isolated_filesystem
 
@@ -42,41 +43,76 @@ def test_listing_init():
 
 
 @pytest.mark.asyncio
-async def test_listing_fetch(aresponses):
+async def test_listing_fetch_200(aresponses):
 
-    # custom handler to respond with chunks
-    async def my_handler(request):
-        LOGGER.debug('in handler')
-        my_boundary = 'boundary'
-        xmlfile_path = Path(__file__).resolve().parent.joinpath('6729.xml')
-        LOGGER.debug('xml file path = {xmlfile_path}')
-        hdr = {
-            "Content-Type": "application/xml"
-        }
-        resp = aresponses.Response(status=200,
-                                   reason='OK',
-                                   headers=hdr,
-                                   )
-        resp.enable_chunked_encoding()
-        await resp.prepare(request)
-
-        xmlfile = open(xmlfile_path, 'rb')
-
-        LOGGER.debug('opened xml file for serving')
-        with MultipartWriter('application/xml', boundary=my_boundary) as mpwriter:
-            mpwriter.append(xmlfile, hdr)
-            LOGGER.debug('appended chunk')
-            await mpwriter.write(resp, close_boundary=True)
-            LOGGER.debug('wrote chunk')
-
-        xmlfile.close()
+    async def get_handler_200(request):
+        xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
+        LOGGER.debug(f'xml file path = {xmlfile_path}')
+        with open(xmlfile_path, 'r') as fd:
+            data = fd.read()
+            resp = aresponses.Response(status=200, reason='OK', text=str(data))
         return resp
 
-    aresponses.add('foo.com', '/feed/6715', 'get', response=my_handler)
 
-    # with isolated_filesystem():
+    aresponses.add('foo.com', '/feed/6715', 'get', response=get_handler_200)
+
+    with isolated_filesystem():
+        l = Listing('http://foo.com/feed/6715')
+        await l.fetch()
+        assert l._path.joinpath(l._filename).is_file()
+
+
+@pytest.mark.skip(reason="Need to fix aresponses Header handling first.")
+@pytest.mark.asyncio
+async def test_listing_fetch_206(aresponses):
+
+    async def get_handler_206(request):
+        xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
+        LOGGER.debug(f'xml file path = {xmlfile_path}')
+        LOGGER.debug(f'request headers = {request.headers}')
+
+        rng = request.http_range
+        with open(xmlfile_path, 'rb') as f:
+            f.seek(rng.start)
+            data = f.read(rng.stop - rng.start)
+            hdr = {'Content-Range': f'bytes {rng.start}-{rng.stop - 1}/{xmlfile_path.stat().st_size}'}
+            LOGGER.debug(f'resp header = {hdr}')
+            resp = aresponses.Response(status=206, reason='OK', text=str(data), )
+        return resp
+
+    aresponses.add('foo.com', '/feed/6715', 'get', response=get_handler_206)
+
+    # aresponses.add(aresponses.ANY, aresponses.ANY, aresponses.ANY, response=get_handler_206)
+
+
+    #with isolated_filesystem():
     l = Listing('http://foo.com/feed/6715')
-
-    await l.fetch()
-
+    await l.fetch(range_size=100)
     assert l._path.joinpath(l._filename).is_file()
+
+
+
+
+
+    # async def get_handler_200(request):
+    #     LOGGER.debug('in get handler')
+    #     my_boundary = 'boundary'
+    #     xmlfile_path = Path(__file__).resolve().parent.joinpath('6729.xml')
+    #     LOGGER.debug(f'xml file path = {xmlfile_path}')
+    #     resp = aresponses.Response(status=200,
+    #                                reason='OK',
+    #                                )
+    #     resp.enable_chunked_encoding()
+    #     await resp.prepare(request)
+
+    #     xmlfile = open(xmlfile_path, 'rb')
+
+    #     LOGGER.debug('opened xml file for serving')
+    #     with MultipartWriter('application/xml', boundary=my_boundary) as mpwriter:
+    #         mpwriter.append(xmlfile)
+    #         LOGGER.debug('appended chunk')
+    #         await mpwriter.write(resp, close_boundary=False)
+    #         LOGGER.debug('wrote chunk')
+
+    #     xmlfile.close()
+    #     return resp
