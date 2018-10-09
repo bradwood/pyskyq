@@ -4,6 +4,8 @@ prelude: >
     and programme data from www.xmltv.co.uk.
 features:
   - Added the :class:`~pyskyq.listing.Listing` class to download and parse XMLTV feeds.
+  - Generalised :class:`~pyskyq.channel.Channel` to support data from multiple sources
+    and make some factory functions to generate Channels with various sources.
 issues:
   - |
     List known issues here, or remove this section.  All of the list items in
@@ -42,7 +44,10 @@ security:
 fixes:
   - Massively improved test coverage for :class:`~pyskyq.epg.EPG` and made the
     tests more granular.
-  - Made a better ``__repr__()`` for EPG to make debugging easier.
+  - Made a better ``__repr__()`` for EPG, Channel and a few other classe to make
+    debugging easier.
+  - Fixed Sphinx layout, coroutine support, and ordering. Much improved module
+    documentation also.
 
 other:
   - |

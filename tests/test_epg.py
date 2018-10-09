@@ -7,7 +7,7 @@ import pytest
 from asynctest import CoroutineMock, MagicMock
 
 from pyskyq import EPG
-from pyskyq.channel import Channel
+from pyskyq.channel import Channel, channel_from_skyq_service
 
 from .asynccontextmanagermock import AsyncContextManagerMock
 from .mock_constants import (REMOTE_TCP_MOCK, SERVICE_DETAIL_1,
@@ -15,7 +15,7 @@ from .mock_constants import (REMOTE_TCP_MOCK, SERVICE_DETAIL_1,
 
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
 def test_load_channel_list(mocker):
@@ -71,7 +71,7 @@ def test_load_channel_details(mocker):
     # manually load the _channels summary data using the SERVICE_SUMMARY_PAYLOAD as this was tested in the previous test.
     chan_payload_json = json.loads(SERVICE_SUMMARY_MOCK)
     for channel in chan_payload_json['services']:
-        epg._channels.append(Channel(channel))
+        epg._channels.append(channel_from_skyq_service(channel))
 
     # we can now test the loading of channel details as we have the summary data already loaded.
 

@@ -1,17 +1,18 @@
 # pylint: skip-file
 import pytest
 import json
-from pyskyq.channel import Channel
+from pyskyq.channel import Channel, channel_from_skyq_service, CSRC
 
 from .mock_constants import SERVICE_DETAIL_1, SERVICE_SUMMARY_MOCK
 
 
-def test_channel():
+def test_channel_from_skyq_service():
 
-
-    chan = Channel(json.loads(SERVICE_SUMMARY_MOCK)['services'][0])
+    chan = channel_from_skyq_service(json.loads(SERVICE_SUMMARY_MOCK)['services'][0])
 
     assert isinstance(chan, Channel)
+    assert chan.sources == CSRC.skyq_service
+    assert chan.__repr__() == '<Channel: sources=1>'
     assert chan.c == "101"
     assert chan.t == "BBC One Lon"
     assert chan.name == "BBC One Lon"

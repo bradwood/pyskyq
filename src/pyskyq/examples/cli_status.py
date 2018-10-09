@@ -6,6 +6,7 @@ Example use of the Status API.
 
 import logging
 import sys
+from time import sleep
 
 from pyskyq import Status
 
@@ -19,6 +20,7 @@ stat = Status('skyq')  # replace with hostname / IP of your Sky box
 stat.create_event_listener()  # set up listener thread.
 
 # do other stuff.
+sleep(30)
 
 # standby property will be updated asynchronously when the box is turned on or off.
 if stat.standby:

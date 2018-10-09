@@ -31,6 +31,7 @@ pydocstyle = "*"
 prospector = "*"
 aresponses = "*"
 python-dateutil = "*"
+sphinxcontrib-asyncio = "*"
 
 [requires]
 python_version = "3.7"

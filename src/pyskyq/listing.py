@@ -4,9 +4,10 @@ import hashlib
 import logging
 from collections.abc import Hashable
 from datetime import datetime
+from http.client import HTTPException
 from pathlib import Path
 from typing import Dict, Optional
-from http.client import HTTPException
+from xml.etree.ElementTree import iterparse
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from yarl import URL
@@ -25,12 +26,14 @@ class Listing(Hashable):
     .. _dtd: https://github.com/AlekSi/xmltv/blob/master/xmltv.dtd
 
     Note:
+        TODO: MOVE THIS SECTION OF DOCUMENTATION!
+
         The :class:`~pyskyq.channel.Channel` class provides the **primary**
         interface to channel data through the :class:`~pyskyq.epg.EPG` class.
 
         This class provides the means to download and parse XML data to do with
         channels, but more importantly, programming schedules. When injected
-        into the :class:`~pyskyq.epg.EPG`, the data from this class will be
+        into the :class:`~pyskyq.epg.EPG` object, the data from this class will be
         merged into the list of :class:`~pyskyq.channel.Channel`'s provided
         there, to provide channel data sourced from both the SkyQ box and an
         external XML TV source.
@@ -127,12 +130,39 @@ class Listing(Hashable):
     # -- HTTP headers missing
     # -- timeouts
     # -- etc
+    # TODO -- add retry support
+
     async def fetch(self,  # pylint: disable=too-many-locals
                     *,
                     timeout: int = 60, # sec
                     range_size: int = 256*1024,   # bytes
                     ) -> None:
-        """Fetch the Listings XML file."""
+        """Fetch the Listings XML file.
+
+        This async method will download the (XML) file specified by the URL passed
+        at instantiation.
+
+        As these files can be large, and because www.xmltv.co.uk, in particular,
+        supports Range Requests (see rfc7233_) this method will attempt to download
+        the file in parts using HTTP Range Requests, if the server supports them.
+        This will limit the use of memory during the download process to that specified
+        by the ``range_size`` parameter.
+
+        If the server does not support Range Requests the method will will fall back
+        to a more memory-intensive, vanilla HTTP download.
+
+        .. _rfc7233 : https://tools.ietf.org/html/rfc7233
+
+        Args:
+            timeout (int): timeout in seconds for the HTTP session. Defaults to
+                60 seconds.
+            range_size (int): the size, in bytes, of each chunk. Defaults to
+                256k (256*1024 bytes).
+
+        Returns:
+            None
+
+        """
         LOGGER.debug(f'Fetch({self}) called started.')
         to_ = ClientTimeout(total=timeout)
         async with ClientSession(timeout=to_) as session:
@@ -181,4 +211,13 @@ class Listing(Hashable):
 
     def parse(self, parser) -> Dict:
         """Parse the Listings XML data."""
-        pass
+        channels = []
+        chan_data = parse_and_remove(self.file_path, 'channel/channel')
+        for chan in chan_data:
+            channels.append[chan]
+
+        # Validate DTD
+        # Read file in chunks.
+        # for each channel found, create a channel object (re-use the existing Channel class??)
+        # for each programme found attach it to the channel in chronological order.
+        #

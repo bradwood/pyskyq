@@ -22,5 +22,6 @@ from pyskyq.remote import press_remote
 from pyskyq.epg import EPG
 from pyskyq.status import Status
 from pyskyq.listing import Listing
+from pyskyq.channel import Channel, channel_from_skyq_service
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

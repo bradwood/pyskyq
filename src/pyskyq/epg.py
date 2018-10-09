@@ -6,7 +6,7 @@ from typing import Any, List, Tuple
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
-from .channel import Channel
+from pyskyq.channel import Channel, channel_from_skyq_service
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
 
@@ -82,7 +82,7 @@ class EPG:
             chan_payload = await chan_payload_json.json()
 
         for channel in chan_payload['services']:
-            self._channels.append(Channel(channel))
+            self._channels.append(channel_from_skyq_service(channel))
 
 
     async def _fetch_all_chan_details(self,
