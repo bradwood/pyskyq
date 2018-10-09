@@ -29,9 +29,13 @@ class EPG:
     It also used the ``xmltv`` file to load **listings** data to enable the querying of
     programmes that are scheduled on the channels.
 
+    Args:
+        host (str): String with resolvable hostname or IPv4 address to SkyQ box.
+        rest_port (int): Defaults to the SkyQ REST port which is 9006.
+
     Attributes:
         host (str): Hostname or IPv4 address of SkyQ Box.
-        port (int): Port number to use to connect to the REST HTTP server.
+        rest_port (int): Port number to use to connect to the REST HTTP server.
             Defaults to the standard port used by SkyQ boxes which is 9006.
 
     """
@@ -41,18 +45,7 @@ class EPG:
                  *,
                  rest_port: int = REST_PORT,
                  ) -> None:
-        """Initialise Sky EPG Object.
-
-        This method instantiates the EPG object.
-
-        Args:
-            host (str): String with resolvable hostname or IPv4 address to SkyQ box.
-            rest_port (int): Defaults to the SkyQ REST port which is 9006.
-
-        Returns:
-            None
-
-        """
+        """Initialise Sky EPG Object."""
         self.host: str = host
         self.rest_port: int = rest_port
         self._channels: list = []
@@ -155,16 +148,16 @@ class EPG:
     def get_channel(self,
                     sid: Any
                     ) -> Channel:
-        """Get channel data.
+        """Get a specific channel's data.
 
-        This method returns a :class:`pyskyq.channel.Channel` object when
+        This method returns a :class:`~pyskyq.channel.Channel` object when
         passed in a channel ``sid``.
 
         Args:
             sid: The sid (service id) of the channel
 
         Returns:
-            :class:`pyskyq.channel.Channel`: The channel if found.
+            :class:`~pyskyq.channel.Channel`: The channel if found.
 
         Raises:
             AttributeError: If the channel is not found.

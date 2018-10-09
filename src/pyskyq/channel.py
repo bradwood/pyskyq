@@ -19,6 +19,11 @@ class Channel:
     :const:`~pyskyq.constants.CHANNEL_FIELD_MAP` dictionary is used to provide access to
     properties using more friendly names.
 
+    Args:
+        chan_dict (dict): This dictionary is the payload that comes directly from the
+            SkyQ's ``as/services/`` endpoint.
+
+
     Note:
         These channel attributes could change at any time with a box upgrade. The API will
         attempt to adapt to ensure the new fields are presented.
@@ -52,17 +57,9 @@ class Channel:
     """
 
     def __init__(self,
-                 chan_dict: Dict,
+                 chan_dict: Dict[str, Any],
                  ) -> None:
-        """Initialise Channel Object.
-
-        Args:
-            chan_dict (dict): This dictionary is the payload that comes directly from the
-                ``as/services/`` endpoint.
-        Returns:
-            None
-
-        """
+        """Initialise Channel Object."""
         self._chan_dict = chan_dict
         LOGGER.debug(f"Channel {self._chan_dict['t']} instantiated.")
 
@@ -83,7 +80,7 @@ class Channel:
             super().__setattr__(name, value)
 
 
-    def add_detail_data(self, detail_dict: Dict) -> None:
+    def add_detail_data(self, detail_dict: Dict[str, Any]) -> None:
         """Add additional properties obtained from the detail endpoint to the object.
 
         Args:

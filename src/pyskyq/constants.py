@@ -1,14 +1,16 @@
-"""Constants for button codes, ports, and so on"""
+"""Constants for button codes, ports, and so on."""
+
 from enum import IntEnum
 
 REMOTE_LEGACY_PORT: int = 5900
 """int: Legacy port number for older Sky Boxes."""
 
 REMOTE_PORT: int = 49160
-"""int: Current port number for newer Sky Boxes."""
+"""int: Current port number for newer SkyQ Boxes."""
 
 class RCMD(IntEnum):
     """Enumeration of Remote codes."""
+
     power = 0
     select = 1
     backup = 2

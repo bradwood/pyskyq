@@ -33,7 +33,7 @@ def test_listing_init():
         assert m._path.is_dir()
         assert m.url == URL('http://blah.com/feed/6715')
 
-        n = Listing('http://blah.com/feed/6715', '.str_path')
+        n = Listing(URL('http://blah.com/feed/6715'), '.str_path')
         assert n._url == URL('http://blah.com/feed/6715')
         assert isinstance(n._path, Path)
         assert str(n._path) == '.str_path'

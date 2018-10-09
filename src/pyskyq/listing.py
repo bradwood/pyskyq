@@ -17,9 +17,23 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Listing(Hashable):
-    """Holds the data and functions required to obtain an EPG listing.
+    """Hold the data and functions required to obtain an EPG listing.
 
-    Currently it only support the XML TV Listings format.
+    Currently it only supports the XML TV Listings format which holds
+    Channel and Programme scheduling information. See the dtd_ for details.
+
+    .. _dtd: https://github.com/AlekSi/xmltv/blob/master/xmltv.dtd
+
+    Note:
+        The :class:`~pyskyq.channel.Channel` class provides the **primary**
+        interface to channel data through the :class:`~pyskyq.epg.EPG` class.
+
+        This class provides the means to download and parse XML data to do with
+        channels, but more importantly, programming schedules. When injected
+        into the :class:`~pyskyq.epg.EPG`, the data from this class will be
+        merged into the list of :class:`~pyskyq.channel.Channel`'s provided
+        there, to provide channel data sourced from both the SkyQ box and an
+        external XML TV source.
 
     """
 
@@ -75,17 +89,37 @@ class Listing(Hashable):
 
     @property
     def last_modified(self):
-        """Return the last modified date from the HTTP header of the last download."""
+        """Return the last modified date from the HTTP header of the last download.
+
+        Returns the date and time when the data was last modified. Taken directly
+        from the ``HTTP-Header``.
+
+        Returns:
+            datetime
+
+
+        """
         return self._last_modified
 
     @property
     def url(self) -> URL:
-        """Return the url of this listing."""
+        """Return the url of this listing.
+
+        Returns:
+            :py:class:`yarl.URL`
+
+        """
         return self._url
 
     @property
     def file_path(self) -> Path:
-        """Return the full file_path of this listing."""
+        """Return the full file path of this listing's XML file.
+
+        Returns:
+            :py:class:`pathlib.Path`: A `Path` to the location of the downloaded
+                XML file (whether it exists or not).
+
+        """
         return self._full_path
 
     # TODO - add aiofiles support HERE!
@@ -118,7 +152,7 @@ class Listing(Hashable):
                             LOGGER.debug(f'Content last modified on: {resp.headers["Last-Modified"]}.')
 
                         if resp.status == 416:
-                            raise HTTPException("Server responsed with {resp.status}: {resp.message}")
+                            raise HTTPException("Server responsed with {resp.status}: {resp.message}")  # pragma: no cover
 
                         if resp.status == 206:  # partial content served.
                             # parse Content-Range header -- it looks like this: Content-Range: bytes 0-1023/16380313

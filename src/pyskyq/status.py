@@ -26,10 +26,19 @@ LOGGER = logging.getLogger(__name__)
 # For now this will do until standby gets refactored into a dict of items.
 
 class Status:
-    """ This class implements the Status object, an internal :py:mod:`asyncio`-based
+    """This class implements the Status object, an internal :py:mod:`asyncio`-based
     event loop used to subscribe to various web-socket and/or uPNP based events.
 
     It also logs all status changes.
+
+    Args:
+        host (str): String with resolvable hostname or IPv4 address to SkyQ box.
+        port (int, optional): Port number to use to connect to the Remote REST API.
+            Defaults to the standard port used by SkyQ boxes which is ``9006``.
+        ws_url_path (str, optional): Path string to append to the URL, defaults to
+            ``/as/system/status``
+        ws_timeout (int, optional): Web socket connection timeout. Defaults is 20 sec.
+        ping_timeout (int, optional): Web socket ping timeout. Defaults is 10 sec.
 
     Attributes:
         host (str): Hostname or IPv4 address of SkyQ Box.
@@ -38,7 +47,6 @@ class Status:
         ws_url (str): ``ws://`` based URL to the SkyQ Box websocket.
         standby (bool): A Boolean indicator stating whether the box is in
             Standby Mode or not.
-
 
     """
     def __init__(self,
@@ -49,22 +57,7 @@ class Status:
                  ws_timeout: int = 20,
                  ping_timeout: int = 10,
                  ) -> None:
-        """Initialise the Status object.
-
-        Args:
-            host (str): String with resolvable hostname or IPv4 address to SkyQ box.
-            port (int, optional): Port number to use to connect to the Remote REST API.
-                Defaults to the standard port used by SkyQ boxes which is ``9006``.
-            ws_url_path (str, optional): Path stiring to append to the URL, defaults to
-                ``/as/system/status``
-            ws_timeout (int, optional): Web socket connection timeout. Defaults is 20 sec.
-            ping_timeout (int, optional): Web socket ping timeout. Defaults is 10 sec.
-
-        Returns:
-            None
-
-        """
-
+        """Initialise the Status object."""
         self.host: str = host
         self.port: int = port
         self.standby: bool = False

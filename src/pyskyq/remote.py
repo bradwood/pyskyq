@@ -1,4 +1,4 @@
-"""This module implements the press_remote() function
+"""This module implements the ``press_remote()`` function
 
 Remote is a lower level interface to the SkyQ box that seeks to emulate most of the the
 button presses available on the SkyQ remote. There are some buttons which are not (currently)
