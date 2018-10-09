@@ -110,9 +110,9 @@ class Listing(Hashable):
                 while True:
                     req_header = {"Range": f'bytes={byte_start}-{byte_stop}'}
                     async with session.get(self._url, headers=req_header) as resp:
-                        LOGGER.debug(f'Attempting byte range download. Range = {byte_start}-{range_size}')
+                        LOGGER.debug(f'Attempting byte range download. Range = {byte_start}-{byte_stop}')
                         LOGGER.info(f"Server responsed with status: {resp.status}.")
-                        LOGGER.debug(f'Headers: {resp.headers}')
+                        LOGGER.debug(f'Server response headers: {resp.headers}')
 
                         if 'Last-Modified' in resp.headers:
                             self._last_modified = parse_http_date(resp.headers['Last-Modified'])
@@ -144,8 +144,14 @@ class Listing(Hashable):
                             break
                         if resp.status == 206:
                             # still have parts to go, update the range for the next cycle:
-                            byte_start = byte_stop + 1
-                            byte_stop = byte_start + range_size
+                            if byte_stop + range_size + 1 > content_entire_payload_size: # type: ignore
+                                byte_start = byte_stop + 1
+                                byte_stop = content_entire_payload_size  # type: ignore
+                                if byte_start >= byte_stop:
+                                    break
+                            else:
+                                byte_start = byte_stop + 1
+                                byte_stop = byte_start + range_size
                             continue
                         # we've downloaded the whole file in one go
                         break

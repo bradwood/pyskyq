@@ -127,7 +127,6 @@ class EPG:
             None
 
         """
-
         sid_list = [chan.sid for chan in self._channels]
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
