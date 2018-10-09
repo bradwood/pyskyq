@@ -124,26 +124,14 @@ class Listing(Hashable):
                         if resp.status == 206:  # partial content served.
                             # parse Content-Range header -- it looks like this: Content-Range: bytes 0-1023/16380313
                             content_range_from_total = resp.headers['Content-Range'].split()[1] # remove "bytes" from front of header
-                            content_current_range = content_range_from_total.split('/')[0]  # grab the bit before the "/"
-                            try:
-                                content_entire_payload_size: Optional[int] = int(content_range_from_total.split('/')[1])  # grab the bit after  "/"" could be "*" if size is unknown
-                            except ValueError:
-                                content_entire_payload_size = None # not known.
-
-                            # content_current_size = int(resp.headers['Content-Length'])  #length of this piece.
-                            # content_start = int(content_current_range.split('-')[0])
-                            content_end = int(content_current_range.split('-')[1])
+                            content_entire_payload_size = int(content_range_from_total.split('/')[1])  # grab the bit after  "/"
 
                         if resp.status == 200:  # full content served as HTTP server doesn't appear to handle range requests.
                             LOGGER.info("Server responsed with status 200 and not 206 so full download assumed.")
 
                         chunk = await resp.read()
                         file_desc.write(chunk)
-                        if resp.status == 206 and content_end + 1 == content_entire_payload_size:
-                            # we have downloaded the entire file
-                            break
                         if resp.status == 206:
-                            # still have parts to go, update the range for the next cycle:
                             if byte_stop + range_size + 1 > content_entire_payload_size: # type: ignore
                                 byte_start = byte_stop + 1
                                 byte_stop = content_entire_payload_size  # type: ignore
@@ -153,7 +141,6 @@ class Listing(Hashable):
                                 byte_start = byte_stop + 1
                                 byte_stop = byte_start + range_size
                             continue
-                        # we've downloaded the whole file in one go
                         break
 
         LOGGER.debug(f'Fetch finished on {self}')

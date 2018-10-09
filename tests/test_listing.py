@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 import pytest
 from aiohttp import MultipartWriter
+from datetime import datetime, timezone
+from dateutil import tz
 
 from pyskyq import Listing
 
@@ -25,12 +27,14 @@ def test_listing_init():
         with pytest.raises(TypeError, match='path must be a string or Path object.'):
             l = Listing('http://blah.com/feed/6715', 6)
 
-        m = Listing('http://blah.com/feed/6715')
+        Path.cwd().joinpath('somedir').mkdir()  # test the case where the directory is already there.
+        m = Listing('http://blah.com/feed/6715','somedir')
         assert m._url == 'http://blah.com/feed/6715'
         assert isinstance(m._path, Path)
-        assert str(m._path) == '.epg_data'
-        assert "<List: url='http://blah.com/feed/6715', path='.epg_data'" in m.__repr__()
+        assert str(m._path) == 'somedir'
+        assert "<List: url='http://blah.com/feed/6715', path='somedir'" in m.__repr__()
         assert m._path.is_dir()
+        assert m.url == 'http://blah.com/feed/6715'
 
         n = Listing('http://blah.com/feed/6715', '.str_path')
         assert n._url == 'http://blah.com/feed/6715'
@@ -42,15 +46,16 @@ def test_listing_init():
         assert m.__hash__() == n.__hash__()
 
 
+xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
+
 @pytest.mark.asyncio
 async def test_listing_fetch_200(aresponses):
 
     async def get_handler_200(request):
-        xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
-        LOGGER.debug(f'xml file path = {xmlfile_path}')
         with open(xmlfile_path, 'r') as fd:
             data = fd.read()
-            resp = aresponses.Response(status=200, reason='OK', body=data)
+            hdr = {'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT'}
+            resp = aresponses.Response(status=200, reason='OK', body=data, headers=hdr)
         return resp
 
 
@@ -59,24 +64,29 @@ async def test_listing_fetch_200(aresponses):
     with isolated_filesystem():
         l = Listing('http://foo.com/feed/6715')
         await l.fetch()
-        assert l._path.joinpath(l._filename).is_file()
+        assert l.file_path.is_file()
+        LOGGER.debug(l.last_modified)
+        LOGGER.debug(datetime(2018, 10, 8, 1, 50, 19, 0))
+        assert l.last_modified == datetime(2018,10,8,1,50,19,0)
+
+        with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
+            assert src.read(-1) == dest.read(-1)
 
 
 @pytest.mark.asyncio
 async def test_listing_fetch_206(aresponses):
 
     async def get_handler_206(request):
-        xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
-        LOGGER.debug(f'xml file path = {xmlfile_path}')
         LOGGER.debug(f'request headers = {request.headers}')
-
         rng = request.http_range
         LOGGER.debug(f'Range = {rng}. Start = {rng.start}. Stop = {rng.stop}. Diff = {rng.stop - rng.start}.')
         with open(xmlfile_path, 'rb') as f:
             f.seek(rng.start)
             data = f.read(rng.stop - rng.start)
             LOGGER.debug(f'data = {data}')
-            hdr = {'Content-Range': f'bytes {rng.start}-{rng.stop - 1 }/{xmlfile_path.stat().st_size}'}
+            hdr = {
+                'Content-Range': f'bytes {rng.start}-{rng.stop - 1 }/{xmlfile_path.stat().st_size}',
+            }
             if rng.stop - 1 > xmlfile_path.stat().st_size:
                 LOGGER.debug('Range request went too far...')
                 resp = aresponses.Response(status=416, reason='Range Not Satisfiable', body=data)
@@ -93,4 +103,7 @@ async def test_listing_fetch_206(aresponses):
     with isolated_filesystem():
         l = Listing('http://foo.com/feed/6715')
         await l.fetch(range_size=100)
-        assert l._path.joinpath(l._filename).is_file()
+        assert l.file_path.is_file()
+
+        with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
+            assert src.read(-1) == dest.read(-1)

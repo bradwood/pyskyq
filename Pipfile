@@ -29,6 +29,7 @@ mock = "*"
 pydocstyle = "*"
 prospector = "*"
 aresponses = "*"
+python-dateutil = "*"
 
 [requires]
 python_version = "3.7"
