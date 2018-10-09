@@ -9,8 +9,9 @@ from typing import Dict, Optional
 from http.client import HTTPException
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
+from yarl import URL
 
-from pyskyq.utils import parse_http_date, url_validator
+from pyskyq.utils import parse_http_date
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,18 +25,17 @@ class Listing(Hashable):
 
     # TODO use yarl instead of str for URLs.
     def __init__(self,
-                 url: str,
+                 url: URL,
                  path: Path = Path('.epg_data'),
                  ) -> None:
         """Instantiate the object with the URL to fetch."""
-        self._url: str
+        self._url: URL
         self._path: Path
 
-        # Validate URL
-        if url_validator(url):
-            self._url = url
+        if not isinstance(url, URL):
+            self._url = URL(url)
         else:
-            raise ValueError('Bad URL passed.')
+            self._url = url
 
         # Validate path
         if not isinstance(path, Path) and not isinstance(path, str):
@@ -50,7 +50,7 @@ class Listing(Hashable):
         if not self._path.is_dir():
             self._path.mkdir()
 
-        str_binary = str(self._url.lower()).encode('utf8')
+        str_binary = str(self._url.human_repr()).encode('utf8')
         self._hashobj = hashlib.sha256(str_binary)
         self._filename = f'{self._hashobj.hexdigest()}.xml'
         self._full_path = self._path.joinpath(self._filename)
@@ -79,7 +79,7 @@ class Listing(Hashable):
         return self._last_modified
 
     @property
-    def url(self) -> str:
+    def url(self) -> URL:
         """Return the url of this listing."""
         return self._url
 
@@ -87,7 +87,6 @@ class Listing(Hashable):
     def file_path(self) -> Path:
         """Return the full file_path of this listing."""
         return self._full_path
-
 
     # TODO - add aiofiles support HERE!
     # TODO -- add error handling for

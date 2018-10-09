@@ -7,7 +7,7 @@ import pytest
 from aiohttp import MultipartWriter
 from datetime import datetime, timezone
 from dateutil import tz
-
+from yarl import URL
 from pyskyq import Listing
 
 from .isloated_filesystem import isolated_filesystem
@@ -21,23 +21,20 @@ LOGGER = logging.getLogger(__name__)
 def test_listing_init():
     # used to set up and tear down a temp dir for these tests.
     with isolated_filesystem():
-        with pytest.raises(ValueError, match='Bad URL passed.'):
-            l = Listing('blah')
-
         with pytest.raises(TypeError, match='path must be a string or Path object.'):
             l = Listing('http://blah.com/feed/6715', 6)
 
         Path.cwd().joinpath('somedir').mkdir()  # test the case where the directory is already there.
         m = Listing('http://blah.com/feed/6715','somedir')
-        assert m._url == 'http://blah.com/feed/6715'
+        assert m._url == URL('http://blah.com/feed/6715')
         assert isinstance(m._path, Path)
         assert str(m._path) == 'somedir'
         assert "<List: url='http://blah.com/feed/6715', path='somedir'" in m.__repr__()
         assert m._path.is_dir()
-        assert m.url == 'http://blah.com/feed/6715'
+        assert m.url == URL('http://blah.com/feed/6715')
 
         n = Listing('http://blah.com/feed/6715', '.str_path')
-        assert n._url == 'http://blah.com/feed/6715'
+        assert n._url == URL('http://blah.com/feed/6715')
         assert isinstance(n._path, Path)
         assert str(n._path) == '.str_path'
 

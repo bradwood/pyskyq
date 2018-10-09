@@ -7,6 +7,7 @@ name = "pypi"
 "e1839a8" = {editable = true, path = "."}
 aiohttp = "*"
 websockets = "*"
+yarl = "*"
 
 [dev-packages]
 pytest = "*"
