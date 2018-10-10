@@ -7,12 +7,12 @@ from datetime import datetime
 from http.client import HTTPException
 from pathlib import Path
 from typing import Dict, Optional
-from xml.etree.ElementTree import iterparse
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from yarl import URL
 
-from pyskyq.utils import parse_http_date
+from pyskyq.utils import parse_http_date, xml_parse_and_remove
+from pyskyq.channel import channel_from_xmltv_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -209,14 +209,13 @@ class XMLTVListing(Hashable):
         LOGGER.debug(f'Fetch finished on {self}')
 
 
-    def parse(self, parser) -> Dict:
-        """Parse the XMLTVListing XML file."""
-        channels = []
-        chan_data = parse_and_remove(self.file_path, 'channel/channel')
-        for chan in chan_data:
-            channels.append[chan]
+    def parse_channels(self) -> Dict:
+        """Parse the XMLTVListing XML file and create an iterator over the channels in it."""
 
-        # Validate DTD
+        chan_data = xml_parse_and_remove(self.file_path, 'channel/channel')
+        for xml_chan in chan_data:
+            yield channel_from_xmltv_list(xml_chan)
+
         # Read file in chunks.
         # for each channel found, create a channel object (re-use the existing Channel class??)
         # for each programme found attach it to the channel in chronological order.

@@ -163,3 +163,11 @@ WS_STATUS_MOCK = """
 
 
 """
+XML_CHANNEL_1 = """
+  <channel id="015ac32387fbc90e1e920d780d43787c">
+    <display-name>Zee Cinema</display-name>
+    <blah>Not understood, not processed, so should be ignored.</blah>
+    <icon src="/images/channels/015ac32387fbc90e1e920d780d43787c.png"/>
+  </channel>
+
+"""
