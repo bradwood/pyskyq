@@ -17,8 +17,8 @@ from pyskyq.utils import parse_http_date
 LOGGER = logging.getLogger(__name__)
 
 
-class Listing(Hashable):
-    """Hold the data and functions required to obtain an EPG listing.
+class XMLTVListing(Hashable):
+    """Hold the data and functions required to obtain an EPG XMLTVListing.
 
     Currently it only supports the XML TV Listings format which holds
     Channel and Programme scheduling information. See the dtd_ for details.
@@ -73,7 +73,7 @@ class Listing(Hashable):
         self._full_path = self._path.joinpath(self._filename)
         self._last_modified: Optional[datetime] = None
 
-        LOGGER.debug(f'Listing initialised: {self}')
+        LOGGER.debug(f'XMLTVListing initialised: {self}')
 
 
     def __hash__(self) -> int:
@@ -84,7 +84,7 @@ class Listing(Hashable):
     def __eq__(self, other) -> bool:
         """Define equality test for a Hashable object."""
         # relying on lazy boolean evaluation here.
-        return isinstance(other, Listing) and hash(other._url) == hash(self._url)  # pylint: disable=protected-access
+        return isinstance(other, XMLTVListing) and hash(other._url) == hash(self._url)  # pylint: disable=protected-access
 
     def __repr__(self):
         """Print a human-friendly representation of this object."""
@@ -106,7 +106,7 @@ class Listing(Hashable):
 
     @property
     def url(self) -> URL:
-        """Return the url of this listing.
+        """Return the url of this XMLTVListing.
 
         Returns:
             :py:class:`yarl.URL`
@@ -137,7 +137,7 @@ class Listing(Hashable):
                     timeout: int = 60, # sec
                     range_size: int = 256*1024,   # bytes
                     ) -> None:
-        """Fetch the Listings XML file.
+        """Fetch the XMLTVListing file.
 
         This async method will download the (XML) file specified by the URL passed
         at instantiation.
@@ -210,7 +210,7 @@ class Listing(Hashable):
 
 
     def parse(self, parser) -> Dict:
-        """Parse the Listings XML data."""
+        """Parse the XMLTVListing XML file."""
         channels = []
         chan_data = parse_and_remove(self.file_path, 'channel/channel')
         for chan in chan_data:

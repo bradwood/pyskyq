@@ -8,7 +8,7 @@ from aiohttp import MultipartWriter
 from datetime import datetime, timezone
 from dateutil import tz
 from yarl import URL
-from pyskyq import Listing
+from pyskyq import XMLTVListing
 
 from .isloated_filesystem import isolated_filesystem
 
@@ -18,14 +18,14 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
 
 LOGGER = logging.getLogger(__name__)
 
-def test_listing_init():
+def test_xmltvlisting_init():
     # used to set up and tear down a temp dir for these tests.
     with isolated_filesystem():
         with pytest.raises(TypeError, match='path must be a string or Path object.'):
-            l = Listing('http://blah.com/feed/6715', 6)
+            l = XMLTVListing('http://blah.com/feed/6715', 6)
 
         Path.cwd().joinpath('somedir').mkdir()  # test the case where the directory is already there.
-        m = Listing('http://blah.com/feed/6715','somedir')
+        m = XMLTVListing('http://blah.com/feed/6715', 'somedir')
         assert m._url == URL('http://blah.com/feed/6715')
         assert isinstance(m._path, Path)
         assert str(m._path) == 'somedir'
@@ -33,7 +33,7 @@ def test_listing_init():
         assert m._path.is_dir()
         assert m.url == URL('http://blah.com/feed/6715')
 
-        n = Listing(URL('http://blah.com/feed/6715'), '.str_path')
+        n = XMLTVListing(URL('http://blah.com/feed/6715'), '.str_path')
         assert n._url == URL('http://blah.com/feed/6715')
         assert isinstance(n._path, Path)
         assert str(n._path) == '.str_path'
@@ -46,7 +46,7 @@ def test_listing_init():
 xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
 
 @pytest.mark.asyncio
-async def test_listing_fetch_200(aresponses):
+async def test_xmltvlisting_fetch_200(aresponses):
 
     async def get_handler_200(request):
         with open(xmlfile_path, 'r') as fd:
@@ -59,7 +59,7 @@ async def test_listing_fetch_200(aresponses):
     aresponses.add('foo.com', '/feed/6715', 'get', response=get_handler_200)
 
     with isolated_filesystem():
-        l = Listing('http://foo.com/feed/6715')
+        l = XMLTVListing('http://foo.com/feed/6715')
         await l.fetch()
         assert l.file_path.is_file()
         LOGGER.debug(l.last_modified)
@@ -71,7 +71,7 @@ async def test_listing_fetch_200(aresponses):
 
 
 @pytest.mark.asyncio
-async def test_listing_fetch_206(aresponses):
+async def test_xmltvlisting_fetch_206(aresponses):
 
     async def get_handler_206(request):
         LOGGER.debug(f'request headers = {request.headers}')
@@ -98,7 +98,7 @@ async def test_listing_fetch_206(aresponses):
 
 
     with isolated_filesystem():
-        l = Listing('http://foo.com/feed/6715')
+        l = XMLTVListing('http://foo.com/feed/6715')
         await l.fetch(range_size=100)
         assert l.file_path.is_file()
 

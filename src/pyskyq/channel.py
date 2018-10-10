@@ -1,20 +1,11 @@
 """This module implements the Channel class and associated factory functions."""
 import logging
 from typing import Dict, Any
-from enum import IntEnum
 
-from pyskyq.constants import CHANNEL_FIELD_MAP
+from pyskyq.constants import CHANNEL_FIELD_MAP, CSRC
 
 LOGGER = logging.getLogger(__name__)
 
-
-class CSRC(IntEnum):
-    """Enumeration of Channel Sources."""
-    no_source = 0
-    skyq_service = 1
-    skyq_service_detail = 2
-    xml_tv_summary = 4
-    xml_tv_detail = 8
 
 class Channel:
     """This class holds channel data and methods for manipulating the channel.
@@ -24,7 +15,7 @@ class Channel:
 
     The attributes are presented as read-only on the object.
 
-    For SkyQ-Sourced Data
+    For SkyQ-sourced Data
     ---------------------
     It will also dynamically
     set attributes based on the payload obtained from the API, which itself could vary
@@ -74,7 +65,12 @@ class Channel:
 
     def __init__(self,) -> None:
         """Initialise Channel Object."""
-        self._chan_dict: Dict[str, Any] = {}
+        blank_chan_dict = {
+            'sid': None,
+            'c': None,
+            't': None,
+        }
+        self._chan_dict: Dict[str, Any] = blank_chan_dict
         self._sources: CSRC = CSRC.no_source
 
     def __getattr__(self, name: str) -> Any:
@@ -95,7 +91,7 @@ class Channel:
 
     def __repr__(self):
         """Give human-friendly representation."""
-        return f'<Channel: sources={self._sources}>'
+        return f'<Channel: sources={self._sources}, id={self.id}, number={self.number}, name={self.name}>'
 
     @property
     def sources(self):
@@ -106,13 +102,12 @@ class Channel:
                                ) -> None:
         """Load summary data from SkyQ box into the Channel"""
         self._chan_dict.update(chan_dict)
-        self._sources = self._sources | CSRC.skyq_service # type: ignore
+        self._sources = self._sources | CSRC.skyq_service_summary # type: ignore
         LOGGER.debug(f"Channel SkyQ Summary Data Loaded  with {chan_dict}.")
         LOGGER.debug(f"Channel sources = {self._sources}.")
 
-
-    def add_detail_data(self, detail_dict: Dict[str, Any]) -> None:
-        """Add additional properties obtained from the detail endpoint to the object.
+    def load_skyq_detail_data(self, detail_dict: Dict[str, Any]) -> None:
+        """Add additional properties obtained from the SkqQ detail endpoint to the object.
 
         Args:
             detail_dict (dict): A detail dict that is passed in directly from the
@@ -123,16 +118,18 @@ class Channel:
 
         """
         self._chan_dict.update(detail_dict['details'])
+        self._sources = self.sources | CSRC.skyq_service_detail
 
+# TODO: make into alternate constructor
 def channel_from_skyq_service(skyq_chan: Dict[str, Any]) -> Channel:
-    """Create a channel from a SkyQ Service payload.
+    """Create a channel from a SkyQ Service summary payload.
 
     Args:
         chan_dict (dict): This dictionary is the payload that comes directly from the
             SkyQ's ``as/services/`` endpoint.
 
     Returns:
-        Channel: Will the SkyQ Data loaded.
+        Channel: With SkyQ summary data loaded.
 
     """
     chan = Channel()

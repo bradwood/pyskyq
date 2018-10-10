@@ -7,10 +7,10 @@ from typing import Any, List, Tuple
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
 from pyskyq.channel import Channel, channel_from_skyq_service
-from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
+from pyskyq.constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
 
-from .listing import Listing
+from pyskyq.xmltvlisting import XMLTVListing
 
 LOGGER = logging.getLogger(__name__)
 
@@ -126,7 +126,7 @@ class EPG:
             channels = await self._fetch_all_chan_details(session, sid_list)
             for channel, sid in zip(channels, sid_list):
                 json_dict = await channel.json()
-                self.get_channel(sid).add_detail_data(json_dict)
+                self.get_channel(sid).load_skyq_detail_data(json_dict)
 
 
     def load_channel_data(self) -> None:
@@ -169,28 +169,28 @@ class EPG:
                 return chan
         raise AttributeError(f"Sid:{sid} not found.")
 
-    def add_listing_schedule(self,
+    def add_XMLTV_listing_schedule(self,
                              *,
-                             listing: Listing,
+                             listing: XMLTVListing,
                              # schedule=None,
                              ) -> None:
-        """Add a listing schedule to the EPG.
+        """Add an  XML TV listing schedule to the EPG.
 
-        This method will add a :class:`~pyskyq.listing.Listing` to the EPG object,
-        which will then takecare of downloading the listing data and updating the EPG
+        This method will add a :class:`~pyskyq.xmltvlisting.XMLTVListing` to the EPG object,
+        which will then takecare of downloading the XML TV listing data and updating the EPG
         object with it according to the passed download shedule.
 
         Args:
-            listing (Listing): a :class:`~pyskyq.listing.Listing` object to add to the EPG.
+            listing (XMLTVListing): a :class:`~pyskyq.xmltvlisting.XMLTVListing` object to add to the EPG.
 
         Returns:
             None
 
         Raises:
-            ValueError: Raised if this listing is already added to the EPG.
+            ValueError: Raised if this XMLTV listing is already added to the EPG.
 
         """
         if listing not in self._listings:
             self._listings.append(listing)
         else:
-            raise ValueError('Listing already added.')
+            raise ValueError('XMLTVListing already added.')
