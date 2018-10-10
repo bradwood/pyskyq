@@ -6,6 +6,8 @@ features:
   - Added the :class:`~pyskyq.xmltvlisting.XMLTVListing` class to download and parse XMLTV feeds.
   - Generalised :class:`~pyskyq.channel.Channel` to support data from multiple sources
     and made some factory functions to generate Channels from various sources.
+  - Added Channel merge function to enable a new channel to be created using
+    merged data from both the XML TV and SkyQ sources.
 issues:
   - |
     List known issues here, or remove this section.  All of the list items in

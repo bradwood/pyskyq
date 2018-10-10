@@ -104,3 +104,25 @@ async def test_xmltvlisting_fetch_206(aresponses):
 
         with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
             assert src.read(-1) == dest.read(-1)
+
+def test_channel_parse():
+    l = XMLTVListing('http://foo.com/feed/6715')
+    l._full_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
+
+    for i,chan in enumerate(l.parse_channels()):
+
+        LOGGER.debug(chan.xmltv_id)
+        LOGGER.debug(chan.xmltv_icon_url)
+        LOGGER.debug(chan.xmltv_display_name)
+
+        if i == 0:
+            assert chan.xmltv_id == 'f3932e75f691561adbe3b609369e487b'
+            assert chan.xmltv_display_name == 'BBC One Lon'
+            assert chan.xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png'
+        elif i == 1:
+
+            assert chan.xmltv_id == 'a3c70f4c25110a9ca84f7c604023ee6c'
+            assert chan.xmltv_display_name == 'Dave'
+            assert chan.xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/a3c70f4c25110a9ca84f7c604023ee6c.png'
+        else:
+            break

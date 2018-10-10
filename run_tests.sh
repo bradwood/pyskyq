@@ -4,7 +4,7 @@ echo
 python setup.py test
 echo
 echo ---- mypy ----
-echo 
+echo
 mypy src --quick-and-dirty --ignore-missing-imports
 echo
 echo ---- pylint ----
@@ -13,4 +13,4 @@ pylint src
 echo
 echo ---- pydocstyle ----
 echo
-echo NotImplementedYet
+echo TODO: 'Implement pydocstyle here and in CI!'

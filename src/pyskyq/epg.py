@@ -8,8 +8,7 @@ from aiohttp import ClientSession, ClientTimeout  # type: ignore
 
 from pyskyq.channel import Channel, channel_from_skyq_service
 from pyskyq.constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
-                        REST_SERVICES_URL)
-
+                              REST_SERVICES_URL)
 from pyskyq.xmltvlisting import XMLTVListing
 
 LOGGER = logging.getLogger(__name__)
@@ -170,10 +169,10 @@ class EPG:
         raise AttributeError(f"Sid:{sid} not found.")
 
     def add_XMLTV_listing_schedule(self,
-                             *,
-                             listing: XMLTVListing,
-                             # schedule=None,
-                             ) -> None:
+                                   *,
+                                   listing: XMLTVListing,
+                                   # schedule=None,
+                                   ) -> None:
         """Add an  XML TV listing schedule to the EPG.
 
         This method will add a :class:`~pyskyq.xmltvlisting.XMLTVListing` to the EPG object,
@@ -181,7 +180,8 @@ class EPG:
         object with it according to the passed download shedule.
 
         Args:
-            listing (XMLTVListing): a :class:`~pyskyq.xmltvlisting.XMLTVListing` object to add to the EPG.
+            listing (XMLTVListing): a :class:`~pyskyq.xmltvlisting.XMLTVListing` object to
+                add to the EPG.
 
         Returns:
             None

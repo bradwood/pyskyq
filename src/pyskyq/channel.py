@@ -95,10 +95,12 @@ class Channel:
 
     def __repr__(self):
         """Give human-friendly representation."""
-        return f'<Channel: sources={self._sources}, id={self.id}, xmltv_id={self.xmltv_id}, number={self.number}, name={self.name}>'
+        return f'<Channel: sources={self._sources}, id={self.id}, ' + \
+        f'xmltv_id={self.xmltv_id}, number={self.number}, name={self.name}>'
 
     @property
     def sources(self):
+        """Return the sources flag."""
         return self._sources
 
     def load_skyq_summary_data(self,
