@@ -8,6 +8,9 @@ name = "pypi"
 aiohttp = "*"
 websockets = "*"
 yarl = "*"
+croniter = "*"
+tzlocal = "*"
+aiocron = {editable = true, git = "https://github.com/bradwood/aiocron.git"}
 
 [dev-packages]
 pytest = "*"

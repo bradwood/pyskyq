@@ -1,4 +1,4 @@
-"""This module implements the EPG listing class."""
+"""This module implements the XMLTVListing listing class."""
 #pylint: disable=line-too-long
 import hashlib
 import logging
@@ -18,7 +18,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class XMLTVListing(Hashable):
-    """Hold the data and functions required to obtain an EPG XMLTVListing.
+    """Hold the data and functions required to obtain an XMLTVListing.
 
     Currently it only supports the XML TV Listings format which holds
     Channel and Programme scheduling information. See the dtd_ for details.
@@ -26,17 +26,15 @@ class XMLTVListing(Hashable):
     .. _dtd: https://github.com/AlekSi/xmltv/blob/master/xmltv.dtd
 
     Note:
-        TODO: MOVE THIS SECTION OF DOCUMENTATION!
 
         The :class:`~pyskyq.channel.Channel` class provides the **primary**
         interface to channel data through the :class:`~pyskyq.epg.EPG` class.
 
         This class provides the means to download and parse XML data to do with
-        channels, but more importantly, programming schedules. When injected
-        into the :class:`~pyskyq.epg.EPG` object, the data from this class will be
-        merged into the list of :class:`~pyskyq.channel.Channel`'s provided
-        there, to provide channel data sourced from both the SkyQ box and an
-        external XML TV source.
+        channels, but more importantly, programming schedules. While it can be used
+        stand-alone, it is designed to be dependency-injected into the
+        :class:`~pyskyq.epg.EPG` object using
+        :meth:`pyskyq.epg.EPG.add_XMLTV_listing_schedule`.
 
     """
 
@@ -68,18 +66,18 @@ class XMLTVListing(Hashable):
             self._path.mkdir()
 
         str_binary = str(self._url.human_repr()).encode('utf8')
-        self._hashobj = hashlib.sha256(str_binary)
-        self._filename = f'{self._hashobj.hexdigest()}.xml'
+        hashobj = hashlib.sha256(str_binary)
+        self._hash = int.from_bytes(hashobj.digest(), 'big')
+        self._filename = f'{hashobj.hexdigest()}.xml'
         self._full_path = self._path.joinpath(self._filename)
         self._last_modified: Optional[datetime] = None
+        self._downloaded_okay: bool = False
 
         LOGGER.debug(f'XMLTVListing initialised: {self}')
 
-
     def __hash__(self) -> int:
         """Define hash function for a Hashable object."""
-        return int.from_bytes(self._hashobj.digest(), 'big')
-
+        return self._hash
 
     def __eq__(self, other) -> bool:
         """Define equality test for a Hashable object."""
@@ -98,7 +96,7 @@ class XMLTVListing(Hashable):
         from the ``HTTP-Header``.
 
         Returns:
-            datetime
+            datetime: A :py:class:`datetime.datetime` object
 
 
         """
@@ -115,12 +113,24 @@ class XMLTVListing(Hashable):
         return self._url
 
     @property
+    def downloaded_okay(self) -> bool:
+        """Return the status of XMLTV file download.
+
+        Returns:
+            bool: ``True`` if the file was downloaded okay
+
+        """
+        return self._downloaded_okay
+
+
+
+    @property
     def file_path(self) -> Path:
         """Return the full file path of this listing's XML file.
 
         Returns:
-            :py:class:`pathlib.Path`: A `Path` to the location of the downloaded
-                XML file (whether it exists or not).
+            :py:class:`pathlib.Path`: A `Path` to the location of the
+            XML file (whether it has yet been :meth:`fetch`'ed or not).
 
         """
         return self._full_path
@@ -205,10 +215,12 @@ class XMLTVListing(Hashable):
                                 byte_stop = byte_start + range_size
                             continue
                         break
-
+        self._downloaded_okay = True
         LOGGER.debug(f'Fetch finished on {self}')
 
     def parse_channels(self) -> Iterator[Channel]:
+        if not self.downloaded_okay:
+            raise OSError('File not downloaded okay.')
         """Parse the XMLTVListing XML file and create an iterator over the channels in it."""
         LOGGER.debug(f'in parse_channels...{self.file_path}')
         for xml_chan in xml_parse_and_remove(self.file_path, 'channel'):
