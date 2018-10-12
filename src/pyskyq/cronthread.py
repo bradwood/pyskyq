@@ -32,17 +32,5 @@ class CronThread(threading.Thread):
 
     def crontab(self, *args, **kwargs):
         kwargs['loop'] = self.loop
-        return aiocron.crontab(*args, **kwargs)  # the function above, not this method.
+        return aiocron.crontab(*args, **kwargs)
 
-
-# CALLING CODE!
-
-# cron = CronThread()
-
-# @cron.crontab('* * * * * *')
-# async def run():
-#     await asyncio.sleep(.1)
-#     print('It works')
-
-# asyncio.get_event_loop().run_forever()
-# cron.stop()
