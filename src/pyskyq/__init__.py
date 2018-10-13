@@ -16,12 +16,14 @@ As of October 2018, this is still very much a work in progress.
 
 import logging
 
-from pyskyq.constants import RCMD, CSRC
+from pyskyq.constants import REMOTECOMMANDS
+from pyskyq.constants import CHANNELSOURCES
+from pyskyq.constants import QUALITY
 from pyskyq._version import __version__
 from pyskyq.remote import press_remote
 from pyskyq.epg import EPG
 from pyskyq.status import Status
 from pyskyq.xmltvlisting import XMLTVListing
-from pyskyq.channel import Channel, channel_from_skyq_service
+from pyskyq.channel import Channel, channel_from_skyq_service, channel_from_xmltv_list
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

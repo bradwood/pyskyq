@@ -14,8 +14,8 @@ import argparse
 import sys
 from typing import List
 
-from pyskyq import RCMD, press_remote
-
+from pyskyq import press_remote
+from pyskyq import REMOTECOMMANDS as RCMD
 
 def parse_args(args: List[str]) -> argparse.Namespace:
     """Parse command line parameters"""

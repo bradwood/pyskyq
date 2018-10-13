@@ -2,14 +2,15 @@
 
 import asyncio
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple, Union, Any
 
-import aiocron
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from croniter.croniter import croniter
+from fuzzywuzzy import process
 
 from dataclasses import dataclass
 from pyskyq.channel import Channel, channel_from_skyq_service, merge_channels
+from pyskyq.constants import QUALITY as Q
 from pyskyq.constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                               REST_SERVICES_URL)
 from pyskyq.cronthread import CronThread
@@ -124,10 +125,14 @@ class EPG:
             channels = await self._fetch_all_chan_details(session, sid_list)
             for channel, sid in zip(channels, sid_list):
                 json_dict = await channel.json()
-                self.get_channel(sid).load_skyq_detail_data(json_dict)
+                # channels are immutable, so need to remove the old and add the new
+                new_chan = self.get_channel_by_sid(sid).load_skyq_detail_data(json_dict)
+                self._channels.remove(self.get_channel_by_sid(sid))
+                self._channels.append(new_chan)
 
 
-    def load_channel_data(self) -> None:
+
+    def load_skyq_channel_data(self) -> None:
         """Load all channel data from the SkyQ REST Service.
 
         This is the high-level method that fully loads all the channel detail.
@@ -143,26 +148,67 @@ class EPG:
 
         loop.close()
 
-    def get_channel(self,
+    def get_channel_by_sid(self,
                     sid: Any
                     ) -> Channel:
-        """Get a specific channel's data.
+        """Get channel data by SkyQ service id.
 
-        This method returns a :class:`~pyskyq.channel.Channel` object when
+        This method returns a :class:`pyskyq.channel.Channel` object when
         passed in a channel ``sid``.
 
         Args:
-            sid: The sid (service id) of the channel
+            sid: The SkyQ service id of the channel
+        Returns:
+            :class:`pyskyq.channel.Channel`: The channel if found.
+
+        Raises:
+            AttributeError: If the channel is not found.
+        """
+        sid = str(sid)
+        for chan in self._channels:
+            if chan.sid == sid:
+                return chan
+        raise AttributeError(f"Sid:{sid} not found.")
+
+
+    def get_channel(self,
+                    name: str,
+                    fuzzy_match: bool = True,
+                    include_timeshift: bool = True,
+                    quality_flag: Optional[Q] = None,
+                    return_list: bool = False
+                    ) -> Union[Channel, List[Channel]]:
+        """Get a channel or list of channels based on various input.
+
+        This method returns a :class:`~pyskyq.channel.Channel` object or
+        a list of them based on the various parameters passed.
+
+        Args:
+            name (str): The name of the channel being searched for
+                (wildcards are not supported).
+            fuzzy_match (bool): Use exact or fuzzy string matching.
+            include_timeshift (bool): Include ``+1`` channels.
+            quality_flag (Q): One of :class:`~pyskyq.constants.QUALITY`
+                `None` means any.
+            return_list (bool): Return a list of results. If ``False``, just
+                returns the best match.
 
         Returns:
             :class:`~pyskyq.channel.Channel`: The channel if found.
 
         Raises:
-            AttributeError: If the channel is not found.
+            AttributeError: If a match is not found.
 
         """
-        sid = str(sid)
+        # chan = self._channels
+        # if not include_timeshift:
+        #     channesl_q = set(chan.name for chan in self._channels) # sourced from SkyQ
+        #     chan_names_x = set(chan.xmltv_display_name for chan in self._channels) # sourced from XMLTV
+        # else:
+        #     chan_names = [chan.name for chan in self._channels if chan.]
+
         for chan in self._channels:
+
             if chan.sid == sid:
                 return chan
         raise AttributeError(f"Sid:{sid} not found.")

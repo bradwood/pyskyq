@@ -8,7 +8,7 @@ import aiohttp
 import pytest
 from asynctest import CoroutineMock, MagicMock
 
-from pyskyq import RCMD
+from pyskyq import REMOTECOMMANDS as RCMD
 #from pyskyq.cli import run
 
 from .asynccontextmanagermock import AsyncContextManagerMock

@@ -32,7 +32,7 @@ def main(args: List[str]):
     """Run main routine, allowing arguments to be passed."""
     pargs = parse_args(args)
     epg = EPG('skyq')  # replace with hostname / IP of your Sky box
-    epg.load_channel_data() # load channel listing from Box.
+    epg.load_skyq_channel_data()  # load channel listing from Box.
 
     print(epg.get_channel(pargs.sid).desc)
 

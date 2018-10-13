@@ -2,12 +2,14 @@ import asyncio
 import json
 import logging
 import sys
+from pathlib import Path
 
 import pytest
 from asynctest import CoroutineMock, MagicMock
 
 from pyskyq import EPG
 from pyskyq.channel import Channel, channel_from_skyq_service
+from pyskyq.xmltvlisting import XMLTVListing
 
 from .asynccontextmanagermock import AsyncContextManagerMock
 from .mock_constants import (REMOTE_TCP_MOCK, SERVICE_DETAIL_1,
@@ -38,12 +40,12 @@ def test_load_channel_list(mocker):
 
     assert isinstance(epg, EPG)
     assert len(epg._channels) == 2
-    assert epg.get_channel(2002).c == "101"
-    assert epg.get_channel(2002).t == "BBC One Lon"
-    assert epg.get_channel(2002).name == "BBC One Lon"
-    assert epg.get_channel('2002').c == "101"
-    assert epg.get_channel('2002').t == "BBC One Lon"
-    assert epg.get_channel('2002').name == "BBC One Lon"
+    assert epg.get_channel_by_sid(2002).c == "101"
+    assert epg.get_channel_by_sid(2002).t == "BBC One Lon"
+    assert epg.get_channel_by_sid(2002).name == "BBC One Lon"
+    assert epg.get_channel_by_sid('2002').c == "101"
+    assert epg.get_channel_by_sid('2002').t == "BBC One Lon"
+    assert epg.get_channel_by_sid('2002').name == "BBC One Lon"
 
 def test_load_channel_details(mocker):
 
@@ -82,15 +84,15 @@ def test_load_channel_details(mocker):
     assert isinstance(epg, EPG)
     assert len(epg._channels) == 2
 
-    assert epg.get_channel(2002).isbroadcasting is True
+    assert epg.get_channel_by_sid(2002).isbroadcasting is True
     assert "BBC ONE for Greater London and the surrounding area." in \
-        epg.get_channel(2002).upgradeMessage
+        epg.get_channel_by_sid(2002).upgradeMessage
 
-    assert "A channel for God's Peace." in \
-        epg.get_channel(2862).upgradeMessage
+    assert "Dave is the home of witty banter with quizcoms, cars and comedies." in \
+        epg.get_channel_by_sid(2306).upgradeMessage
 
 
-def test_EPG(mocker):
+def test_EPG_sky_channels(mocker):
 
     jsonmock_invocation_count = 0
 
@@ -115,23 +117,37 @@ def test_EPG(mocker):
     a.return_value = client_response
 
     epg = EPG('test_load_channel_list_fake_host')
-    epg.load_channel_data()
+    epg.load_skyq_channel_data()
 
     assert isinstance(epg, EPG)
     assert len(epg._channels) == 2
-    assert epg.get_channel(2002).c == "101"
-    assert epg.get_channel(2002).t == "BBC One Lon"
-    assert epg.get_channel(2002).name == "BBC One Lon"
-    assert epg.get_channel('2002').c == "101"
-    assert epg.get_channel('2002').t == "BBC One Lon"
-    assert epg.get_channel('2002').name == "BBC One Lon"
+    assert epg.get_channel_by_sid(2002).c == "101"
+    assert epg.get_channel_by_sid(2002).t == "BBC One Lon"
+    assert epg.get_channel_by_sid(2002).name == "BBC One Lon"
+    assert epg.get_channel_by_sid('2002').c == "101"
+    assert epg.get_channel_by_sid('2002').t == "BBC One Lon"
+    assert epg.get_channel_by_sid('2002').name == "BBC One Lon"
 
-    assert epg.get_channel(2002).isbroadcasting is True
+    assert epg.get_channel_by_sid(2002).isbroadcasting is True
     assert "BBC ONE for Greater London and the surrounding area." in \
-        epg.get_channel(2002).upgradeMessage
+        epg.get_channel_by_sid(2002).upgradeMessage
 
-    assert "A channel for God's Peace." in \
-        epg.get_channel(2862).upgradeMessage
+    assert "Dave is the home of witty banter with quizcoms, cars and comedies." in \
+        epg.get_channel_by_sid(2306).upgradeMessage
 
     with pytest.raises(AttributeError, match='Sid:1234567 not found.'):
-        epg.get_channel(1234567)
+        epg.get_channel_by_sid(1234567)
+
+def test_apply_EPG_XMLTV_listing():
+
+    l = XMLTVListing('http://host.com/some/feed')
+
+    # fake the fact that the file was downloaded, as this is tested elsewhere.
+    l._full_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
+    l._downloaded_okay = True
+
+    epg = EPG('test_load_channel_list_fake_host')
+
+    epg.apply_XMLTVListing(l)  # apply EPG listing to an empty EPG.
+
+    assert True

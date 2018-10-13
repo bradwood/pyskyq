@@ -11,6 +11,7 @@ yarl = "*"
 croniter = "*"
 tzlocal = "*"
 aiocron = {editable = true, git = "https://github.com/bradwood/aiocron.git"}
+fuzzywuzzy = {extras = ["speedup"], version = "*"}
 
 [dev-packages]
 pytest = "*"

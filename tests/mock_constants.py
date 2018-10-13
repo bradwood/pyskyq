@@ -16,15 +16,16 @@ SERVICE_SUMMARY_MOCK = """
             "xsg": 3
         },
         {
-            "c": "0214",
-            "dvbtriplet": "2.2095.55128",
-            "servicetype": "DSAT",
-            "sf": "au",
-            "sg": 20,
-            "sid": "2862",
-            "sk": 2862,
-            "t": "UCB Ireland",
-            "xsg": 4
+            "c" : "811",
+            "dvbtriplet" : "2.2022.6506",
+            "schedule" : true,
+            "servicetype" : "DSAT",
+            "sf" : "sd",
+            "sg" : 12,
+            "sid" : "2306",
+            "sk" : 2306,
+            "t" : "Dave",
+            "xsg" : 3
         }
     ],
     "version": 3
@@ -52,16 +53,16 @@ SERVICE_DETAIL_1 = """
 SERVICE_DETAIL_2 = """
 {
     "details": {
-        "dvbtriplet": "2.2095.55128",
+        "dvbtriplet": "2.2022.6506",
         "isbroadcasting": true,
-        "upgradeMessage": "A channel for God's Peace."
+        "upgradeMessage": "Dave is the home of witty banter with quizcoms, cars and comedies."
     },
-    "sid": "2862",
+    "sid": "2306",
     "streamingprofiles": [
         {
             "name": "AnExample",
-            "suri": "http://10.0.1.6:4730/trans_caption/CHAN%3Alocator%3A5%3A3%3AB2E/profileAnExample.ttml",
-            "uri": "http://10.0.1.6:4730/trans/CHAN%3Alocator%3A5%3A3%3AB2E/profileAnExample.ts"
+            "suri": "http://10.0.1.6:4730/trans_caption/CHAN%3Alocator%3A5%3A3%3A902/profileAnExample.ttml",
+            "uri": "http://10.0.1.6:4730/trans/CHAN%3Alocator%3A5%3A3%3A902/profileAnExample.ts"
         }
     ]
 }

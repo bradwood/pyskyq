@@ -1,32 +1,35 @@
 """This module implements the Channel class and associated factory functions."""
+import copy
 import logging
+from collections.abc import Hashable
 from typing import Any, Dict
 from xml.etree.ElementTree import Element
 
 from yarl import URL
 
-from pyskyq.constants import CHANNEL_FIELD_MAP, CSRC
+from pyskyq.constants import CHANNEL_FIELD_MAP
+from pyskyq.constants import CHANNELSOURCES as CSRC
 
 LOGGER = logging.getLogger(__name__)
 
 
-class Channel:
+class Channel(Hashable):
     """This class holds channel data and methods for manipulating the channel.
 
     Channel data can come form a variety of sources, including the SkyQ box itself
     or from a remote XML TV feed.
 
-    This class has an extremely basic ``__init__()`` method, instead allowing data loading from
-    helper methods that are source-specific. It is probably better, however, to use the factory
-    functions to instantiate an object and load it with data.
+    Warning:
+        In order to be ``Hashable`` this class is **immutable**, and so its methods
+        will return a new instance of the class with effect of the method applied to it.
 
-    Note:
-        Attributes are dynamically set based on the data payload provided, so if the SkyQ box
-        or XML TV feed is upgraded, new attributes *should* magically appear. Note that this
-        also implies that not every channel has every field, e.g., the ``timeshifted`` is only
-        present if it's ``True``. This is a Sky weirdness.
+        This class cannot be instantiated directly, but only via one of the factory methods.
 
-    All attributes are read-only.
+    Attributes are dynamically set based on the data payload provided, so if the SkyQ box
+    or XML TV feed is upgraded, new attributes *should* magically appear. Note that this
+    also implies that not every channel has every field, e.g., the ``timeshifted`` is only
+    present if it's ``True``. This is a Sky weirdness.
+
 
     Note:
         Data from XML TV sources presents the following channel attributes.
@@ -51,7 +54,7 @@ class Channel:
         dvbtriplet (str):  DVB Triplet (I have no idea what this is)
         schedule (bool): Is the channel "scheduled" or not?
         servicetype (str): Where is the channel coming from (e.g., ``DSAT``)
-        sf (str): Quality of the channel (e.g., ``hd``)
+        sf (str): Quality of the channel (e.g., ``hd``, ``sd``, or ``au``)
         sg (int): No ideas what this is.
         sid (str): Channel id (aka ``sid``) in `str` form - the **primary key** for the channel.
         sk (int): Channel id (aka ``sid``) in `str` form.
@@ -63,7 +66,12 @@ class Channel:
 
     """
 
-    def __init__(self,) -> None:
+    def __init__(self) -> None:
+        """Raise exception to prevent this from being initatiated normally."""
+        raise NotImplementedError('This class cannot be instantiated directly. ' +
+                                  'Use a factory function to create an instance.')
+
+    def __new__(cls, *args, **kwargs):
         """Initialise Channel Object."""
         blank_chan_dict = {
             'sid': None,
@@ -71,8 +79,11 @@ class Channel:
             't': None,
             'xmltv_id': None,
         }
-        self._chan_dict: Dict[str, Any] = blank_chan_dict
-        self._sources: CSRC = CSRC.no_source # type: ignore
+        # pylint: disable=attribute-defined-outside-init
+        new_obj = super(Channel, cls).__new__(cls, *args, **kwargs)
+        new_obj._chan_dict: Dict[str, Any] = blank_chan_dict
+        new_obj._sources: CSRC = CSRC.no_source
+        return new_obj
 
     def __getattr__(self, name: str) -> Any:
         """Handle attribute reads."""
@@ -95,6 +106,26 @@ class Channel:
         return f'<Channel: sources={self._sources}, id={self.id}, ' + \
         f'xmltv_id={self.xmltv_id}, number={self.number}, name={self.name}>'
 
+    def __hash__(self):
+        """Return hash of this object."""
+        # both sourced channel
+        if (self._sources & CSRC.skyq_service_summary == CSRC.skyq_service_summary) and \
+            (self._sources & CSRC.xml_tv == CSRC.xml_tv):
+            assert self._chan_dict['t'] == self._chan_dict['xmltv_display_name']
+            return hash(self._chan_dict['t'])
+
+        # sky sourced channel
+        if self._sources & CSRC.skyq_service_summary == CSRC.skyq_service_summary:
+            return hash(self._chan_dict['t'])
+
+        # xmltv sourced channel
+        if self._sources & CSRC.xml_tv == CSRC.xml_tv:
+            return hash(self._chan_dict['xmltv_display_name'])
+
+        # empty channel
+        if self._sources == CSRC.no_source:
+            return hash(CSRC.no_source)
+
     @property
     def sources(self) -> CSRC:
         """Return the sources flag.
@@ -107,41 +138,49 @@ class Channel:
         return self._sources
 
     def load_skyq_summary_data(self,
-                               chan_dict: Dict[str, Any],
-                               ) -> None:
-        """Load summary data from SkyQ box into the Channel.
+                               chan_dict: Dict[str, Any]
+                               ) -> 'Channel':
+        """Load summary data from SkyQ box into a new Channel.
 
         Args:
             chan_dict (dict): A detail dict that is obtained from the
                 ``as/services/`` endpoint.
 
         Returns:
-            None
+            Channel: A new channel with the summary SkyQ data added.
 
         """
-        self._chan_dict.update(chan_dict)
-        self._sources = self._sources | CSRC.skyq_service_summary # type: ignore
-        LOGGER.debug(f"Channel SkyQ Summary Data Loaded  with {chan_dict}.")
-        LOGGER.debug(f"Channel sources = {self._sources}.")
+        # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=protected-access
+        newchannel = Channel.__new__(Channel)
+        newchannel._chan_dict = copy.deepcopy(self._chan_dict)
+        newchannel._chan_dict.update(chan_dict)
+        newchannel._sources = copy.copy(self._sources | CSRC.skyq_service_summary)
+        return newchannel
 
-    def load_skyq_detail_data(self, detail_dict: Dict[str, Any]) -> None:
-        """Add additional properties obtained from the SkqQ detail endpoint to the object.
+    def load_skyq_detail_data(self, detail_dict: Dict[str, Any]) -> 'Channel':
+        """Add additional properties obtained from the SkqQ box to a new object.
 
         Args:
             detail_dict (dict): A detail dict that is obtained from the
                 ``as/services/details/<sid>`` endpoint.
 
         Returns:
-            None
+            Channel: A new channel with the detailed SkyQ data added.
 
         """
-        self._chan_dict.update(detail_dict['details'])
-        self._sources = self.sources | CSRC.skyq_service_detail
+        # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=protected-access
+        newchannel = Channel.__new__(Channel)
+        newchannel._chan_dict = copy.deepcopy(self._chan_dict)
+        newchannel._chan_dict.update(detail_dict['details'])
+        newchannel._sources = copy.copy(self._sources | CSRC.skyq_service_detail)
+        return newchannel
 
     def load_xmltv_data(self,
                         xml_chan: Element,
                         base_url: URL = URL('http://www.xmltv.co.uk/'),
-                        ) -> None:
+                        ) -> 'Channel':
         """Take an XML TV Channel element and load it into the channel's data structure.
 
         This method loads this object with data passed in from an XML TV channel element.
@@ -152,35 +191,43 @@ class Channel:
                 :attr:`~pyskyq.channel.Channel.xmltv_icon_url` property.
 
         Returns:
-            None
-
+            Channel: A new channel with the detailed XMLTV data added.
 
         """
+        # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=protected-access
+
+        newchannel = Channel.__new__(Channel)
+        newchannel._chan_dict = copy.deepcopy(self._chan_dict)
+
         assert xml_chan.tag.lower() == 'channel'
-        self._chan_dict['xmltv_id'] = xml_chan.attrib['id']
+
+        newchannel._chan_dict['xmltv_id'] = xml_chan.attrib['id']
         for child in xml_chan:
             if child.tag.lower() == 'icon':
-                self._chan_dict['xmltv_icon_url'] = base_url.join(URL(child.attrib['src']))
+                newchannel._chan_dict['xmltv_icon_url'] = base_url.join(URL(child.attrib['src']))
                 continue
             if child.tag.lower() == 'display-name':
-                self._chan_dict['xmltv_display_name'] = child.text
-        self._sources = self.sources | CSRC.xml_tv
+                newchannel._chan_dict['xmltv_display_name'] = child.text
+
+        newchannel._sources = copy.copy(self._sources | CSRC.xml_tv)
+
+        return newchannel
 
 
 def channel_from_skyq_service(skyq_chan: Dict[str, Any]) -> Channel:
     """Create a Channel object from a SkyQ Service summary payload.
 
     Args:
-        chan_dict (dict): This dictionary is the payload that comes directly from the
+        skyq_chan (Dict[str, Any]): This dictionary is the payload that comes directly from the
             SkyQ's ``as/services/`` endpoint.
 
     Returns:
-        Channel: With SkyQ summary data loaded.
+        Channel: A channel object with the  SkyQ summary data loaded.
 
     """
-    chan = Channel()
-    chan.load_skyq_summary_data(skyq_chan)
-    return chan
+    chan = Channel.__new__(Channel)
+    return chan.load_skyq_summary_data(skyq_chan)
 
 def channel_from_xmltv_list(xml_chan: Element) -> Channel:
     """Create a Channel object from an XMLTV channel element.
@@ -195,10 +242,8 @@ def channel_from_xmltv_list(xml_chan: Element) -> Channel:
         Channel: A channel object with the XML TV data loaded.
 
     """
-
-    chan = Channel()
-    chan.load_xmltv_data(xml_chan)
-    return chan
+    chan = Channel.__new__(Channel)
+    return chan.load_xmltv_data(xml_chan)
 
 def merge_channels(chan_a: Channel,
                    chan_b: Channel,
@@ -230,35 +275,39 @@ def merge_channels(chan_a: Channel,
         override, regardless of the passed order.
 
     """
-    new_chan = Channel()
-    new_chan._chan_dict = {**chan_a._chan_dict, **chan_b._chan_dict}  # pylint: disable=protected-access
+    # pylint: disable=attribute-defined-outside-init
+    # pylint: disable=protected-access
+
+    new_chan = Channel.__new__(Channel)
+
+    new_chan._chan_dict = {**chan_a._chan_dict, **chan_b._chan_dict}
 
     if chan_a.id is not None and chan_b.id is None:
-        new_chan._chan_dict['sid'] = chan_a.id  # pylint: disable=protected-access
+        new_chan._chan_dict['sid'] = chan_a.id
 
     if chan_b.id is not None and chan_a.id is None:
-        new_chan._chan_dict['sid'] = chan_b.id  # pylint: disable=protected-access
+        new_chan._chan_dict['sid'] = chan_b.id
 
 
     if chan_a.c is not None and chan_b.c is None:
-        new_chan._chan_dict['c'] = chan_a.c  # pylint: disable=protected-access
+        new_chan._chan_dict['c'] = chan_a.c
 
     if chan_b.c is not None and chan_a.c is None:
-        new_chan._chan_dict['c'] = chan_b.c  # pylint: disable=protected-access
+        new_chan._chan_dict['c'] = chan_b.c
 
 
     if chan_a.t is not None and chan_b.t is None:
-        new_chan._chan_dict['t'] = chan_a.t  # pylint: disable=protected-access
+        new_chan._chan_dict['t'] = chan_a.t
 
     if chan_b.t is not None and chan_a.t is None:
-        new_chan._chan_dict['t'] = chan_b.t  # pylint: disable=protected-access
+        new_chan._chan_dict['t'] = chan_b.t
 
 
     if chan_a.xmltv_id is not None and chan_b.xmltv_id is None:
-        new_chan._chan_dict['xmltv_id'] = chan_a.xmltv_id  # pylint: disable=protected-access
+        new_chan._chan_dict['xmltv_id'] = chan_a.xmltv_id
 
     if chan_b.xmltv_id is not None and chan_a.xmltv_id is None:
-        new_chan._chan_dict['sxmltv_id'] = chan_b.xmltv_id  # pylint: disable=protected-access
+        new_chan._chan_dict['xmltv_id'] = chan_b.xmltv_id
 
-    new_chan._sources = chan_a._sources | chan_b._sources  # pylint: disable=protected-access
+    new_chan._sources = chan_a._sources | chan_b._sources
     return new_chan
