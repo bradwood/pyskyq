@@ -20,7 +20,7 @@ logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
-def test_load_channel_list(mocker):
+def test_load_channel_list(mocker, event_loop):
 
     # mocking class
     class jsonmock:
@@ -34,9 +34,9 @@ def test_load_channel_list(mocker):
     a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
     a.return_value = client_response
 
-    loop = asyncio.get_event_loop()
-    epg = EPG('test_load_channel_list_fake_host')
-    loop.run_until_complete(epg._load_channel_list())
+    # loop = asyncio.get_event_loop()
+    epg = EPG('test_load_channel_list_fake_host', loop=event_loop)
+    event_loop.run_until_complete(epg._load_channel_list())
 
     assert isinstance(epg, EPG)
     assert len(epg._channels) == 2
@@ -47,7 +47,9 @@ def test_load_channel_list(mocker):
     assert epg.get_channel_by_sid('2002').t == "BBC One Lon"
     assert epg.get_channel_by_sid('2002').name == "BBC One Lon"
 
-def test_load_channel_details(mocker):
+
+def test_load_channel_details(mocker, event_loop):
+    asyncio.set_event_loop(event_loop)
 
     jsonmock_invocation_count = 0
 
@@ -68,7 +70,7 @@ def test_load_channel_details(mocker):
     a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
     a.return_value = client_response
 
-    epg = EPG('test_fetch_all_channel_details_fake_host')
+    epg = EPG('test_fetch_all_channel_details_fake_host', loop=event_loop)
 
     # manually load the _channels summary data using the SERVICE_SUMMARY_PAYLOAD as this was tested in the previous test.
     chan_payload_json = json.loads(SERVICE_SUMMARY_MOCK)
@@ -76,10 +78,7 @@ def test_load_channel_details(mocker):
         epg._channels.append(channel_from_skyq_service(channel))
 
     # we can now test the loading of channel details as we have the summary data already loaded.
-
-    # TODO use asyncio.run() below
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(epg._load_channel_details())
+    event_loop.run_until_complete(epg._load_channel_details())
 
     assert isinstance(epg, EPG)
     assert len(epg._channels) == 2
@@ -92,7 +91,9 @@ def test_load_channel_details(mocker):
         epg.get_channel_by_sid(2306).upgradeMessage
 
 
-def test_EPG_sky_channels(mocker):
+
+def test_EPG_sky_channels(mocker, event_loop):
+    asyncio.set_event_loop(event_loop)
 
     jsonmock_invocation_count = 0
 
@@ -116,7 +117,7 @@ def test_EPG_sky_channels(mocker):
     a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
     a.return_value = client_response
 
-    epg = EPG('test_load_channel_list_fake_host')
+    epg = EPG('test_load_channel_list_fake_host', loop=event_loop)
     epg.load_skyq_channel_data()
 
     assert isinstance(epg, EPG)
@@ -135,19 +136,42 @@ def test_EPG_sky_channels(mocker):
     assert "Dave is the home of witty banter with quizcoms, cars and comedies." in \
         epg.get_channel_by_sid(2306).upgradeMessage
 
-    with pytest.raises(AttributeError, match='Sid:1234567 not found.'):
+    with pytest.raises(ValueError, match='Sid:1234567 not found.'):
         epg.get_channel_by_sid(1234567)
 
-def test_apply_EPG_XMLTV_listing():
+def test_apply_EPG_XMLTV_listing(mocker, event_loop):
+    asyncio.set_event_loop(event_loop)
+
+    # set up the epg object with sky data.
+    jsonmock_invocation_count = 0
+
+    class jsonmock:
+        @staticmethod
+        async def json():
+            nonlocal jsonmock_invocation_count
+            jsonmock_invocation_count += 1
+            if jsonmock_invocation_count == 1:
+                return json.loads(SERVICE_SUMMARY_MOCK)
+            if jsonmock_invocation_count == 2:
+                return json.loads(SERVICE_DETAIL_1)
+            if jsonmock_invocation_count == 3:
+                return json.loads(SERVICE_DETAIL_2)
+
+    client_response = asyncio.Future()
+    client_response.set_result(jsonmock)
+
+    a = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
+    a.return_value = client_response
+
+    epg = EPG('test_load_channel_list_fake_host', loop=event_loop)
+    epg.load_skyq_channel_data()
+
+    # now test the xml loading.
 
     l = XMLTVListing('http://host.com/some/feed')
-
-    # fake the fact that the file was downloaded, as this is tested elsewhere.
     l._full_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
     l._downloaded_okay = True
 
-    epg = EPG('test_load_channel_list_fake_host')
-
     epg.apply_XMLTVListing(l)  # apply EPG listing to an empty EPG.
 
-    assert True
+    #assert True

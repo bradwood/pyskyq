@@ -165,10 +165,9 @@ WS_STATUS_MOCK = """
 
 """
 XML_CHANNEL_1 = """
-  <channel id="015ac32387fbc90e1e920d780d43787c">
-    <display-name>Zee Cinema</display-name>
+  <channel id="f3932e75f691561adbe3b609369e487b">
+    <display-name>BBC One Lon</display-name>
     <blah>Not understood, not processed, so should be ignored.</blah>
-    <icon src="/images/channels/015ac32387fbc90e1e920d780d43787c.png"/>
+    <icon src="/images/channels/f3932e75f691561adbe3b609369e487b.png"/>
   </channel>
-
 """

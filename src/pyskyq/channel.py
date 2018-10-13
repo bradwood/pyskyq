@@ -16,23 +16,26 @@ LOGGER = logging.getLogger(__name__)
 class Channel(Hashable):
     """This class holds channel data and methods for manipulating the channel.
 
-    Channel data can come form a variety of sources, including the SkyQ box itself
-    or from a remote XML TV feed.
+    Channel data can come form a variety of sources, including the SkyQ box
+    itself or from a remote XML TV feed.
 
     Warning:
-        In order to be ``Hashable`` this class is **immutable**, and so its methods
-        will return a new instance of the class with effect of the method applied to it.
-
         This class cannot be instantiated directly, but only via one of the factory methods.
 
-    Attributes are dynamically set based on the data payload provided, so if the SkyQ box
-    or XML TV feed is upgraded, new attributes *should* magically appear. Note that this
-    also implies that not every channel has every field, e.g., the ``timeshifted`` is only
-    present if it's ``True``. This is a Sky weirdness.
-
+        In order to be ``Hashable`` this class is **immutable**, and so its
+        methods will return a new instance of the class with the effect of the
+        method applied to returned class.
 
     Note:
-        Data from XML TV sources presents the following channel attributes.
+        Attributes are dynamically set based on the data payload provided, so if
+        the SkyQ box or XML TV feed is upgraded, new attributes *should*
+        magically appear. Note that this also implies that not every channel has
+        every field, e.g., the ``timeshifted`` is only present if it's ``True``.
+        This Sky weirdness is managed by simply returing ``None`` if the
+        attribute is not present, rather than raising a ``KeyError``.
+
+
+     Data from XML TV sources presents the following channel attributes.
 
     Attributes:
         xmltv_id (str): A hex string uniquely identifying this channel in the XML TV listing.
@@ -86,12 +89,15 @@ class Channel(Hashable):
         return new_obj
 
     def __getattr__(self, name: str) -> Any:
-        """Handle attribute reads."""
+        """Handle attribute reads.
+
+        Return ``None`` rather than a KeyError if the attriute not found.
+        """
         if name in self._chan_dict.keys():
             return self._chan_dict[name]
         if name in CHANNEL_FIELD_MAP.keys():
             return self._chan_dict.get(CHANNEL_FIELD_MAP[name], None)
-        raise KeyError(name)
+        return None
 
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -123,8 +129,7 @@ class Channel(Hashable):
             return hash(self._chan_dict['xmltv_display_name'])
 
         # empty channel
-        if self._sources == CSRC.no_source:
-            return hash(CSRC.no_source)
+        return hash(CSRC.no_source)
 
     @property
     def sources(self) -> CSRC:

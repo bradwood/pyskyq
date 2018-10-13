@@ -48,12 +48,17 @@ class EPG:
                  host: str,
                  *,
                  rest_port: int = REST_PORT,
+                 loop: asyncio.AbstractEventLoop = None
                  ) -> None:
         """Initialise Sky EPG Object."""
         self.host: str = host
         self.rest_port: int = rest_port
         self._channels: list = []
         self._jobs: list = []
+        self._loop = loop if loop else asyncio.get_event_loop()
+
+        assert not self._loop.is_closed()
+
         LOGGER.debug(f"Initialised EPG object using SkyQ box={self.host}")
 
     def __repr__(self):
@@ -61,11 +66,14 @@ class EPG:
         return f"<EPG: host={self.host}, rest_port={self.rest_port}, " + \
             f"len(_channels)={len(self._channels)}, len(_xmltv_urls)={len(self._channels)}>"
 
+    def channels_loaded(self) -> bool:
+        """Return True if the list of channels is not loaded."""
+        return bool(self._channels)
 
     async def _load_channel_list(self) -> None:
         """Load channel data into channel property.
 
-        This method fetches the channel list from ``/as/services`` endpoint and load
+        This method fetches the channel list from ``/as/services`` endpoint and loads
         :attr:`~pyskyq.epg.EPG._channels`
 
         Returns:
@@ -102,7 +110,7 @@ class EPG:
         """
         urls = [f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
                 for sid in sid_list]
-        results = await asyncio.gather(*[session.get(url) for url in urls])
+        results = await asyncio.gather(*[session.get(url) for url in urls], loop=self._loop)
 
         return results
 
@@ -119,6 +127,7 @@ class EPG:
             None
 
         """
+        asyncio.set_event_loop(self._loop)
         sid_list = [chan.sid for chan in self._channels]
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
@@ -141,12 +150,14 @@ class EPG:
             None
 
         """
-        loop = asyncio.get_event_loop()
 
-        loop.run_until_complete(self._load_channel_list())
-        loop.run_until_complete(self._load_channel_details())
+        # if not loop.is_running():
+        #     lopp = asyncio.new_event_loop()
 
-        loop.close()
+        self._loop.run_until_complete(self._load_channel_list())
+        self._loop.run_until_complete(self._load_channel_details())
+
+        # loop.close()
 
     def get_channel_by_sid(self,
                     sid: Any
@@ -162,13 +173,17 @@ class EPG:
             :class:`pyskyq.channel.Channel`: The channel if found.
 
         Raises:
-            AttributeError: If the channel is not found.
+            ValueError: If the channel is not found or the channel
+                list is empty.
         """
         sid = str(sid)
+        if not self.channels_loaded():
+            raise ValueError(f"No channels loaded.")
+
         for chan in self._channels:
             if chan.sid == sid:
                 return chan
-        raise AttributeError(f"Sid:{sid} not found.")
+        raise ValueError(f"Sid:{sid} not found.")
 
 
     def get_channel(self,
@@ -176,8 +191,8 @@ class EPG:
                     fuzzy_match: bool = True,
                     include_timeshift: bool = True,
                     quality_flag: Optional[Q] = None,
-                    return_list: bool = False
-                    ) -> Union[Channel, List[Channel]]:
+                    limit: int = 1
+                    ) -> List[Channel]:
         """Get a channel or list of channels based on various input.
 
         This method returns a :class:`~pyskyq.channel.Channel` object or
@@ -190,29 +205,31 @@ class EPG:
             include_timeshift (bool): Include ``+1`` channels.
             quality_flag (Q): One of :class:`~pyskyq.constants.QUALITY`
                 `None` means any.
-            return_list (bool): Return a list of results. If ``False``, just
-                returns the best match.
+            limit (int): Maximum (not exact) number of matches to return.
 
         Returns:
-            :class:`~pyskyq.channel.Channel`: The channel if found.
+            List[Channel]: Returns a list of matches ordered with closest
+                match first.
 
         Raises:
-            AttributeError: If a match is not found.
+            ValueError: If a match is not found, the channel list is
+                empty or a bad limit is passed.
 
         """
-        # chan = self._channels
-        # if not include_timeshift:
-        #     channesl_q = set(chan.name for chan in self._channels) # sourced from SkyQ
-        #     chan_names_x = set(chan.xmltv_display_name for chan in self._channels) # sourced from XMLTV
-        # else:
-        #     chan_names = [chan.name for chan in self._channels if chan.]
+        if limit < 1:
+            raise ValueError('Limit must be 1 or higher.')
+        if not self._channels:
+            raise ValueError(f"No channels loaded.")
 
-        for chan in self._channels:
+        if not include_timeshift:
+            channels = [chan for chan in self._channels if not chan.timeshifted]
+        if quality_flag:
+            channels = [chan for chan in channels if chan.quality == quality_flag]
 
-            if chan.sid == sid:
-                return chan
-        raise AttributeError(f"Sid:{sid} not found.")
-
+        choices = [chan.name for chan in channels]
+        matches = process.extract(name, choices, limit=limit) # returns a list of tuples (name, score)
+        matched_names = [item[0] for item in matches]
+        return [chan for chan in channels if chan.name in matched_names]
 
     @dataclass
     class CronJob:
@@ -258,10 +275,13 @@ class EPG:
             None
 
         Raises:
-            ValueError: Raised if this XMLTV listing is already added to the EPG, or if the
-                cronspec passes is invalid.
+            ValueError: Raised if this XMLTV listing is already added to the EPG, the
+                cronspec passes is invalid, or the channel list is empty.
 
         """
+        if not self._channels:
+            raise ValueError(f"No channels loaded.")
+
         if listing not in [job.listing for job in self._jobs]:
             if cronspec and croniter.is_valid(cronspec):
                 cron_t = CronThread()
@@ -288,17 +308,46 @@ class EPG:
         download and apply an XMLTVListing, you might prefer to call
         :meth:`pyskyq.xmltvlisting.XMLTVListing.fetch` manually first, followed by
         :meth:`apply_XMLTVListing`.
+
+        Args:
+            listing (XMLTVListing): a :class:`~pyskyq.xmltvlisting.XMLTVListing` object to
+                download and apply to the EPG.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: Raised if the channel list is empty.
+
         """
+        if not self._channels:
+            raise ValueError(f"No channels loaded.")
+
         await listing.fetch()  # do the download
         self.apply_XMLTVListing(listing)
 
 
     def apply_XMLTVListing(self, listing: XMLTVListing) -> None:
-        """Merge listing data into the EPG channels data structure."""
+        """Merge listing data into the EPG channels data structure.
+
+        Args:
+            listing(XMLTVListing): a: class: `~pyskyq.xmltvlisting.XMLTVListing` object to
+            merge to the EPG.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: Raised if the channel list is empty.
+
+        """
+        if not self._channels:
+            raise ValueError(f"No channels loaded.")
+
         # TODO: optimise this, maybe with some kind of sorted list?
         for skyq_channel in self._channels:
             for xmltv_channel in listing.parse_channels():  # load the channels
-                if skyq_channel.name == xmltv_channel.xmltv_display_name:
+                if skyq_channel.name.lower() == xmltv_channel.xmltv_display_name.lower():
                     skyq_channel = merge_channels(skyq_channel, xmltv_channel)
 
     @property
