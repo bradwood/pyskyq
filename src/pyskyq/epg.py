@@ -25,7 +25,7 @@ class EPG:
     Electronic Programme Guide through a REST endpoint exposed on the box.
     Specifically, it fetches both summary and detail channel information from
     two different endpoints from the box and aggregates this data into a list of
-    :class:`.channel.Channel` objects.
+    :class:`~.channel.Channel` objects.
 
     This channel data is then *augmented* with data from www.xmltv.co.uk which provides
     an XML file which follows the ``xmltv`` DTD.
@@ -67,7 +67,12 @@ class EPG:
             f"len(_channels)={len(self._channels)}, len(_xmltv_urls)={len(self._channels)}>"
 
     def channels_loaded(self) -> bool:
-        """Return True if the list of channels is not loaded."""
+        """Return whether channels have been loaded.
+
+        Returns:
+            bool: ``True`` if channels have been loaded.
+
+        """
         return bool(self._channels)
 
     async def _load_channel_list(self) -> None:
@@ -143,7 +148,8 @@ class EPG:
     def load_skyq_channel_data(self) -> None:
         """Load all channel data from the SkyQ REST Service.
 
-        This is the high-level method that fully loads all the channel detail.
+        This method loads all channel data from the SkyQ box into the
+        :class:`~.epg.EPG` object.
 
         Returns:
             None
@@ -163,13 +169,13 @@ class EPG:
                     ) -> Channel:
         """Get channel data by SkyQ service id.
 
-        This method returns a :class:`.channel.Channel` object when
+        This method returns a :class:`~.channel.Channel` object when
         passed in a channel ``sid``.
 
         Args:
             sid: The SkyQ service id of the channel
         Returns:
-            :class:`.channel.Channel`: The channel if found.
+            :class:`~.channel.Channel`: The channel if found.
 
         Raises:
             ValueError: If the channel is not found or the channel
@@ -231,7 +237,7 @@ class EPG:
         return [chan for chan in channels if chan.name in matched_names]
 
     @dataclass
-    class CronJob:
+    class _CronJob:
         listing: XMLTVListing
         schedule: str
         thread: Optional[CronThread] = None
@@ -288,7 +294,7 @@ class EPG:
                                func=self.download_and_apply_XMLTVListing(listing),
                                start=True
                                )
-                cronjob = self.CronJob(listing=listing, schedule=cronspec, thread=cron_t)
+                cronjob = self._CronJob(listing=listing, schedule=cronspec, thread=cron_t)
                 self._jobs.append(cronjob)
             else:
                 raise ValueError('Bad cronspec passed.')
@@ -349,23 +355,23 @@ class EPG:
                 if skyq_channel.name.lower() == xmltv_channel.xmltv_display_name.lower():
                     skyq_channel = merge_channels(skyq_channel, xmltv_channel)
 
-    @property
-    def cronjobs(self) -> List[Tuple[XMLTVListing, Optional[str]]]:
+    def get_cronjobs(self) -> List[Tuple[XMLTVListing, str]]:
         """Return currently loaded XML TV Listings and associated cronjobs.
 
-        This returns a list of :class:`~.xmltvlisting.XMLTVListing` objects and
-        associated cronspec strings.
+        This returns a list of tuples containing
+        :class:`~.xmltvlisting.XMLTVListing` objects and associated cronspec
+        strings.
 
         Returns:
-            List[Tuple[XMLTVListing, str, bool]]: Returns a list of tuples where each
+            List[Tuple[XMLTVListing, str]]: Returns a list of tuples where each
                 tuple is as follows::
 
-                    (listing, cronspec)
+                    (XMLTVListing, cronspec)
 
                 where:
-                - listing is an :class:`XMLTVListing` object
-                - cronspec is a string like ``0 9,10 * * * mon,fri`` or ``None``
 
+                - listing is an :class:`~.xmltvlisting.XMLTVListing` object
+                - cronspec is a string like ``0 9,10 * * * mon,fri``
 
         """
         return [(j.listing, j.cronspec) for j in self._jobs]

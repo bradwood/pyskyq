@@ -12,9 +12,9 @@ features:
     class:`~.cronthread.CronThread`.
   - Generalised :class:`~.channel.Channel` to support data from multiple sources
     and made some factory functions to generate Channels from various sources.
-  - Added Channel merge function to enable a new channel to be created using
+  - Added channel merge function to enable a new channel to be created using
     merged data from both the XML TV and SkyQ sources.
-  - Improved :meth:`.EPG.getChannel` to enable more sophisticated searching,
+  - Improved :meth:`.EPG.get_channel` to enable more sophisticated searching,
     including by name, channel quality, ``+1`` channels using either fuzzy or
     exact matching.
 issues:
