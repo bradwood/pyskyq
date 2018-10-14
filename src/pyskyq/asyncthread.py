@@ -63,15 +63,17 @@ class AsyncThread(metaclass=_Singleton):
             LOGGER.debug(f'Event loop still running in thread: {self.thread.name}')
             await asyncio.sleep(1)
 
-    async def _cancel_all_tasks(self):
+    # This gets invoked in the  shutdown_async_thread test. coverage seems to not see it tho'
+    async def _cancel_all_tasks(self):  # pragma: no cover
         """Cancel all running tasks in the loop."""
         tasks = [task for task in asyncio.Task.all_tasks() if task is not
-                 asyncio.tasks.Task.current_task()]
+                 asyncio.current_task()]
         for task in tasks:
             task.cancel()
         LOGGER.info(f'Cancelled {len(tasks)} running tasks.')
 
-    async def _shutdown_signal_handler(self, sig: Enum) -> None:
+    # no unit test for the below, but tested manually... Honestly... :)
+    async def _shutdown_signal_handler(self, sig: Enum) -> None:  # pragma: no cover
         """Shut down the event loop cleanly."""
         LOGGER.info(f'Caught signal: {sig.name}. Shutting down...')
         self._shutdown_sentinel = True
@@ -83,7 +85,7 @@ class AsyncThread(metaclass=_Singleton):
         LOGGER.info(f'Shutting down...')
         self._shutdown_sentinel = True
         fut = asyncio.run_coroutine_threadsafe(self._cancel_all_tasks(), self.loop)
-        while fut.running():
+        while fut.running():  # pragma: no cover - can't easily make something run after cancel.
             LOGGER.debug(f'Waiting for asyncio tasks to finish...')
             asyncio.sleep(.1)
         self.loop.stop()
