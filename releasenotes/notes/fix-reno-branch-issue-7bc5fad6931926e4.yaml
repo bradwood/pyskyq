@@ -1,15 +1,15 @@
 ---
 prelude: >
     This ia quite a big bump, chiefly because it introduces use of :py:mod:`asyncio` and
-    other Python 3.7 features. The main addition is the introduction of the :class:`~pyskyq.epg.EPG`
-    and :class:`~pyskyq.channel.Channel` classes, which provide access to channel datails
+    other Python 3.7 features. The main addition is the introduction of the :class:`~.epg.EPG`
+    and :class:`~.channel.Channel` classes, which provide access to channel datails
     (name, number, HD/SD, description, etc).
 
 
     It **does not** (yet) provide the actual EPG programme data.
 features:
-  - Added :class:`~pyskyq.channel.Channel` class.
-  - Added :class:`~pyskyq.epg.EPG` which contains a list of :class:`~pyskyq.channel.Channel` objects.
+  - Added :class:`~.channel.Channel` class.
+  - Added :class:`~.epg.EPG` which contains a list of :class:`~.channel.Channel` objects.
   - |
     Closed issue 15_
 
@@ -22,5 +22,5 @@ upgrade:
 other:
   - tidied up some of the tests, including mocking the SkyQ Box REST API
   - fixed up all the tests that were breaking due to missing mocks on the REST API
-  - changed the call signature for :meth:`~pyskyq.skyq.SkyQ.__init__` to force use of keyword arguments
+  - changed the call signature for :meth:`~.skyq.SkyQ.__init__` to force use of keyword arguments
     for optional parameters.

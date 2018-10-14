@@ -7,8 +7,8 @@ from xml.etree.ElementTree import Element
 
 from yarl import URL
 
-from pyskyq.constants import CHANNEL_FIELD_MAP
-from pyskyq.constants import CHANNELSOURCES as CSRC
+from .constants import CHANNEL_FIELD_MAP
+from .constants import CHANNELSOURCES as CSRC
 
 LOGGER = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ class Channel(Hashable):
         """Return the sources flag.
 
         Returns:
-            CSRC: A flag of one or more :class:`~pyskyq.constants.CSRC` ORed together to
+            CSRC: A flag of one or more :class:`~.constants.CSRC` ORed together to
                 indicate which sources have been applied to this object.
 
         """
@@ -193,7 +193,7 @@ class Channel(Hashable):
         Args:
             xml_chan (Element): A XML element of ``<channel>...</channel>`` tags.
             base_url (URL): A :py:class:`~yarl.URL` prefix which is used contstruct the full
-                :attr:`~pyskyq.channel.Channel.xmltv_icon_url` property.
+                :attr:`~.channel.Channel.xmltv_icon_url` property.
 
         Returns:
             Channel: A new channel with the detailed XMLTV data added.

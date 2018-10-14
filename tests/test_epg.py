@@ -7,9 +7,7 @@ from pathlib import Path
 import pytest
 from asynctest import CoroutineMock, MagicMock
 
-from pyskyq import EPG
-from pyskyq.channel import Channel, channel_from_skyq_service
-from pyskyq.xmltvlisting import XMLTVListing
+from pyskyq import EPG,  Channel, channel_from_skyq_service, XMLTVListing
 
 from .asynccontextmanagermock import AsyncContextManagerMock
 from .mock_constants import (REMOTE_TCP_MOCK, SERVICE_DETAIL_1,
@@ -118,6 +116,10 @@ def test_EPG_sky_channels(mocker, event_loop):
     a.return_value = client_response
 
     epg = EPG('test_load_channel_list_fake_host', loop=event_loop)
+
+    with pytest.raises(ValueError, match='No channels loaded.'):
+        epg.get_channel_by_sid(2002)
+
     epg.load_skyq_channel_data()
 
     assert isinstance(epg, EPG)

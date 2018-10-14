@@ -28,7 +28,7 @@ def press_remote(host: str, code: int, *, port: int = REMOTE_PORT) -> None:
     Args:
         host (str): String with resolvable hostname or IPv4 address to SkyQ box.
         code (int): A code passed which represents the button to press. See
-            :py:mod:`pyskyq.constants` for a human-friendly list of the currently
+            :py:mod:`.constants` for a human-friendly list of the currently
             supported buttons and their associated codes.
         port (int, optional): Port number to use to connect to the Remote TCP socket.
             Defaults to the standard port used by SkyQ boxes which is 49160.

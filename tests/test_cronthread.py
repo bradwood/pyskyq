@@ -2,7 +2,7 @@ import pytest
 import aiocron
 import asyncio
 import time
-from pyskyq.cronthread import CronThread
+from pyskyq import CronThread
 
 def test_cronthread(capsys):
     t = CronThread()

@@ -9,12 +9,12 @@ from croniter.croniter import croniter
 from fuzzywuzzy import process
 
 from dataclasses import dataclass
-from pyskyq.channel import Channel, channel_from_skyq_service, merge_channels
-from pyskyq.constants import QUALITY as Q
-from pyskyq.constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
+from .channel import Channel, channel_from_skyq_service, merge_channels
+from .constants import QUALITY as Q
+from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                               REST_SERVICES_URL)
-from pyskyq.cronthread import CronThread
-from pyskyq.xmltvlisting import XMLTVListing
+from .cronthread import CronThread
+from .xmltvlisting import XMLTVListing
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class EPG:
     Electronic Programme Guide through a REST endpoint exposed on the box.
     Specifically, it fetches both summary and detail channel information from
     two different endpoints from the box and aggregates this data into a list of
-    :class:`pyskyq.channel.Channel` objects.
+    :class:`.channel.Channel` objects.
 
     This channel data is then *augmented* with data from www.xmltv.co.uk which provides
     an XML file which follows the ``xmltv`` DTD.
@@ -74,7 +74,7 @@ class EPG:
         """Load channel data into channel property.
 
         This method fetches the channel list from ``/as/services`` endpoint and loads
-        :attr:`~pyskyq.epg.EPG._channels`
+        :attr:`~.epg.EPG._channels`
 
         Returns:
             None
@@ -118,16 +118,15 @@ class EPG:
     async def _load_channel_details(self) -> None:
         """Load channel details onto channel properties.
 
-        This method is a wrapper which calls :meth:`~pyskyq.epg.EPG._fetch_all_chan_details`
+        This method is a wrapper which calls :meth:`~.epg.EPG._fetch_all_chan_details`
         to get the details about each channel from it's detail endpoint
         ``/as/services/details/<sid>`` and then adds it to the list data
-        on :attr:`~pyskyq.epg.EPG._channels`.
+        on :attr:`~.epg.EPG._channels`.
 
         Returns:
             None
 
         """
-        asyncio.set_event_loop(self._loop)
         sid_list = [chan.sid for chan in self._channels]
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
@@ -164,13 +163,13 @@ class EPG:
                     ) -> Channel:
         """Get channel data by SkyQ service id.
 
-        This method returns a :class:`pyskyq.channel.Channel` object when
+        This method returns a :class:`.channel.Channel` object when
         passed in a channel ``sid``.
 
         Args:
             sid: The SkyQ service id of the channel
         Returns:
-            :class:`pyskyq.channel.Channel`: The channel if found.
+            :class:`.channel.Channel`: The channel if found.
 
         Raises:
             ValueError: If the channel is not found or the channel
@@ -195,7 +194,7 @@ class EPG:
                     ) -> List[Channel]:
         """Get a channel or list of channels based on various input.
 
-        This method returns a :class:`~pyskyq.channel.Channel` object or
+        This method returns a :class:`~.channel.Channel` object or
         a list of them based on the various parameters passed.
 
         Args:
@@ -203,7 +202,7 @@ class EPG:
                 (wildcards are not supported).
             fuzzy_match (bool): Use exact or fuzzy string matching.
             include_timeshift (bool): Include ``+1`` channels.
-            quality_flag (Q): One of :class:`~pyskyq.constants.QUALITY`
+            quality_flag (Q): One of :class:`~.constants.QUALITY`
                 `None` means any.
             limit (int): Maximum (not exact) number of matches to return.
 
@@ -258,14 +257,14 @@ class EPG:
                                   ) -> None:
         """Add an XML TV listing cronjob to the EPG.
 
-        This method will add a :class:`~pyskyq.xmltvlisting.XMLTVListing` to the EPG object
+        This method will add a :class:`~.xmltvlisting.XMLTVListing` to the EPG object
         and immediately schedule it as a cronjob.
 
         The processing of the XMLTV download and load into memory will be immedately triggered
         if ``run_now`` is ``True``.
 
         Args:
-            listing (XMLTVListing): a :class:`~pyskyq.xmltvlisting.XMLTVListing` object to
+            listing (XMLTVListing): a :class:`~.xmltvlisting.XMLTVListing` object to
                 add to the EPG.
             cronspec (str): cronspec string, e.g.: ``0 9,10 * * * mon,fri``.
             run_now (bool): If ``True`` **runs** the XMLTV job immediately in addition to
@@ -306,11 +305,11 @@ class EPG:
 
         This method is intended primarily for use in EPG cronjobs. If you wish to manually
         download and apply an XMLTVListing, you might prefer to call
-        :meth:`pyskyq.xmltvlisting.XMLTVListing.fetch` manually first, followed by
+        :meth:`.xmltvlisting.XMLTVListing.fetch` manually first, followed by
         :meth:`apply_XMLTVListing`.
 
         Args:
-            listing (XMLTVListing): a :class:`~pyskyq.xmltvlisting.XMLTVListing` object to
+            listing (XMLTVListing): a :class:`~.xmltvlisting.XMLTVListing` object to
                 download and apply to the EPG.
 
         Returns:
@@ -331,7 +330,7 @@ class EPG:
         """Merge listing data into the EPG channels data structure.
 
         Args:
-            listing(XMLTVListing): a: class: `~pyskyq.xmltvlisting.XMLTVListing` object to
+            listing(XMLTVListing): a: class: `~.xmltvlisting.XMLTVListing` object to
             merge to the EPG.
 
         Returns:
@@ -354,7 +353,7 @@ class EPG:
     def cronjobs(self) -> List[Tuple[XMLTVListing, Optional[str]]]:
         """Return currently loaded XML TV Listings and associated cronjobs.
 
-        This returns a list of :class:`~pyskyq.xmltvlisting.XMLTVListing` objects and
+        This returns a list of :class:`~.xmltvlisting.XMLTVListing` objects and
         associated cronspec strings.
 
         Returns:

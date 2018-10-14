@@ -1,13 +1,15 @@
 import asyncio
-import aiohttp
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
+
+import aiohttp
 import pytest
 from aiohttp import MultipartWriter
-from datetime import datetime, timezone
 from dateutil import tz
 from yarl import URL
+
 from pyskyq import XMLTVListing
 
 from .isloated_filesystem import isolated_filesystem

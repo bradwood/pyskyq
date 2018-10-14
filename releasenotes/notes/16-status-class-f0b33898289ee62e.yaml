@@ -1,6 +1,6 @@
 ---
 prelude: |
-    This release adds the :class:`~pyskyq.status.Status` class. This is quite a big addition in that
+    This release adds the :class:`~.status.Status` class. This is quite a big addition in that
     it introduces a separate thread for managing subscriptions to the SkyQ's
     websocket services via the :py:mod:`asyncio`-based websockets_ module.
 
@@ -13,7 +13,7 @@ issues:
     the async-cum-thread design works. More work is needed to subscribe to other webocket- and uPNP-based event
     streams.
   - |
-    test coverage of :class:`~pyskyq.status.Status` is not great due to the difficulty in mocking
+    test coverage of :class:`~.status.Status` is not great due to the difficulty in mocking
     all the various websocket protocol events. A separate issue (27_) has been opend to follow up on this,
     but in the interests of making progress, we are proceeding with this inferior test coverage.
 

@@ -11,8 +11,8 @@ from typing import Optional, Iterator
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from yarl import URL
 
-from pyskyq.utils import parse_http_date, xml_parse_and_remove
-from pyskyq.channel import Channel, channel_from_xmltv_list
+from .utils import parse_http_date, xml_parse_and_remove
+from .channel import Channel, channel_from_xmltv_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,14 +27,14 @@ class XMLTVListing(Hashable):
 
     Note:
 
-        The :class:`~pyskyq.channel.Channel` class provides the **primary**
-        interface to channel data through the :class:`~pyskyq.epg.EPG` class.
+        The :class:`~.channel.Channel` class provides the **primary**
+        interface to channel data through the :class:`~.epg.EPG` class.
 
         This class provides the means to download and parse XML data to do with
         channels, but more importantly, programming schedules. While it can be used
         stand-alone, it is designed to be dependency-injected into the
-        :class:`~pyskyq.epg.EPG` object using
-        :meth:`pyskyq.epg.EPG.add_XMLTV_listing_schedule`.
+        :class:`~.epg.EPG` object using
+        :meth:`.epg.EPG.add_XMLTV_listing_schedule`.
 
     """
 

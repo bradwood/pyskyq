@@ -6,15 +6,15 @@ prelude: >
     into the ``EPG`` on demand, or via a schedule and have it integrate
     seamlessly with data obtained directly from the SkyQ box.
 features:
-  - Added the :class:`~pyskyq.xmltvlisting.XMLTVListing` class to download and
+  - Added the :class:`~.xmltvlisting.XMLTVListing` class to download and
     parse XMLTV feeds.
   - Added cron-style scheduling of XMLTV downloads through the introduction of
-    class:`~pyskyq.cronthread.CronThread`.
-  - Generalised :class:`~pyskyq.channel.Channel` to support data from multiple sources
+    class:`~.cronthread.CronThread`.
+  - Generalised :class:`~.channel.Channel` to support data from multiple sources
     and made some factory functions to generate Channels from various sources.
   - Added Channel merge function to enable a new channel to be created using
     merged data from both the XML TV and SkyQ sources.
-  - Improved :meth:`pyskyq.EPG.getChannel` to enable more sophisticated searching,
+  - Improved :meth:`.EPG.getChannel` to enable more sophisticated searching,
     including by name, channel quality, ``+1`` channels using either fuzzy or
     exact matching.
 issues:
@@ -23,14 +23,14 @@ issues:
   - All asyncio-related loop and thread management stuff should probably be extracted
     into a separate class to be injected where needed.
 fixes:
-  - Massively improved test coverage for :class:`~pyskyq.epg.EPG` and made the
+  - Massively improved test coverage for :class:`~.epg.EPG` and made the
     tests more granular.
   - Made a better ``__repr__()`` for EPG, Channel and a few other classe to make
     debugging easier.
   - Fixed Sphinx layout, coroutine support, and ordering. Much improved module
     documentation also.
-  - Made :class:`~pyskyq.channel.Channel` immutable and ``Hashable`` to facilitate
+  - Made :class:`~.channel.Channel` immutable and ``Hashable`` to facilitate
     easier management of lists of Channels.
-  - Added :class:`pyskyq.constants.QUALITY` for representing the various channel
+  - Added :class:`.constants.QUALITY` for representing the various channel
     quality types (``HD``, ``SD``, ``AU``).
 

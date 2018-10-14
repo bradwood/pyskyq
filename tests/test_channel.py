@@ -1,11 +1,15 @@
 # pylint: skip-file
-import pytest
 import json
-from pyskyq.channel import Channel, channel_from_skyq_service, channel_from_xmltv_list, merge_channels
-from pyskyq.constants import CHANNELSOURCES
 import xml.etree.ElementTree as ET
+
+import pytest
 from yarl import URL
-from .mock_constants import SERVICE_DETAIL_1, SERVICE_SUMMARY_MOCK, XML_CHANNEL_1
+
+from pyskyq import (CHANNELSOURCES, Channel, channel_from_skyq_service,
+                    channel_from_xmltv_list, merge_channels)
+
+from .mock_constants import (SERVICE_DETAIL_1, SERVICE_SUMMARY_MOCK,
+                             XML_CHANNEL_1)
 
 
 def test_hashable_channels():

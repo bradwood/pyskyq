@@ -9,7 +9,6 @@ import pytest
 from asynctest import CoroutineMock, MagicMock
 
 from pyskyq import REMOTECOMMANDS as RCMD
-#from pyskyq.cli import run
 
 from .asynccontextmanagermock import AsyncContextManagerMock
 from .mock_constants import REMOTE_TCP_MOCK
