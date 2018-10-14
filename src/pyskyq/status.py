@@ -15,6 +15,7 @@ import signal
 import socket
 from threading import Thread
 from typing import Dict
+from enum import Enum
 
 import websockets
 
@@ -112,7 +113,7 @@ class Status:
                         asyncio.create_task(self._handle(json.loads(payload)))
 
             except (socket.gaierror, ConnectionRefusedError) as sc_err:
-                await asyncio.sleep(1)
+                await asyncio.sleep(.1)
                 LOGGER.debug(f'Could not connect to web socket. Error={sc_err}. Retrying...')
                 # sleep a bit, log it, then try again
                 continue
@@ -168,14 +169,14 @@ class Status:
 
 
     async def _shutdown_signal_handler(self,
-                                       sig: int,
+                                       sig: Enum,
                                        ) -> None:
         """Shut down event loop cleanly."""
 
 
         # mypy gets confused wit IntEnums
-        LOGGER.info(f'Caught {sig.name} signal')  # type: ignore
-        self._shutdown_sentinel = True  # trigger websocked to shutdown cleanly.
+        LOGGER.info(f'Caught {sig.name} signal')
+        self._shutdown_sentinel = True  # trigger websocket to shutdown cleanly.
         tasks = [task for task in asyncio.Task.all_tasks() if task is not
                  asyncio.tasks.Task.current_task()]
         results = await asyncio.gather(*tasks, return_exceptions=True).cancel()  # type: ignore
