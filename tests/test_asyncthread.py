@@ -21,8 +21,11 @@ def test_asyncthread():
     at1 = AsyncThread()
     at2 = AsyncThread()
 
+    # test singleton.
     assert at1.loop is at2.loop
     assert at1.thread is at2.thread
+
+    assert at1.shutdown_sentinel is False
     assert at1.thread.is_alive()
 
     async def t1():
@@ -35,16 +38,12 @@ def test_asyncthread():
 
 
     async def cancel_me():
-        print('cancel_me(): before sleep')
         try:
             # Wait for 1 hour
             await asyncio.sleep(3600)
         except asyncio.CancelledError:
-            print('cancel_me(): cancel sleep')
             await asyncio.sleep(5)
             raise
-        finally:
-            print('cancel_me(): after sleep')
 
 
     f1 = asyncio.run_coroutine_threadsafe(
@@ -68,4 +67,12 @@ def test_asyncthread():
         time.sleep(.1)
     assert f2.result() == "...he's very naughty boy."
 
-    at1.shutdown_async_thread()
+    at1.shutdown()
+    assert at1.shutdown_sentinel is True
+
+    time.sleep(0.1)
+    assert not at1.loop.is_running()
+
+    at3 = AsyncThread()  #create a new one to test re-initing...
+    assert at3.shutdown_sentinel is False
+    assert at3.thread.is_alive()

@@ -5,6 +5,14 @@ prelude: >
     the addition of a number of new classes, it's now possible to load XMLTV
     into the ``EPG`` on demand, or via a schedule and have it integrate
     seamlessly with data obtained directly from the SkyQ box.
+
+
+    This has resulted in a refactoring and clean up of a number of other parts
+    of the codebase, including a major rework of all asyncio-based coroutines
+    to operate in a separate dedicated thread. The rationale for this, apart
+    from general tidying up, is to provide a synchronous API to users whilst
+    still taking advantage of asyncio, as well as to separate the internal
+    event from any others that the calling code might employ in the main thread.
 features:
   - Added the :class:`~.xmltvlisting.XMLTVListing` class to download and
     parse XMLTV feeds.
@@ -17,6 +25,9 @@ features:
   - Improved :meth:`.EPG.get_channel` to enable more sophisticated searching,
     including by name, channel quality, ``+1`` channels using either fuzzy or
     exact matching.
+  - Introduced a :class:`~.asyncthread.AsyncThread` to manage asyncio event loops
+    in a separate thread and refactored all async calls throughout the library to
+    run in this thread.
 issues:
   - More inversion of control is needed with the Status object to improve the
     interface and make it easier to test.
