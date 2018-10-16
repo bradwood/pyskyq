@@ -1,6 +1,6 @@
 """Constants for button codes, ports, and so on."""
 
-from enum import IntEnum, Enum, Flag, auto
+from enum import IntEnum, Enum, IntFlag, auto
 
 REMOTE_LEGACY_PORT: int = 5900
 """int: Legacy port number for older Sky Boxes."""
@@ -17,7 +17,7 @@ class QUALITY(Enum):
 
 
 
-class CHANNELSOURCES(Flag):
+class CHANNELSOURCES(IntFlag):
     """Enumeration of Channel Sources."""
 
     no_source = 0

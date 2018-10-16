@@ -1,21 +1,25 @@
 """This module implements the EPG class."""
 
 import asyncio
+import functools
+import json
 import logging
-from typing import List, Optional, Tuple, Union, Any
 import time
+from typing import Any, List, Optional, Tuple, Union
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from croniter.croniter import croniter
 from fuzzywuzzy import process
 
 from dataclasses import dataclass
-from .channel import Channel, channel_from_skyq_service, merge_channels
+
+from .asyncthread import AsyncThread
+from .channel import (Channel, ChannelJSONEncoder, channel_from_json,
+                      channel_from_skyq_service, merge_channels)
 from .constants import QUALITY as Q
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
-                              REST_SERVICES_URL)
+                        REST_SERVICES_URL)
 from .cronthread import CronThread
-from .asyncthread import AsyncThread
 from .xmltvlisting import XMLTVListing
 
 LOGGER = logging.getLogger(__name__)
@@ -83,7 +87,8 @@ class EPG:
         """Load channel data into channel property.
 
         This method fetches the channel list from ``/as/services`` endpoint and loads
-        :attr:`~.epg.EPG._channels`
+        :attr:`~.epg.EPG._channels`. It then fetches the detail from ``/as/services/details/<sid>``
+        and adds that to the channels.
 
         Returns:
             None
@@ -94,10 +99,14 @@ class EPG:
 
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
+            LOGGER.debug(f'About to fetch channel list from sky box.')
             chan_payload_json = await session.get(url)
+            LOGGER.debug(f'Got channel list from sky box.')
             chan_payload = await chan_payload_json.json()
+            LOGGER.debug(f'Parsed channel list JSON from sky box.')
 
             for single_channel_payload in chan_payload['services']:
+                LOGGER.debug(f'Processing {single_channel_payload}')
                 channel = channel_from_skyq_service(single_channel_payload)
                 sid = channel.sid
                 detail_url =f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
@@ -107,6 +116,24 @@ class EPG:
                 self._channels.append(detailed_channel)
 
 
+    def as_json(self) -> str:
+        """Return the channel and programme data as JSON."""
+        return json.dumps(self._channels, cls=ChannelJSONEncoder, indent=4)
+
+    def from_json(self, json_: str) -> None:
+        """Load channel and programme data from JSON."""
+        payload = json.loads(json_)
+        new_chans: list = []
+
+        for item in payload:
+            if item['__type__'] == "__channel__":
+                new_chans.append(channel_from_json(json.dumps(item)))
+            else:
+                pass
+                # TODO: add jobs, programmes, etc
+        self._channels = new_chans
+
+
     def load_skyq_channel_data(self) -> None:
         """Load all channel data from the SkyQ REST Service.
 
@@ -114,7 +141,7 @@ class EPG:
         :class:`~.epg.EPG` object.
 
         Warning:
-            This method is non-blocking. You may need to wait a few seconds before
+            This method is non-blocking. You may need to wait a bit before
             the channels are all fully loaded..
 
         Returns:
@@ -145,7 +172,7 @@ class EPG:
         """
         sid = str(sid)
         if not self.channels_loaded():
-            raise ValueError(f"No channels loaded.")
+            raise ValueError("No channels loaded.")
 
         for chan in self._channels:
             if chan.sid == sid:
@@ -185,8 +212,8 @@ class EPG:
         """
         if limit < 1:
             raise ValueError('Limit must be 1 or higher.')
-        if not self._channels:
-            raise ValueError(f"No channels loaded.")
+        if not self.channels_loaded():
+            raise ValueError("No channels loaded.")
 
         if not include_timeshift:
             channels = [chan for chan in self._channels if not chan.timeshifted]
@@ -253,7 +280,7 @@ class EPG:
             if cronspec and croniter.is_valid(cronspec):
                 cron_t = CronThread()
                 cron_t.crontab(cronspec,
-                               func=self.download_and_apply_XMLTVListing(listing),
+                               func=functools.partial(self._download_and_apply_XMLTVListing, listing),
                                start=True
                                )
                 cronjob = self._CronJob(listing=listing, schedule=cronspec, thread=cron_t)
@@ -265,10 +292,14 @@ class EPG:
 
         if run_now:
             # no thread required, just run it async in this thread.
-            asyncio.run(self.download_and_apply_XMLTVListing(listing))
+            # asyncio.run(self._download_and_apply_XMLTVListing(listing))
+            asyncio.run_coroutine_threadsafe(
+                self._download_and_apply_XMLTVListing(listing),
+                at.loop
+            )
 
 
-    async def download_and_apply_XMLTVListing(self, listing: XMLTVListing) -> None:
+    async def _download_and_apply_XMLTVListing(self, listing: XMLTVListing) -> None:
         """Download a listing and merge its data into the EPG channels data structure.
 
         This method is intended primarily for use in EPG cronjobs. If you wish to manually
@@ -290,12 +321,13 @@ class EPG:
         if not self._channels:
             raise ValueError(f"No channels loaded.")
 
+        LOGGER.debug(f'Listing = {listing}')
         await listing.fetch()  # do the download
         self.apply_XMLTVListing(listing)
 
 
     def apply_XMLTVListing(self, listing: XMLTVListing) -> None:
-        """Merge listing data into the EPG channels data structure.
+        """Merge listing data into the EPG channels data structure by channel name.
 
         Args:
             listing(XMLTVListing): a: class: `~.xmltvlisting.XMLTVListing` object to
@@ -305,17 +337,24 @@ class EPG:
             None
 
         Raises:
-            ValueError: Raised if the channel list is empty.
+            ValueError: Raised if the channel list is empty, or the XMLTVListing file
+                cannot be found.
 
         """
         if not self._channels:
-            raise ValueError(f"No channels loaded.")
+            raise ValueError("No channels loaded.")
+
+        if not listing.downloaded_okay:
+            raise ValueError("No XMLTVListing file found.")
 
         # TODO: optimise this, maybe with some kind of sorted list?
         for skyq_channel in self._channels:
             for xmltv_channel in listing.parse_channels():  # load the channels
                 if skyq_channel.name.lower() == xmltv_channel.xmltv_display_name.lower():
-                    skyq_channel = merge_channels(skyq_channel, xmltv_channel)
+                    new_chan = merge_channels(skyq_channel, xmltv_channel)
+                    self._channels.append(new_chan)
+                    self._channels.remove(skyq_channel)
+
 
     def get_cronjobs(self) -> List[Tuple[XMLTVListing, str]]:
         """Return currently loaded XML TV Listings and associated cronjobs.

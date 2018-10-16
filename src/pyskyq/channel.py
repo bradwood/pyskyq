@@ -1,5 +1,6 @@
 """This module implements the Channel class and associated factory functions."""
 import copy
+import json
 import logging
 from collections.abc import Hashable
 from typing import Any, Dict
@@ -10,7 +11,26 @@ from yarl import URL
 from .constants import CHANNEL_FIELD_MAP
 from .constants import CHANNELSOURCES as CSRC
 
+
 LOGGER = logging.getLogger(__name__)
+
+
+class ChannelJSONEncoder(json.JSONEncoder):
+    """Encode Channel objects in JSON."""
+
+    def default(self, obj):  # pylint: disable=E0202
+        if isinstance(obj, Channel):
+            type_ = '__channel__'
+            chan_dict = obj._chan_dict
+            sources = obj._sources
+            return {'__type__': type_,
+                    'attributes': chan_dict,
+                    'sources': sources
+                    }
+        elif isinstance(obj, CSRC):
+            return int(obj)
+        else:
+            json.JSONEncoder.default(self, obj)
 
 
 class Channel(Hashable):
@@ -131,6 +151,10 @@ class Channel(Hashable):
         # empty channel
         return hash(CSRC.no_source)
 
+    def as_json(self) -> str:
+        """Return a JSON string respenting this Channel's state"""
+        return json.dumps(self, cls=ChannelJSONEncoder, indent=4)
+
     @property
     def sources(self) -> CSRC:
         """Return the sources flag.
@@ -218,6 +242,19 @@ class Channel(Hashable):
         newchannel._sources = copy.copy(self._sources | CSRC.xml_tv)
 
         return newchannel
+
+# pylint: disable=attribute-defined-outside-init
+# pylint: disable=protected-access
+def channel_from_json(json_) -> Channel:
+    """Create a channel from JSON data."""
+    chan = Channel.__new__(Channel)
+    data = json.loads(json_)
+    if not data.get('__type__') == '__channel__':
+        raise ValueError('Incorrect type metadata in JSON payload.')
+    chan._chan_dict = data['attributes']
+    chan._sources = data['sources']
+    return chan
+
 
 
 def channel_from_skyq_service(skyq_chan: Dict[str, Any]) -> Channel:

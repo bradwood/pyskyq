@@ -12,7 +12,8 @@ class AsyncContextManagerMock(MagicMock):
         return self.aenter_return
 
     async def __aexit__(self, *args):
-        return self.aexit_return
+        pass
+        # return self.aexit_return
 
     # # Grabbed this hack from here
     # # https://github.com/aaugustin/websockets/issues/359

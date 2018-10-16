@@ -66,8 +66,6 @@ async def test_xmltvlisting_fetch_200(aresponses):
         await l.fetch()
         assert l._downloaded_okay
         assert l.file_path.is_file()
-        LOGGER.debug(l.last_modified)
-        LOGGER.debug(datetime(2018, 10, 8, 1, 50, 19, 0))
         assert l.last_modified == datetime(2018,10,8,1,50,19,0)
 
         with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
@@ -115,9 +113,6 @@ def test_channel_parse():
     with pytest.raises(OSError, match='File not downloaded okay.'):
         for chan in l.parse_channels():
             pass # should throw an error as file is not downloaded.
-
-
-
 
     l._full_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
     l._downloaded_okay = True

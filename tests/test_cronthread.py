@@ -16,8 +16,8 @@ def test_cronthread(capsys):
               start=True
               )
 
-    time.sleep(5)
+    time.sleep(2.5)
     t.stop()
 
     captured = capsys.readouterr()
-    assert captured.out == "It works\nIt works\nIt works\nIt works\n"
+    assert captured.out == "It works\nIt works\n"

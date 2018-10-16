@@ -29,6 +29,7 @@ features:
   - Introduced a :class:`~.asyncthread.AsyncThread` to manage asyncio event loops
     in a separate thread and refactored all async calls throughout the library to
     run in this thread.
+  - Added JSON Encoding/Decoding for Channels & EPG.
 issues:
   - More inversion of control is needed with the Status object to improve the
     interface and make it easier to test.
