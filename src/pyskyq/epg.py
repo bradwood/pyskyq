@@ -3,6 +3,7 @@
 import asyncio
 import logging
 from typing import List, Optional, Tuple, Union, Any
+import time
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from croniter.croniter import croniter
@@ -14,9 +15,12 @@ from .constants import QUALITY as Q
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                               REST_SERVICES_URL)
 from .cronthread import CronThread
+from .asyncthread import AsyncThread
 from .xmltvlisting import XMLTVListing
 
 LOGGER = logging.getLogger(__name__)
+
+at = AsyncThread()
 
 class EPG:
     """The top-level class for all EPG data and functions.
@@ -30,7 +34,7 @@ class EPG:
     This channel data is then *augmented* with data from www.xmltv.co.uk which provides
     an XML file which follows the ``xmltv`` DTD.
 
-    It also used the ``xmltv`` file to load **listings** data to enable the querying of
+    It also uses the ``xmltv`` file to load **listings** data to enable the querying of
     programmes that are scheduled on the channels.
 
     Args:
@@ -48,16 +52,16 @@ class EPG:
                  host: str,
                  *,
                  rest_port: int = REST_PORT,
-                 loop: asyncio.AbstractEventLoop = None
                  ) -> None:
         """Initialise Sky EPG Object."""
         self.host: str = host
         self.rest_port: int = rest_port
         self._channels: list = []
         self._jobs: list = []
-        self._loop = loop if loop else asyncio.get_event_loop()
 
-        assert not self._loop.is_closed()
+        #self._loop = loop if loop else asyncio.get_event_loop()
+
+        #assert not self._loop.is_closed()
 
         LOGGER.debug(f"Initialised EPG object using SkyQ box={self.host}")
 
@@ -75,7 +79,7 @@ class EPG:
         """
         return bool(self._channels)
 
-    async def _load_channel_list(self) -> None:
+    async def _load_channels_from_skyq(self) -> None:
         """Load channel data into channel property.
 
         This method fetches the channel list from ``/as/services`` endpoint and loads
@@ -86,63 +90,21 @@ class EPG:
 
         """
         url = f'http://{self.host}:{self.rest_port}{REST_SERVICES_URL}'
-        LOGGER.debug('Fetching channel list from {url}')
+        LOGGER.debug(f'Fetching channel list from {url}')
 
         timeout = ClientTimeout(total=60)
         async with ClientSession(timeout=timeout) as session:
             chan_payload_json = await session.get(url)
             chan_payload = await chan_payload_json.json()
 
-        for channel in chan_payload['services']:
-            self._channels.append(channel_from_skyq_service(channel))
-
-
-    async def _fetch_all_chan_details(self,
-                                      session: ClientSession,
-                                      sid_list: List[int]
-                                      ) -> Tuple:
-        """Fetch channel detail data from SkyQ box asynchronously.
-
-        This method fetches the channel list from ``/as/services/detail/<sid>`` endpoint.
-
-        Args:
-            session (aiohttp.ClientSession): Session to use when fetching the data.
-            sid_list (list): List of Channel SID's to fetch.
-
-        Returns:
-            List: List of JSON documents for each channel detail fetched.
-
-        """
-        urls = [f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
-                for sid in sid_list]
-        results = await asyncio.gather(*[session.get(url) for url in urls], loop=self._loop)
-
-        return results
-
-
-    async def _load_channel_details(self) -> None:
-        """Load channel details onto channel properties.
-
-        This method is a wrapper which calls :meth:`~.epg.EPG._fetch_all_chan_details`
-        to get the details about each channel from it's detail endpoint
-        ``/as/services/details/<sid>`` and then adds it to the list data
-        on :attr:`~.epg.EPG._channels`.
-
-        Returns:
-            None
-
-        """
-        sid_list = [chan.sid for chan in self._channels]
-        timeout = ClientTimeout(total=60)
-        async with ClientSession(timeout=timeout) as session:
-            channels = await self._fetch_all_chan_details(session, sid_list)
-            for channel, sid in zip(channels, sid_list):
-                json_dict = await channel.json()
-                # channels are immutable, so need to remove the old and add the new
-                new_chan = self.get_channel_by_sid(sid).load_skyq_detail_data(json_dict)
-                self._channels.remove(self.get_channel_by_sid(sid))
-                self._channels.append(new_chan)
-
+            for single_channel_payload in chan_payload['services']:
+                channel = channel_from_skyq_service(single_channel_payload)
+                sid = channel.sid
+                detail_url =f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
+                detail_payload_json = await session.get(detail_url)
+                detail_payload = await detail_payload_json.json()
+                detailed_channel = channel.load_skyq_detail_data(detail_payload)
+                self._channels.append(detailed_channel)
 
 
     def load_skyq_channel_data(self) -> None:
@@ -151,18 +113,18 @@ class EPG:
         This method loads all channel data from the SkyQ box into the
         :class:`~.epg.EPG` object.
 
+        Warning:
+            This method is non-blocking. You may need to wait a few seconds before
+            the channels are all fully loaded..
+
         Returns:
             None
 
         """
-
-        # if not loop.is_running():
-        #     lopp = asyncio.new_event_loop()
-
-        self._loop.run_until_complete(self._load_channel_list())
-        self._loop.run_until_complete(self._load_channel_details())
-
-        # loop.close()
+        asyncio.run_coroutine_threadsafe(
+            self._load_channels_from_skyq(),
+            at.loop
+        )
 
     def get_channel_by_sid(self,
                     sid: Any

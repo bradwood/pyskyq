@@ -8,11 +8,12 @@ prelude: >
 
 
     This has resulted in a refactoring and clean up of a number of other parts
-    of the codebase, including a major rework of all asyncio-based coroutines
-    to operate in a separate dedicated thread. The rationale for this, apart
-    from general tidying up, is to provide a synchronous API to users whilst
-    still taking advantage of asyncio, as well as to separate the internal
-    event from any others that the calling code might employ in the main thread.
+    of the codebase, including a major rework of all asyncio-based coroutines to
+    operate in a separate dedicated thread (:class:`~.asyncthread.AsyncThread`).
+    The rationale for this, apart from general tidying up, is to provide a
+    synchronous API to users whilst still taking advantage of asyncio, as well
+    as to separate the internal event from any others that the calling code
+    might employ in the main thread.
 features:
   - Added the :class:`~.xmltvlisting.XMLTVListing` class to download and
     parse XMLTV feeds.
@@ -44,4 +45,8 @@ fixes:
     easier management of lists of Channels.
   - Added :class:`.constants.QUALITY` for representing the various channel
     quality types (``HD``, ``SD``, ``AU``).
+  - Refactored :class:`~.status.Status` to use :class:`~.asyncthread.AsyncThread`.
+  - Simplified fetching of channel data from both summary and detail SkyQ endpoints
+    in :meth:`.epg.load_skyq_channel_data` to load the detail data on the fly rather
+    than after all summary channel data was downloaded.
 
