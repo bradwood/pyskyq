@@ -21,9 +21,9 @@ class CHANNELSOURCES(IntFlag):
     """Enumeration of Channel Sources."""
 
     no_source = 0
-    skyq_service_summary = auto()  # data got from skyq:9006/as/service
-    skyq_service_detail = auto()   # data got from skyq:9006/as/service/detail/<sid>
-    xml_tv = auto()  # data got from XMLTV servce
+    skyq_service_summary = 1  # data got from skyq:9006/as/service
+    skyq_service_detail = 2   # data got from skyq:9006/as/service/detail/<sid>
+    xml_tv = 4  # data got from XMLTV servce
     all_source = skyq_service_summary | skyq_service_detail | xml_tv
 
 

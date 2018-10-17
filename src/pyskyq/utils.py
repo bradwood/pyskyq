@@ -19,7 +19,8 @@ def parse_http_date(httpdatetime: str) -> datetime:
     return datetime(*eut.parsedate(httpdatetime)[:6])  # type: ignore
 
 
-# todo: use  XMLPullParser instead of iterparse() as it's non-blocking...
+# TODO: use  XMLPullParser instead of iterparse() as it's non-blocking...
+# TODO: add error checking for XML errors
 def xml_parse_and_remove(filename, path) -> Iterator[Any]:
     """Incrementally load and parse an XML file.
 
@@ -38,20 +39,12 @@ def xml_parse_and_remove(filename, path) -> Iterator[Any]:
             LOGGER.debug(f'Parsing XML element: {elem.tag}')
             tag_stack.append(elem.tag)
             elem_stack.append(elem)
-            # LOGGER.debug(f'START: tag stack = {tag_stack}')
-            # LOGGER.debug(f'START: elem stack = {elem_stack}')
         else: # event == 'end'
-            # LOGGER.debug(f'END: tag stack = {tag_stack}')
-            # LOGGER.debug(f'END: elem stack = {elem_stack}')
             if tag_stack == path_parts:
-                # LOGGER.debug(f'YEILD!!! ________________ {elem}')
                 yield elem
                 elem.clear()
             try:
-                # LOGGER.debug('POPPING both stacks')
                 tag_stack.pop()
                 elem_stack.pop()
             except IndexError:
                 pass
-
-

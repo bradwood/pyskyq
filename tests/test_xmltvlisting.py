@@ -31,7 +31,7 @@ def test_xmltvlisting_init():
         assert m._url == URL('http://blah.com/feed/6715')
         assert isinstance(m._path, Path)
         assert str(m._path) == 'somedir'
-        assert "<List: url='http://blah.com/feed/6715', path='somedir'" in m.__repr__()
+        assert "<XMLTVListing: url='http://blah.com/feed/6715', path='somedir'" in m.__repr__()
         assert m._path.is_dir()
         assert m.url == URL('http://blah.com/feed/6715')
 
@@ -45,7 +45,7 @@ def test_xmltvlisting_init():
         assert m.__hash__() == n.__hash__()
 
 
-xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
+xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.txt')
 
 @pytest.mark.asyncio
 async def test_xmltvlisting_fetch_200(aresponses):
@@ -62,9 +62,9 @@ async def test_xmltvlisting_fetch_200(aresponses):
 
     with isolated_filesystem():
         l = XMLTVListing('http://foo.com/feed/6715')
-        assert not l._downloaded_okay
+        assert not l._downloaded
         await l.fetch()
-        assert l._downloaded_okay
+        assert l._downloaded
         assert l.file_path.is_file()
         assert l.last_modified == datetime(2018,10,8,1,50,19,0)
 
@@ -107,15 +107,16 @@ async def test_xmltvlisting_fetch_206(aresponses):
         with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
             assert src.read(-1) == dest.read(-1)
 
+#TODO -- add bad xml file test here.
 def test_channel_parse():
     l = XMLTVListing('http://foo.com/feed/6715')
 
-    with pytest.raises(OSError, match='File not downloaded okay.'):
+    with pytest.raises(OSError, match='File not downloaded, or download is currently in flight.'):
         for chan in l.parse_channels():
             pass # should throw an error as file is not downloaded.
 
     l._full_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
-    l._downloaded_okay = True
+    l._downloaded = True
 
     for i,chan in enumerate(l.parse_channels()):
 

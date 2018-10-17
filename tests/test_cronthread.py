@@ -1,8 +1,16 @@
-import pytest
-import aiocron
 import asyncio
+import logging
+import sys
 import time
+
+import pytest
+
+import aiocron
 from pyskyq import CronThread
+
+logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+                    format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
 def test_cronthread(capsys):
     t = CronThread()
@@ -16,7 +24,7 @@ def test_cronthread(capsys):
               start=True
               )
 
-    time.sleep(2.5)
+    time.sleep(3)
     t.stop()
 
     captured = capsys.readouterr()

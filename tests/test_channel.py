@@ -67,7 +67,7 @@ def test_blank_channel():
 
 
     assert blank_chan.sources == CHANNELSOURCES.no_source
-    assert blank_chan.__repr__() == '<Channel: sources=CHANNELSOURCES.no_source, id=None, xmltv_id=None, number=None, name=None>'
+    assert blank_chan.__repr__() == f'<Channel: sources={CHANNELSOURCES.no_source}, id=None, xmltv_id=None, number=None, name=None>'
 
     with pytest.raises(AttributeError, match="Can't modify sid"):
         blank_chan.sid = 232
@@ -82,7 +82,7 @@ def test_channel_from_skyq_service():
 
     assert isinstance(chan, Channel)
     assert chan.sources == CHANNELSOURCES.skyq_service_summary
-    assert chan.__repr__() == '<Channel: sources=CHANNELSOURCES.skyq_service_summary, id=2002, xmltv_id=None, number=101, name=BBC One Lon>'
+    assert chan.__repr__() == f'<Channel: sources={CHANNELSOURCES.skyq_service_summary}, id=2002, xmltv_id=None, number=101, name=BBC One Lon>'
     assert chan.c == "101"
     assert chan.t == "BBC One Lon"
     assert chan.name == "BBC One Lon"
@@ -96,7 +96,7 @@ def test_channel_from_skyq_service():
 
     assert chan.isbroadcasting
     assert chan.sources == CHANNELSOURCES.skyq_service_summary | CHANNELSOURCES.skyq_service_detail
-    assert chan.__repr__() == '<Channel: sources=CHANNELSOURCES.skyq_service_detail|skyq_service_summary, id=2002, xmltv_id=None, number=101, name=BBC One Lon>'
+    assert chan.__repr__() == f'<Channel: sources={CHANNELSOURCES.skyq_service_detail | CHANNELSOURCES.skyq_service_summary}, id=2002, xmltv_id=None, number=101, name=BBC One Lon>'
 
     assert chan.upgradeMessage == "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
     assert chan.desc == "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
@@ -108,7 +108,7 @@ def test_channel_from_xmltv_data():
 
     assert isinstance(chan, Channel)
     assert chan.sources == CHANNELSOURCES.xml_tv
-    assert chan.__repr__() == '<Channel: sources=CHANNELSOURCES.xml_tv, id=None, xmltv_id=f3932e75f691561adbe3b609369e487b, number=None, name=None>'
+    assert chan.__repr__() == f'<Channel: sources={CHANNELSOURCES.xml_tv}, id=None, xmltv_id=f3932e75f691561adbe3b609369e487b, number=None, name=None>'
     assert chan.xmltv_id == "f3932e75f691561adbe3b609369e487b"
     assert isinstance(chan.xmltv_icon_url, URL)
     assert chan.xmltv_icon_url.human_repr() == "http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png"
@@ -124,7 +124,7 @@ def test_channel_from_both_sources():
 
     assert isinstance(chan, Channel)
     assert chan.sources == CHANNELSOURCES.xml_tv | CHANNELSOURCES.skyq_service_summary
-    assert chan.__repr__() == '<Channel: sources=CHANNELSOURCES.xml_tv|skyq_service_summary, id=2002, xmltv_id=f3932e75f691561adbe3b609369e487b, number=101, name=BBC One Lon>'
+    assert chan.__repr__() == f'<Channel: sources={CHANNELSOURCES.xml_tv | CHANNELSOURCES.skyq_service_summary}, id=2002, xmltv_id=f3932e75f691561adbe3b609369e487b, number=101, name=BBC One Lon>'
     assert chan.c == "101"
     assert chan.t == "BBC One Lon"
     assert chan.name == "BBC One Lon"
@@ -138,7 +138,7 @@ def test_channel_from_both_sources():
 
     assert isinstance(chan, Channel)
     assert chan.sources == CHANNELSOURCES.xml_tv | CHANNELSOURCES.skyq_service_summary
-    assert chan.__repr__() == '<Channel: sources=CHANNELSOURCES.xml_tv|skyq_service_summary, id=2002, xmltv_id=f3932e75f691561adbe3b609369e487b, number=101, name=BBC One Lon>'
+    assert chan.__repr__() == f'<Channel: sources={CHANNELSOURCES.xml_tv | CHANNELSOURCES.skyq_service_summary}, id=2002, xmltv_id=f3932e75f691561adbe3b609369e487b, number=101, name=BBC One Lon>'
     assert chan.c == "101"
     assert chan.t == "BBC One Lon"
     assert chan.name == "BBC One Lon"

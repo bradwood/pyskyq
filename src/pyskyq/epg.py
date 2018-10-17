@@ -241,7 +241,7 @@ class EPG:
             raise ValueError('No cronjob found for the passed XMLTVListing.') from ve
 
         cronjob.thread.stop()
-        del self._jobs[cronjob]
+        del self._jobs[self._jobs.index(cronjob)]
 
 
     def add_XMLTV_listing_cronjob(self,
@@ -284,6 +284,7 @@ class EPG:
                                start=True
                                )
                 cronjob = self._CronJob(listing=listing, schedule=cronspec, thread=cron_t)
+                LOGGER.info(f'Listing cronjob added: {cronjob}')
                 self._jobs.append(cronjob)
             else:
                 raise ValueError('Bad cronspec passed.')
@@ -344,16 +345,18 @@ class EPG:
         if not self._channels:
             raise ValueError("No channels loaded.")
 
-        if not listing.downloaded_okay:
+        if not listing.downloaded:
             raise ValueError("No XMLTVListing file found.")
 
-        # TODO: optimise this, maybe with some kind of sorted list?
-        for skyq_channel in self._channels:
-            for xmltv_channel in listing.parse_channels():  # load the channels
-                if skyq_channel.name.lower() == xmltv_channel.xmltv_display_name.lower():
-                    new_chan = merge_channels(skyq_channel, xmltv_channel)
-                    self._channels.append(new_chan)
-                    self._channels.remove(skyq_channel)
+        for xmltv_channel in listing.parse_channels():
+            sky_channel_names = [chan.name.lower() for chan in self._channels]
+            if xmltv_channel.xmltv_display_name.lower() in sky_channel_names:
+                idx = sky_channel_names.index(xmltv_channel.xmltv_display_name.lower())
+                new_chan = merge_channels(self._channels[idx], xmltv_channel)
+                LOGGER.debug(f'New channel:{new_chan}.')
+                self._channels.append(new_chan)
+                LOGGER.debug(f'Replaced {self._channels[idx]} with {new_chan} in EPG.')
+                del self._channels[idx]
 
 
     def get_cronjobs(self) -> List[Tuple[XMLTVListing, str]]:

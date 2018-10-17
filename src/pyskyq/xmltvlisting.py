@@ -2,17 +2,18 @@
 #pylint: disable=line-too-long
 import hashlib
 import logging
+import shutil
 from collections.abc import Hashable
 from datetime import datetime
 from http.client import HTTPException
 from pathlib import Path
-from typing import Optional, Iterator
+from typing import Iterator, Optional
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from yarl import URL
 
-from .utils import parse_http_date, xml_parse_and_remove
 from .channel import Channel, channel_from_xmltv_list
+from .utils import parse_http_date, xml_parse_and_remove
 
 LOGGER = logging.getLogger(__name__)
 
@@ -69,7 +70,8 @@ class XMLTVListing(Hashable):
         self._filename = f'{hashobj.hexdigest()}.xml'
         self._full_path = self._path.joinpath(self._filename)
         self._last_modified: Optional[datetime] = None
-        self._downloaded_okay: bool = False
+        self._downloaded: bool = False
+        self._downloading: bool = False
 
         LOGGER.debug(f'XMLTVListing initialised: {self}')
 
@@ -111,14 +113,24 @@ class XMLTVListing(Hashable):
         return self._url
 
     @property
-    def downloaded_okay(self) -> bool:
+    def downloaded(self) -> bool:
         """Return the status of XMLTV file download.
 
         Returns:
-            bool: ``True`` if the file was downloaded okay
+            bool: ``True`` if the file was downloaded successfully
 
         """
-        return self._downloaded_okay
+        return self._downloaded
+
+    @property
+    def downloading(self) -> bool:
+        """Return the status of XMLTV file download.
+
+        Returns:
+            bool: ``True`` if the file is currently being downlaoded
+
+        """
+        return self._downloading
 
     @property
     def file_path(self) -> Path:
@@ -170,12 +182,14 @@ class XMLTVListing(Hashable):
 
         """
         LOGGER.debug(f'Fetch({self}) called started.')
+        self._downloading = True
         to_ = ClientTimeout(total=timeout)
         async with ClientSession(timeout=to_) as session:
             LOGGER.debug(f'Client session created: {session}. About to fetch url={self._url}')
             byte_start = 0
-            byte_stop = range_size - 1 # as we count from 0
-            with open(self._full_path, 'wb') as file_desc:  #TODO: use aiofile
+            byte_stop = range_size - 1  # as we count from 0
+            newfile = self._full_path.with_suffix('.tmp')
+            with open(newfile, 'wb') as file_desc:  # TODO: use aiofile
                 while True:
                     req_header = {"Range": f'bytes={byte_start}-{byte_stop}'}
                     resp = await session.get(self._url, headers=req_header)
@@ -214,15 +228,17 @@ class XMLTVListing(Hashable):
                         continue
                     break
                     # -------
-
-        self._downloaded_okay = True
+            shutil.move(newfile,self._full_path)
+            self._downloading = False
+            self._downloaded = True
         LOGGER.debug(f'Fetch finished on {self}')
 
     def parse_channels(self) -> Iterator[Channel]:
-        if not self.downloaded_okay:
-            raise OSError('File not downloaded okay.')
         """Parse the XMLTVListing XML file and create an iterator over the channels in it."""
-        LOGGER.debug(f'in parse_channels...{self.file_path}')
-        for xml_chan in xml_parse_and_remove(self.file_path, 'channel'):
-            LOGGER.debug('yielding channel...')
-            yield channel_from_xmltv_list(xml_chan)
+        if not self.downloaded and not self.downloading:
+            raise OSError('File not downloaded, or download is currently in flight.')
+        else:
+            LOGGER.debug(f'in parse_channels. file = {self.file_path}')
+            for xml_chan in xml_parse_and_remove(self.file_path, 'channel'):
+                LOGGER.debug('yielding channel...')
+                yield channel_from_xmltv_list(xml_chan)

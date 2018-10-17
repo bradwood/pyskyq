@@ -99,7 +99,7 @@ def test_apply_EPG_XMLTV_listing(mocker):
 
     l = XMLTVListing('http://host.com/some/feed')
     l._full_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
-    l._downloaded_okay = True
+    l._downloaded = True
 
     epg.load_skyq_channel_data()
     time.sleep(2)
@@ -114,15 +114,13 @@ def test_apply_EPG_XMLTV_listing(mocker):
     assert epg.get_channel_by_sid(2002).xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png'
 
 
-
-xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
+xmlfile_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
 
 def test_add_cronjob(mocker):
     # set up the epg object with sky data.
     epg = EPG('testing_cron')
 
     global json_data
-    print(json_data)
     epg.from_json(json_data)
 
     assert epg.get_channel_by_sid(2002).name == "BBC One Lon"
@@ -144,21 +142,26 @@ def test_add_cronjob(mocker):
 
     b = mocker.patch('aiohttp.ClientSession.get', new_callable=AsyncContextManagerMock)
     b.return_value = xmlresponse
+
     # and finally test the cronjob.
-    with isolated_filesystem():
+    # with isolated_filesystem():
 
-        l = XMLTVListing('http://host.com/some/feed')
-        epg.add_XMLTV_listing_cronjob(l, "*/2 * * * * *", run_now=True)
+    l = XMLTVListing('http://host.com/some/feed')
+    epg.add_XMLTV_listing_cronjob(l, "1 1 1 1 1", run_now=True)
 
-        time.sleep(3)
-        assert epg.get_channel_by_sid(2002).xmltv_id == 'f3932e75f691561adbe3b609369e487b'
-        assert epg.get_channel_by_sid(2002).xmltv_display_name == 'BBC One Lon'
-        assert epg.get_channel_by_sid(2002).xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png'
+    time.sleep(3)
+    assert epg.get_channel_by_sid(2002).xmltv_id == 'f3932e75f691561adbe3b609369e487b'
+    assert epg.get_channel_by_sid(2002).xmltv_display_name == 'BBC One Lon'
+    assert epg.get_channel_by_sid(2002).xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png'
+
+    time.sleep(2)
+    epg.delete_XMLTV_listing_cronjob(l)
+
 
 @pytest.mark.asyncio
 async def tesst_add_cronjob(aresponses):
     # mock out the XMLTV server.
-    # xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.xml')
+    # xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.txt')
     # async def get_XML_handler_200(request):
     #     with open(xmlfile_path, 'r') as fd:
     #         data = fd.read()
