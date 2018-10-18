@@ -10,7 +10,7 @@ from yarl import URL
 
 from .constants import CHANNEL_FIELD_MAP
 from .constants import CHANNELSOURCES as CSRC
-
+from .utils import skyq_json_decoder_hook
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,10 +27,10 @@ class ChannelJSONEncoder(json.JSONEncoder):
                     'attributes': chan_dict,
                     'sources': sources
                     }
-        elif isinstance(obj, CSRC):
-            return int(obj)
+        elif isinstance(obj, URL):
+            return obj.human_repr()
         else:
-            json.JSONEncoder.default(self, obj)
+            json.JSONEncoder.default(self, obj) # pragma: no cover
 
 
 class Channel(Hashable):
@@ -151,6 +151,13 @@ class Channel(Hashable):
         # empty channel
         return hash(CSRC.no_source)
 
+    def __eq__(self, other):
+        """Return True if self == other."""
+        if not isinstance(other, Channel):
+            return False
+        return self._chan_dict == other._chan_dict and self._sources == other._sources # pylint: disable=protected-access
+
+
     def as_json(self) -> str:
         """Return a JSON string respenting this Channel's state"""
         return json.dumps(self, cls=ChannelJSONEncoder, indent=4)
@@ -248,7 +255,7 @@ class Channel(Hashable):
 def channel_from_json(json_) -> Channel:
     """Create a channel from JSON data."""
     chan = Channel.__new__(Channel)
-    data = json.loads(json_)
+    data = json.loads(json_, object_hook=skyq_json_decoder_hook)
     if not data.get('__type__') == '__channel__':
         raise ValueError('Incorrect type metadata in JSON payload.')
     chan._chan_dict = data['attributes']

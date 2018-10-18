@@ -164,10 +164,93 @@ WS_STATUS_MOCK = """
 
 
 """
+
 XML_CHANNEL_1 = """
   <channel id="f3932e75f691561adbe3b609369e487b">
     <display-name>BBC One Lon</display-name>
     <blah>Not understood, not processed, so should be ignored.</blah>
     <icon src="/images/channels/f3932e75f691561adbe3b609369e487b.png"/>
   </channel>
+"""
+
+XML_CHAN_JSON = """{
+    "__type__": "__channel__",
+    "attributes": {
+        "sid": null,
+        "c": null,
+        "t": null,
+        "xmltv_id": "f3932e75f691561adbe3b609369e487b",
+        "xmltv_display_name": "BBC One Lon",
+        "xmltv_icon_url": "http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png"
+    },
+    "sources": 4
+}
+"""
+
+SKYQ_CHAN_JSON = """{
+    "__type__": "__channel__",
+    "attributes": {
+        "sid": "2002",
+        "c": "101",
+        "t": "BBC One Lon",
+        "xmltv_id": null,
+        "dvbtriplet": "2.2045.6301",
+        "schedule": "true",
+        "servicetype": "DSAT",
+        "sf": "sd",
+        "sg": 12,
+        "sk": 2002,
+        "xsg": 3,
+        "isbroadcasting": true,
+        "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
+    },
+    "sources": 3
+}
+"""
+
+MERGED_CHAN_JSON = """{
+    "__type__": "__channel__",
+    "attributes": {
+        "sid": "2002",
+        "c": "101",
+        "t": "BBC One Lon",
+        "xmltv_id": "f3932e75f691561adbe3b609369e487b",
+        "dvbtriplet": "2.2045.6301",
+        "schedule": "true",
+        "servicetype": "DSAT",
+        "sf": "sd",
+        "sg": 12,
+        "sk": 2002,
+        "xsg": 3,
+        "isbroadcasting": true,
+        "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england.",
+        "xmltv_display_name": "BBC One Lon",
+        "xmltv_icon_url": "http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png"
+    },
+    "sources": 7
+}
+"""
+
+
+BAD_JSON = """
+{
+    "attributes": {
+        "sid": "2002",
+        "c": "101",
+        "t": "BBC One Lon",
+        "xmltv_id": "f3932e75f691561adbe3b609369e487b",
+        "dvbtriplet": "2.2045.6301",
+        "schedule": "true",
+        "servicetype": "DSAT",
+        "sf": "sd",
+        "sg": 12,
+        "sk": 2002,
+        "xsg": 3,
+        "isbroadcasting": true,
+        "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england.",
+        "xmltv_display_name": "BBC One Lon",
+        "xmltv_icon_url": "http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png"
+    },
+    "sources": 7
+}
 """

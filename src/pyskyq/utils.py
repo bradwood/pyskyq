@@ -6,6 +6,9 @@ from datetime import datetime
 from typing import Any, Iterator
 from xml.etree.ElementTree import iterparse
 
+from yarl import URL
+
+
 def parse_http_date(httpdatetime: str) -> datetime:
     """Turn an HTTP-formated date-time string into a native :py:class:`~datetime.datetime` object.
 
@@ -48,3 +51,10 @@ def xml_parse_and_remove(filename, path) -> Iterator[Any]:
                 elem_stack.pop()
             except IndexError:
                 pass
+
+#TODO: this is ugly, fix at some point.
+def skyq_json_decoder_hook(obj):
+    """Decode JSON into appropriate types used in the project."""
+    if "xmltv_icon_url" in obj.keys():
+        obj['xmltv_icon_url'] = URL(obj['xmltv_icon_url'])
+    return obj

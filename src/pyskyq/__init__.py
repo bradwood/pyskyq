@@ -23,7 +23,9 @@ from .epg import EPG
 from .status import Status
 from .xmltvlisting import XMLTVListing
 from .channel import (Channel, channel_from_skyq_service,
-                      channel_from_xmltv_list, merge_channels)
+                      channel_from_xmltv_list, merge_channels,
+                      channel_from_json, ChannelJSONEncoder)
 from .cronthread import CronThread
+from .asyncthread import AsyncThread
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

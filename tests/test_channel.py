@@ -6,10 +6,11 @@ import pytest
 from yarl import URL
 
 from pyskyq import (CHANNELSOURCES, Channel, channel_from_skyq_service,
-                    channel_from_xmltv_list, merge_channels)
+                    channel_from_xmltv_list, merge_channels, channel_from_json)
 
-from .mock_constants import (SERVICE_DETAIL_1, SERVICE_SUMMARY_MOCK,
-                             XML_CHANNEL_1)
+from .mock_constants import (MERGED_CHAN_JSON, SERVICE_DETAIL_1,
+                             SERVICE_SUMMARY_MOCK, SKYQ_CHAN_JSON,
+                             XML_CHAN_JSON, XML_CHANNEL_1, BAD_JSON)
 
 
 def test_hashable_channels():
@@ -146,3 +147,28 @@ def test_channel_from_both_sources():
     assert isinstance(chan.xmltv_icon_url, URL)
     assert chan.xmltv_icon_url.human_repr() == "http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png"
     assert chan.xmltv_display_name == "BBC One Lon"
+
+
+def test_channel_json():
+    chan_x = channel_from_xmltv_list(ET.XML(XML_CHANNEL_1))
+    chan_q = channel_from_skyq_service(json.loads(SERVICE_SUMMARY_MOCK)['services'][0])
+    chan_q = chan_q.load_skyq_detail_data(json.loads(SERVICE_DETAIL_1))
+
+    mergechan = merge_channels(chan_q, chan_x)  # note, chan_x overwrites chan_q
+
+    assert json.loads(chan_x.as_json()) == json.loads(XML_CHAN_JSON)
+    assert json.loads(chan_q.as_json()) == json.loads(SKYQ_CHAN_JSON)
+    assert json.loads(mergechan.as_json()) == json.loads(MERGED_CHAN_JSON)
+
+    assert chan_x == channel_from_json(XML_CHAN_JSON)
+    assert chan_q == channel_from_json(SKYQ_CHAN_JSON)
+    assert mergechan == channel_from_json(MERGED_CHAN_JSON)
+
+    assert chan_x != chan_q
+
+    assert chan_x != "blah"
+
+    with pytest.raises(ValueError, match="Incorrect type metadata in JSON payload."):
+        channel_from_json(BAD_JSON)
+
+
