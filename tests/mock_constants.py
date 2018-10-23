@@ -254,3 +254,133 @@ BAD_JSON = """
     "sources": 7
 }
 """
+FUZZY_CHANNELS_MOCK = """
+{
+    "documentId": "683",
+    "services": [
+        {
+            "c": "101",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "sd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC One Lon",
+            "xsg": 3
+        },
+        {
+            "c": "102",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "hd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC One Lon HD",
+            "xsg": 3
+        },
+        {
+            "c": "103",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "hd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC One HD",
+            "xsg": 3
+        },
+        {
+            "c": "104",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "sd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC One +1",
+            "timeshifted": true,
+            "xsg": 3
+        },
+        {
+            "c": "105",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "sd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC News",
+            "xsg": 3
+        },
+        {
+            "c": "106",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "sd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC One YH",
+            "xsg": 3
+        },
+        {
+            "c": "107",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "hd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC One NI HD",
+            "xsg": 3
+        },
+        {
+            "c": "108",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "sd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC News Lon",
+            "xsg": 3
+        },
+        {
+            "c": "109",
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "hd",
+            "sg": 12,
+            "sid": "2002",
+            "sk": 2002,
+            "t": "BBC News HD",
+            "xsg": 3
+        },
+        {
+            "c" : "110",
+            "dvbtriplet" : "2.2022.6506",
+            "schedule" : true,
+            "servicetype" : "DSAT",
+            "sf" : "hd",
+            "sg" : 12,
+            "sid" : "2306",
+            "sk" : 2306,
+            "t" : "BBC News HD +1",
+            "timeshifted": true,
+            "xsg" : 3
+        }
+    ],
+    "version": 3
+}
+"""

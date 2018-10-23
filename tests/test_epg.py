@@ -13,10 +13,10 @@ from pyskyq import EPG, Channel, XMLTVListing, channel_from_skyq_service
 from .asynccontextmanagermock import AsyncContextManagerMock
 from .isloated_filesystem import isolated_filesystem
 from .mock_constants import (SERVICE_DETAIL_1, SERVICE_DETAIL_2,
-                             SERVICE_SUMMARY_MOCK)
+                             SERVICE_SUMMARY_MOCK, FUZZY_CHANNELS_MOCK)
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
 json_data = ""
@@ -97,15 +97,21 @@ def test_apply_EPG_XMLTV_listing(mocker):
 
     epg = EPG('test_load_channel_list_fake_host')
 
+
     l = XMLTVListing('http://host.com/some/feed')
     l._full_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
+
+    with pytest.raises(ValueError, match='No XMLTVListing file found.'):
+        epg.apply_XMLTVListing(l)
+
     l._downloaded = True
 
     epg.load_skyq_channel_data()
     time.sleep(2)
 
     global json_data
-    json_data = epg.as_json()
+    json_data = epg.as_json()   # save state here so we can use in the next test.
+
     # now test the xml loading.
     epg.apply_XMLTVListing(l)
 
@@ -116,7 +122,7 @@ def test_apply_EPG_XMLTV_listing(mocker):
 
 xmlfile_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
 
-def test_add_cronjob(mocker):
+def test_cronjob(mocker):
     # set up the epg object with sky data.
     epg = EPG('testing_cron')
 
@@ -144,71 +150,48 @@ def test_add_cronjob(mocker):
     b.return_value = xmlresponse
 
     # and finally test the cronjob.
-    # with isolated_filesystem():
-
-    l = XMLTVListing('http://host.com/some/feed')
-    epg.add_XMLTV_listing_cronjob(l, "1 1 1 1 1", run_now=True)
-
-    time.sleep(3)
-    assert epg.get_channel_by_sid(2002).xmltv_id == 'f3932e75f691561adbe3b609369e487b'
-    assert epg.get_channel_by_sid(2002).xmltv_display_name == 'BBC One Lon'
-    assert epg.get_channel_by_sid(2002).xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png'
-
-    time.sleep(2)
-    epg.delete_XMLTV_listing_cronjob(l)
-
-
-@pytest.mark.asyncio
-async def tesst_add_cronjob(aresponses):
-    # mock out the XMLTV server.
-    # xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.txt')
-    # async def get_XML_handler_200(request):
-    #     with open(xmlfile_path, 'r') as fd:
-    #         data = fd.read()
-    #         hdr = {'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT'}
-    #         resp = aresponses.Response(status=200, reason='OK', body=data, headers=hdr)
-    #     return resp
-
-    # # mock out the SkyQ box.
-    # async def get_skyq_service_summary(request):
-    #     data = SERVICE_SUMMARY_MOCK
-    #     #hdr = {'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT'}
-    #     resp = aresponses.Response(status=200, reason='OK', body=data)
-    #     return resp
-
-    # async def get_skyq_detail_1(request):
-    #     data = SERVICE_DETAIL_1
-    #     hdr = {'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT'}
-    #     resp = aresponses.Response(status=200, reason='OK', body=data, headers=hdr)
-    #     return resp
-
-    # async def get_skyq_detail_2(request):
-    #     data = SERVICE_DETAIL_2
-    #     hdr = {'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT'}
-    #     resp = aresponses.Response(status=200, reason='OK', body=data, headers=hdr)
-    #     return resp
-
-    aresponses.add(aresponses.ANY, '/as/services', 'get', response=SERVICE_SUMMARY_MOCK)
-    aresponses.add(aresponses.ANY, '/as/services/details/2002', 'get', response=SERVICE_DETAIL_1)
-    aresponses.add(aresponses.ANY, '/as/services/details/2306', 'get', response=SERVICE_DETAIL_2)
-
-
-    # aresponses.add('foo.com', '/feed/6715', 'get', response=get_XML_handler_200)
-
-    # now run the test
     with isolated_filesystem():
+        l = XMLTVListing('http://host.com/some/feed')
 
-        epg = EPG('skybox', rest_port=80)
-
-        epg.load_skyq_channel_data()
-        await asyncio.sleep(10)
-        assert epg.get_channel_by_sid(2002).name == "BBC One Lon"
+        l2 = XMLTVListing('http://host.com/some/feed/2')
 
 
-        l = XMLTVListing('http://foo.com/feed/6715')
-        epg.add_XMLTV_listing_cronjob(l, "* * * * * *", run_now=True)
+        with pytest.raises(ValueError, match='Bad cronspec passed.'):
+            epg.add_XMLTV_listing_cronjob(l, "Arthur 'Two Sheds' Jackson", run_now=True)
 
-        await asyncio.sleep(3)
+
+        epg.add_XMLTV_listing_cronjob(l, "1 1 1 1 1", run_now=True)
+        epg.add_XMLTV_listing_cronjob(l2, "1 1 1 1 1", run_now=False)
+
+
+        time.sleep(3)
         assert epg.get_channel_by_sid(2002).xmltv_id == 'f3932e75f691561adbe3b609369e487b'
         assert epg.get_channel_by_sid(2002).xmltv_display_name == 'BBC One Lon'
         assert epg.get_channel_by_sid(2002).xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png'
+
+        with pytest.raises(ValueError, match='XMLTVListing already added.'):
+            epg.add_XMLTV_listing_cronjob(l, "1 1 1 1 1", run_now=True)
+
+        time.sleep(2)
+
+        cronjobs = epg.get_cronjobs()
+        l, s = cronjobs[0]
+        assert len(cronjobs) == 2
+        assert isinstance(l, XMLTVListing)
+        assert l.url.human_repr() == 'http://host.com/some/feed'
+        assert s == "1 1 1 1 1"
+
+        epg.delete_XMLTV_listing_cronjob(l)
+        epg.delete_XMLTV_listing_cronjob(l2)
+
+
+
+        epg2 = EPG('testing_cron')  # blank epg
+
+
+        with pytest.raises(ValueError, match='No channels loaded.'):
+            epg2.add_XMLTV_listing_cronjob(l, "1 1 1 1 1", run_now=True)
+
+        with pytest.raises(ValueError, match='No cronjob found for the passed XMLTVListing.'):
+            epg2.delete_XMLTV_listing_cronjob(l)
+

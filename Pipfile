@@ -11,7 +11,7 @@ yarl = "*"
 croniter = "*"
 tzlocal = "*"
 aiocron = {editable = true, git = "https://github.com/bradwood/aiocron.git"}
-fuzzywuzzy = {extras = ["speedup"], version = "*"}
+metaphone = "*"
 
 [dev-packages]
 pytest = "*"
@@ -32,7 +32,6 @@ pytest-aiohttp = "*"
 pytest-asyncio = "*"
 mock = "*"
 pydocstyle = "*"
-prospector = "*"
 aresponses = "*"
 python-dateutil = "*"
 sphinxcontrib-asyncio = "*"

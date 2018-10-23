@@ -7,14 +7,10 @@ uPNP subscription) and then update object attributes when neccessary.
 """
 
 import asyncio
-import functools
 import json
 import logging
-import signal
 import socket
-from threading import Thread
 from typing import Dict
-from enum import Enum
 
 import websockets
 
@@ -23,7 +19,6 @@ from .asyncthread import AsyncThread
 LOGGER = logging.getLogger(__name__)
 
 at = AsyncThread()
-
 class Status:
     """This class implements the Status object, an internal :py:mod:`asyncio`-based
     concurrency object used to subscribe to various web-socket and/or uPNP based events.
@@ -74,12 +69,12 @@ class Status:
         """Fetch data from web socket asynchronously.
 
         This  method fetches data from a web socket asynchronously. It is used to
-        fetch subscribe to websockets of the SkyQ box.
+        subscribe to websockets of the SkyQ box.
 
         """
         LOGGER.debug(f'Setting up web socket listener on {self.ws_url}.')
 
-        while not at.shutdown_sentinel and not self._shutdown_sentinel:  # while not being told to shut down
+        while not at.shutdown_sentinel and not self._shutdown_sentinel:
         # outer loop that will restart every time the connection fails (if sentinel says its okay)
             LOGGER.debug('No shutdown sentinel set, so (re)-starting websocket connection.')
             try:
@@ -92,7 +87,8 @@ class Status:
                             LOGGER.debug('Waiting for data...')
                             payload = await asyncio.wait_for(ws.recv(), timeout=self._ws_timeout)
                             LOGGER.debug(f'Web-socket data received. size = {len(payload)}')
-                        except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed) as err:  # pylint: disable=line-too-long
+                        except (asyncio.TimeoutError,
+                                websockets.exceptions.ConnectionClosed) as err:
                             LOGGER.debug(f'Websocket timed out or was closed. Error = {err}')
                             try:
                                 if at.shutdown_sentinel or self._shutdown_sentinel:
@@ -130,10 +126,8 @@ class Status:
         SkyQ Box.
 
         """
-        asyncio.run_coroutine_threadsafe(
-            self._ws_subscribe(),
-            at.loop
-        )
+        at.run(self._ws_subscribe())
+
 
     async def _handle(self,
                       payload: Dict,

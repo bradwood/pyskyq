@@ -18,7 +18,7 @@ from .utils import parse_http_date, xml_parse_and_remove
 LOGGER = logging.getLogger(__name__)
 
 
-class XMLTVListing(Hashable):
+class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
     """Hold the data and functions required to obtain an XMLTVListing.
 
     Currently it only supports the XML TV Listings format which holds
@@ -38,6 +38,7 @@ class XMLTVListing(Hashable):
         :meth:`.epg.EPG.add_XMLTV_listing_schedule`.
 
     """
+
     def __init__(self,
                  url: URL,
                  path: Path = Path('.epg_data'),
@@ -228,7 +229,7 @@ class XMLTVListing(Hashable):
                         continue
                     break
                     # -------
-            shutil.move(newfile,self._full_path)
+            shutil.move(newfile, self._full_path)
             self._downloading = False
             self._downloaded = True
         LOGGER.debug(f'Fetch finished on {self}')

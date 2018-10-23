@@ -18,19 +18,19 @@ LOGGER = logging.getLogger(__name__)
 class ChannelJSONEncoder(json.JSONEncoder):
     """Encode Channel objects in JSON."""
 
-    def default(self, obj):  # pylint: disable=E0202
+    def default(self, obj):  # pylint: disable=arguments-differ,method-hidden,inconsistent-return-statements
         if isinstance(obj, Channel):
             type_ = '__channel__'
-            chan_dict = obj._chan_dict
-            sources = obj._sources
+            chan_dict = obj._chan_dict # pylint: disable=protected-access
+            sources = obj._sources  # pylint: disable=protected-access
             return {'__type__': type_,
                     'attributes': chan_dict,
                     'sources': sources
                     }
-        elif isinstance(obj, URL):
+        if isinstance(obj, URL):
             return obj.human_repr()
-        else:
-            json.JSONEncoder.default(self, obj) # pragma: no cover
+
+        json.JSONEncoder.default(self, obj) # pragma: no cover
 
 
 class Channel(Hashable):
@@ -50,9 +50,10 @@ class Channel(Hashable):
         Attributes are dynamically set based on the data payload provided, so if
         the SkyQ box or XML TV feed is upgraded, new attributes *should*
         magically appear. Note that this also implies that not every channel has
-        every field, e.g., the ``timeshifted`` is only present if it's ``True``.
-        This Sky weirdness is managed by simply returing ``None`` if the
-        attribute is not present, rather than raising a ``KeyError``.
+        every field, e.g., the ``timeshifted`` and ``adult`` properties are only
+        present if they are  ``True``. This Sky weirdness is managed by simply
+        returing ``None`` if the attribute is not present, rather than raising a
+        ``KeyError``.
 
 
      Data from XML TV sources presents the following channel attributes.
@@ -80,10 +81,11 @@ class Channel(Hashable):
         sf (str): Quality of the channel (e.g., ``hd``, ``sd``, or ``au``)
         sg (int): No ideas what this is.
         sid (str): Channel id (aka ``sid``) in `str` form - the **primary key** for the channel.
-        sk (int): Channel id (aka ``sid``) in `str` form.
+        sk (int): Channel id (aka ``sid``) in `int` form.
         t (str): Channel name, eg, ``BBC One Lon``
         xsg (int): No idea what this is.
         timeshifted (bool): Is this a ``+1``-style channel?
+        adult (bool): Is this an adult channel?
         upgradeMessage (str): A short description of the channel.
         isbroadcasting (boo): Is the channel broadcasting currently or not?
 

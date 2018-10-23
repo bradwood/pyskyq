@@ -1,6 +1,6 @@
 """Constants for button codes, ports, and so on."""
 
-from enum import IntEnum, Enum, IntFlag, auto
+from enum import IntEnum, Enum, IntFlag
 
 REMOTE_LEGACY_PORT: int = 5900
 """int: Legacy port number for older Sky Boxes."""

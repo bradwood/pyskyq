@@ -13,7 +13,7 @@ logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
-# LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def test_asyncthread():
@@ -45,19 +45,9 @@ def test_asyncthread():
             await asyncio.sleep(5)
             raise
 
-
-    f1 = asyncio.run_coroutine_threadsafe(
-        t1(),
-        at1.loop
-    )
-    f2 = asyncio.run_coroutine_threadsafe(
-        t2(),
-        at1.loop
-    )
-    asyncio.run_coroutine_threadsafe(
-        cancel_me(),
-        at1.loop
-    )
+    f1 = at1.run(t1())
+    f2 = at1.run(t2())
+    at1.run(cancel_me())
 
     while f1.running():
         time.sleep(.1)
@@ -76,3 +66,4 @@ def test_asyncthread():
     at3 = AsyncThread()  #create a new one to test re-initing...
     assert at3.shutdown_sentinel is False
     assert at3.thread.is_alive()
+

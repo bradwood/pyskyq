@@ -14,10 +14,7 @@ Example:
 
         at = AsyncThread()
 
-        future = asyncio.run_coroutine_threadsafe(
-            coro(),
-            at1.loop
-        )
+        future = at.run(my_coro())
 
         # do some other stuff
 
@@ -34,7 +31,9 @@ import threading
 import signal
 import logging
 import functools
+from concurrent.futures import Future
 from enum import Enum
+from typing import Coroutine
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,13 +41,14 @@ class AsyncThread():
     """This class holds references to a separate thread which runs an asyncio event loop.
 
     It is a Singleton.
-
     Attributes:
         loop (asyncio.AbstractEventLoop): The associated event loop.
         thread (threading.Thread): The thread that the event loop is running in.
     """
     _instance = None
+    # pylint: disable=protected-access
     def __new__(cls, *args, **kwargs):
+        """Implement the Singleton pattern."""
         if cls._instance is None:
             cls._instance = super().__new__(cls, *args, **kwargs)
             cls._instance._state = 'new'
@@ -69,54 +69,88 @@ class AsyncThread():
         otherwise it will create new ones.
 
         """
+        self.thread: threading.Thread
+        self.loop: asyncio.AbstractEventLoop
+
         def _start_event_loop_thread() -> None:
             """Run an asyncio event loop inside this thread."""
             asyncio.set_event_loop(self.loop)
             LOGGER.info(f'Starting asyncio loop in thread: {self.thread.name}.')
             self.loop.run_forever()
 
+        # pylint: disable=access-member-before-definition
         if self._state == 'new':  # type: ignore
             # set up everything as this is the first invocation.
             self.loop = asyncio.new_event_loop()
             LOGGER.info('Created new event loop.')
             for sig in (signal.SIGINT, signal.SIGTERM):
                 self.loop.add_signal_handler(sig,
-                                            functools.partial(asyncio.create_task,
-                                                            self._shutdown_signal_handler(sig)
-                                                            )
-                                            )
+                                             functools.partial(asyncio.create_task,
+                                                               self._shutdown_signal_handler(sig)
+                                                               )
+                                             )
             LOGGER.debug('Added signal handlers...')
             self.thread = threading.Thread(target=_start_event_loop_thread,
-                                        name=__name__,
-                                        daemon=True)
+                                           name=__name__,
+                                           daemon=True)
             LOGGER.debug(f'Started thread {self.thread.name}.')
             self.thread.start()
-            self._state == 'exists'  # type: ignore
+            self._state = 'exists'
 
         else:
             LOGGER.info('Loop already exists, so not creating a new one.')
             if not self.thread or not self.thread.is_alive():
                 self.thread = threading.Thread(target=_start_event_loop_thread,
-                                            name=__name__,
-                                            daemon=True)
+                                               name=__name__,
+                                               daemon=True)
                 LOGGER.debug(f'Started thread {self.thread.name}.')
                 self.thread.start()
 
         self._shutdown_sentinel = False
         asyncio.run_coroutine_threadsafe(self._loop_monitor(), self.loop)
 
+    def run(self, coro: Coroutine) -> Future:
+        """Run a coroutine in the async thread.
+
+        Warning:
+            This is a non-blocking method.
+
+        Returns:
+            concurrent.futures.Future: a Future holding any results returned from the call.
+
+        """
+        return asyncio.run_coroutine_threadsafe(
+            coro, self.loop)
+
+
+    # def __enter__(self):
+    #     """Open the context block."""
+    #     AsyncThread._context_count += 1
+    #     LOGGER.debug(f'Started context block. Nest level = {AsyncThread._context_count}.')
+    #     return self
+
+    # def __exit__(self, ex_type, ex_val, traceback):
+    #     """Close the context block and shutdown the thread if this is outmost block."""
+    #     AsyncThread._context_count -= 1
+    #     LOGGER.debug(f'Exited context block. Nest level = {AsyncThread._context_count}.')
+    #     if AsyncThread._context_count == 0:
+    #         LOGGER.debug(f'Nest level = {AsyncThread._context_count}. Shutting down.')
+    #         self.shutdown()
+
 
     @property
     def shutdown_sentinel(self):
         """Flag imminent shutdown of the event loop and its thread.
 
-        This sentinel can be used in coroutines that want to loop ``while True``. Instead
-        of doing that do::
+        This sentinel can be used in coroutines that want to loop ``while
+        True``. Instead of doing that do::
 
-            # TBC -- add example here
+             while not at.shutdown_sentinel:
+                 ...
 
         Returns:
-            shutdown_sentinel (bool): If ``True`` then the event loop is instructed to shut down.
+            shutdown_sentinel (bool): If ``True`` then the event loop has been i
+            nstructed to shut down.
 
         """
         return self._shutdown_sentinel
@@ -128,8 +162,7 @@ class AsyncThread():
             LOGGER.debug(f'Event loop still running in thread: {self.thread.name}')
             await asyncio.sleep(1)
 
-    # This gets invoked in the  shutdown() test. coverage seems to not see it tho'
-    async def _cancel_all_tasks(self):  # pragma: no cover
+    async def _cancel_all_tasks(self):
         """Cancel all running tasks in the loop."""
         tasks = [task for task in asyncio.all_tasks(loop=self.loop) if task is not
                  asyncio.current_task(loop=self.loop)]

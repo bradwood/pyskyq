@@ -1,22 +1,18 @@
 """This module implements the EPG class."""
 
-import asyncio
 import functools
 import json
 import logging
-import time
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from croniter.croniter import croniter
-from fuzzywuzzy import process
 
 from dataclasses import dataclass
 
 from .asyncthread import AsyncThread
 from .channel import (Channel, ChannelJSONEncoder, channel_from_json,
                       channel_from_skyq_service, merge_channels)
-from .constants import QUALITY as Q
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
 from .cronthread import CronThread
@@ -109,7 +105,8 @@ class EPG:
                 LOGGER.debug(f'Processing {single_channel_payload}')
                 channel = channel_from_skyq_service(single_channel_payload)
                 sid = channel.sid
-                detail_url =f'http://{self.host}:{self.rest_port}{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
+                detail_url = f'http://{self.host}:{self.rest_port}' + \
+                    f'{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
                 detail_payload_json = await session.get(detail_url)
                 detail_payload = await detail_payload_json.json()
                 detailed_channel = channel.load_skyq_detail_data(detail_payload)
@@ -128,9 +125,7 @@ class EPG:
         for item in payload:
             if item['__type__'] == "__channel__":
                 new_chans.append(channel_from_json(json.dumps(item)))
-            else:
-                pass
-                # TODO: add jobs, programmes, etc
+            # TODO: add jobs, programmes, etc
         self._channels = new_chans
 
 
@@ -148,14 +143,12 @@ class EPG:
             None
 
         """
-        asyncio.run_coroutine_threadsafe(
-            self._load_channels_from_skyq(),
-            at.loop
-        )
+
+        at.run(self._load_channels_from_skyq())
 
     def get_channel_by_sid(self,
-                    sid: Any
-                    ) -> Channel:
+                           sid: Any
+                           ) -> Channel:
         """Get channel data by SkyQ service id.
 
         This method returns a :class:`~.channel.Channel` object when
@@ -169,6 +162,7 @@ class EPG:
         Raises:
             ValueError: If the channel is not found or the channel
                 list is empty.
+
         """
         sid = str(sid)
         if not self.channels_loaded():
@@ -180,55 +174,11 @@ class EPG:
         raise ValueError(f"Sid:{sid} not found.")
 
 
-    def get_channel(self,
-                    name: str,
-                    fuzzy_match: bool = True,
-                    include_timeshift: bool = True,
-                    quality_flag: Optional[Q] = None,
-                    limit: int = 1
-                    ) -> List[Channel]:
-        """Get a channel or list of channels based on various input.
-
-        This method returns a :class:`~.channel.Channel` object or
-        a list of them based on the various parameters passed.
-
-        Args:
-            name (str): The name of the channel being searched for
-                (wildcards are not supported).
-            fuzzy_match (bool): Use exact or fuzzy string matching.
-            include_timeshift (bool): Include ``+1`` channels.
-            quality_flag (Q): One of :class:`~.constants.QUALITY`
-                `None` means any.
-            limit (int): Maximum (not exact) number of matches to return.
-
-        Returns:
-            List[Channel]: Returns a list of matches ordered with closest
-                match first.
-
-        Raises:
-            ValueError: If a match is not found, the channel list is
-                empty or a bad limit is passed.
-
-        """
-        if limit < 1:
-            raise ValueError('Limit must be 1 or higher.')
-        if not self.channels_loaded():
-            raise ValueError("No channels loaded.")
-
-        if not include_timeshift:
-            channels = [chan for chan in self._channels if not chan.timeshifted]
-        if quality_flag:
-            channels = [chan for chan in channels if chan.quality == quality_flag]
-
-        choices = [chan.name for chan in channels]
-        matches = process.extract(name, choices, limit=limit) # returns a list of tuples (name, score)
-        matched_names = [item[0] for item in matches]
-        return [chan for chan in channels if chan.name in matched_names]
 
     @dataclass
     class _CronJob:
         listing: XMLTVListing
-        schedule: str
+        crontab: str
         thread: Optional[CronThread] = None
 
     def delete_XMLTV_listing_cronjob(self,
@@ -237,7 +187,7 @@ class EPG:
         """Delete an XML TV listing cronjob from the EPG."""
         try:
             cronjob = [job for job in self._jobs if job.listing == listing][0]
-        except ValueError as ve:
+        except (ValueError, IndexError) as ve:
             raise ValueError('No cronjob found for the passed XMLTVListing.') from ve
 
         cronjob.thread.stop()
@@ -280,10 +230,12 @@ class EPG:
             if cronspec and croniter.is_valid(cronspec):
                 cron_t = CronThread()
                 cron_t.crontab(cronspec,
-                               func=functools.partial(self._download_and_apply_XMLTVListing, listing),
+                               func=functools.partial(
+                                   self._download_and_apply_XMLTVListing,
+                                   listing),
                                start=True
                                )
-                cronjob = self._CronJob(listing=listing, schedule=cronspec, thread=cron_t)
+                cronjob = self._CronJob(listing=listing, crontab=cronspec, thread=cron_t)
                 LOGGER.info(f'Listing cronjob added: {cronjob}')
                 self._jobs.append(cronjob)
             else:
@@ -292,12 +244,7 @@ class EPG:
             raise ValueError('XMLTVListing already added.')
 
         if run_now:
-            # no thread required, just run it async in this thread.
-            # asyncio.run(self._download_and_apply_XMLTVListing(listing))
-            asyncio.run_coroutine_threadsafe(
-                self._download_and_apply_XMLTVListing(listing),
-                at.loop
-            )
+            at.run(self._download_and_apply_XMLTVListing(listing))
 
 
     async def _download_and_apply_XMLTVListing(self, listing: XMLTVListing) -> None:
@@ -315,13 +262,7 @@ class EPG:
         Returns:
             None
 
-        Raises:
-            ValueError: Raised if the channel list is empty.
-
         """
-        if not self._channels:
-            raise ValueError(f"No channels loaded.")
-
         LOGGER.debug(f'Listing = {listing}')
         await listing.fetch()  # do the download
         self.apply_XMLTVListing(listing)
@@ -338,12 +279,9 @@ class EPG:
             None
 
         Raises:
-            ValueError: Raised if the channel list is empty, or the XMLTVListing file
-                cannot be found.
+            ValueError: Raised if the XMLTVListing file cannot be found.
 
         """
-        if not self._channels:
-            raise ValueError("No channels loaded.")
 
         if not listing.downloaded:
             raise ValueError("No XMLTVListing file found.")
@@ -375,7 +313,7 @@ class EPG:
                 where:
 
                 - listing is an :class:`~.xmltvlisting.XMLTVListing` object
-                - cronspec is a string like ``0 9,10 * * * mon,fri``
+                - str is a string like ``0 9,10 * * * mon,fri``
 
         """
-        return [(j.listing, j.cronspec) for j in self._jobs]
+        return [(j.listing, j.crontab) for j in self._jobs]

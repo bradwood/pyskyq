@@ -9,6 +9,10 @@
     <display-name>Dave</display-name>
     <icon src="/images/channels/a3c70f4c25110a9ca84f7c604023ee6c.png"/>
   </channel>
+  <channel id="sdlkfjsdlfkjsdflksdjflksdjflsdkfjsdlkfj">
+    <display-name>Dave-NOT-ON-SKY</display-name>
+    <icon src="/images/channels/sdlkfjsdlfkjsdflksdjflksdjflsdkfjsdlkfj.png"/>
+  </channel>
   <programme start="20181005060000 +0100" stop="20181005091500 +0100" channel="f3932e75f691561adbe3b609369e487b">
     <title lang="en">Break</title>
     <desc lang="en">The latest news, sport, business and weather from the BBC's Breakfast team. Also in HD. [S] Including regional news at 25 and 55 minutes past each hour.</desc>
