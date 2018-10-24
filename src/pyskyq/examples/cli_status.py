@@ -14,7 +14,7 @@ logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
-logging.getLogger().setLevel(logging.DEBUG)  # status changes are logged.
+logging.getLogger().setLevel(logging.INFO)  # status changes are logged.
 
 stat = Status('skyq')  # replace with hostname / IP of your Sky box
 stat.create_event_listener()  # set up listener thread.

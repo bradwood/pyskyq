@@ -83,6 +83,7 @@ full list of available attributes.
 
     epg = EPG(('1.2.3.4')  # replace with hostname / IP of your Sky box
     epg.load_skyq_channel_data() # load channel listing from Box.
+    sleep(5) # as above method is non-blocking
     print(epg.get_channel(2002).desc) # print out the description of channel with sid = 2002
 
 

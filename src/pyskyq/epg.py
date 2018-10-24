@@ -11,7 +11,7 @@ from croniter.croniter import croniter
 from dataclasses import dataclass
 
 from .asyncthread import AsyncThread
-from .channel import (Channel, ChannelJSONEncoder, channel_from_json,
+from .channel import (Channel, _ChannelJSONEncoder, channel_from_json,
                       channel_from_skyq_service, merge_channels)
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
@@ -114,11 +114,19 @@ class EPG:
 
 
     def as_json(self) -> str:
-        """Return the channel and programme data as JSON."""
-        return json.dumps(self._channels, cls=ChannelJSONEncoder, indent=4)
+        """Return the channel and programme data as JSON.
+
+        Returns:
+            str: A JSON representation of this EPG."""
+        return json.dumps(self._channels, cls=_ChannelJSONEncoder, indent=4)
 
     def from_json(self, json_: str) -> None:
-        """Load channel and programme data from JSON."""
+        """Load channel and programme data from JSON.
+
+        Args:
+            json_(str): A string of JSON text.
+
+        """
         payload = json.loads(json_)
         new_chans: list = []
 
@@ -137,7 +145,7 @@ class EPG:
 
         Warning:
             This method is non-blocking. You may need to wait a bit before
-            the channels are all fully loaded..
+            the channel data is all fully loaded.
 
         Returns:
             None

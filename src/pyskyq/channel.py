@@ -10,12 +10,13 @@ from yarl import URL
 
 from .constants import CHANNEL_FIELD_MAP
 from .constants import CHANNELSOURCES as CSRC
+
 from .utils import skyq_json_decoder_hook
 
 LOGGER = logging.getLogger(__name__)
 
 
-class ChannelJSONEncoder(json.JSONEncoder):
+class _ChannelJSONEncoder(json.JSONEncoder):
     """Encode Channel objects in JSON."""
 
     def default(self, obj):  # pylint: disable=arguments-differ,method-hidden,inconsistent-return-statements
@@ -161,16 +162,17 @@ class Channel(Hashable):
 
 
     def as_json(self) -> str:
-        """Return a JSON string respenting this Channel's state"""
-        return json.dumps(self, cls=ChannelJSONEncoder, indent=4)
+        """Return a JSON string respenting this Channel."""
+        return json.dumps(self, cls=_ChannelJSONEncoder, indent=4)
 
     @property
     def sources(self) -> CSRC:
         """Return the sources flag.
 
         Returns:
-            CSRC: A flag of one or more :class:`~.constants.CSRC` ORed together to
-                indicate which sources have been applied to this object.
+            CSRC: A flag of one or more
+                :class:`~.constants.CHANNELSOURCES` ORed together to indicate
+                which sources have been applied to this object.
 
         """
         return self._sources
@@ -225,7 +227,7 @@ class Channel(Hashable):
 
         Args:
             xml_chan (Element): A XML element of ``<channel>...</channel>`` tags.
-            base_url (URL): A :py:class:`~yarl.URL` prefix which is used contstruct the full
+            base_url (URL): A :py:class:`~yarl.URL` prefix which is used construct the full
                 :attr:`~.channel.Channel.xmltv_icon_url` property.
 
         Returns:
@@ -255,7 +257,13 @@ class Channel(Hashable):
 # pylint: disable=attribute-defined-outside-init
 # pylint: disable=protected-access
 def channel_from_json(json_) -> Channel:
-    """Create a channel from JSON data."""
+    """Create a channel from JSON data.
+
+    Args:
+        str: A string of JSON data.
+
+    Returns:
+        Channel: A channel object."""
     chan = Channel.__new__(Channel)
     data = json.loads(json_, object_hook=skyq_json_decoder_hook)
     if not data.get('__type__') == '__channel__':

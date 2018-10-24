@@ -18,7 +18,9 @@ class QUALITY(Enum):
 
 
 class CHANNELSOURCES(IntFlag):
-    """Enumeration of Channel Sources."""
+    """Enumeration of Channel Sources.
+
+    These are ORed together when sources are overlaid."""
 
     no_source = 0
     skyq_service_summary = 1  # data got from skyq:9006/as/service

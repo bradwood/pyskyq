@@ -41,6 +41,7 @@ class AsyncThread():
     """This class holds references to a separate thread which runs an asyncio event loop.
 
     It is a Singleton.
+
     Attributes:
         loop (asyncio.AbstractEventLoop): The associated event loop.
         thread (threading.Thread): The thread that the event loop is running in.
@@ -149,8 +150,8 @@ class AsyncThread():
                  ...
 
         Returns:
-            shutdown_sentinel (bool): If ``True`` then the event loop has been i
-            nstructed to shut down.
+            shutdown_sentinel (bool): If ``True`` then the event loop has been
+            instructed to shut down.
 
         """
         return self._shutdown_sentinel
