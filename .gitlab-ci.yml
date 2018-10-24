@@ -76,7 +76,7 @@ doccheck:
   script:
   - pipenv install --dev --ignore-pipfile
   - pipenv run python setup.py check --restructuredtext --strict  # make sure README.rst parses okay.
-  - pipenv run python python setup.py check --metadata --strict # check metadata for correctness.
+  - pipenv run python setup.py check --metadata --strict # check metadata for correctness.
   - pipenv run pydocstyle src
 
 package:
