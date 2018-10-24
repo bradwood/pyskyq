@@ -132,7 +132,8 @@ pages:
     paths:
     - public
   only:
-  - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
+  - master
+#  - /^v?\d+\.\d+\.\d+$/  # only semver strings e.g. 1.0.0 or v1.0.1
 
 deploy_to_live_pypi:
   stage: Release to Live PyPI
