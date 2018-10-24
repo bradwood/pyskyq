@@ -4,15 +4,12 @@
 .. image:: https://badge.fury.io/py/pyskyq.svg
     :target: https://badge.fury.io/py/pyskyq
 
-.. image:: https://readthedocs.org/projects/pyskyq/badge/?version=latest
-    :target: https://pyskyq.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
-
 
 ======
 pyskyq
 ======
 
+|Build Status| |docs| |pypi| |python| |license|
 
 A Python library for controlling a SkyQ Box.
 
@@ -110,3 +107,21 @@ Code and ideas obtained from:
 - https://gladdy.uk/blog/2017/03/13/skyq-upnp-rest-and-websocket-api-interfaces/
 
 Thank you to those individuals for their contributions.
+
+
+
+.. |Build Status| image:: https://gitlab.com/bradwood/pyskyq/badges/master/pipeline.svg
+   :target: https://gitlab.com/bradwood/pyskyq/pipelines
+
+.. |docs| image:: https://img.shields.io/badge/docs-passing-brightgreen.svg
+   :target: https://bradwood.gitlab.io/pyskyq/html/
+
+.. |pypi| image:: https://badge.fury.io/py/pyskyq.svg
+   :target: https://badge.fury.io/py/pyskyq
+
+.. |python| image:: https://img.shields.io/pypi/pyversions/pyskyq.svg
+   :target: https://pypi.org/project/pyskyq/
+
+.. |license| image:: https://img.shields.io/badge/license-MIT-blue.svg
+   :target: https://gitlab.com/bradwood/pyskyq/raw/master/LICENSE.txt
+
