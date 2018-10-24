@@ -1,9 +1,3 @@
-.. image:: https://gitlab.com/bradwood/pyskyq/badges/master/pipeline.svg
-   :target: https://gitlab.com/bradwood/pyskyq/pipelines
-
-.. image:: https://badge.fury.io/py/pyskyq.svg
-    :target: https://badge.fury.io/py/pyskyq
-
 
 ======
 pyskyq
