@@ -4,7 +4,7 @@ prelude: >
 features:
   - Added ``examples`` directory with a few simple example scripts included.
   - |
-    Added the :func:`pyskyq.remote.press_remote` function as a replacement for
+    Added the :func:`~.remote.press_remote` function as a replacement for
     the deprecated ``SkyRemote`` class.
 deprecations:
   - |

@@ -18,15 +18,7 @@ import shutil
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
 
-
-def skip(app, what, name, obj, skip, options):
-    if name == "__init__":
-        return False
-    return skip
-
-
-def setup(app):
-    app.connect("autodoc-skip-member", skip)
+autodoc_member_order = 'groupwise'
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -58,7 +50,7 @@ try:
     import sphinx
     from distutils.version import LooseVersion
 
-    cmd_line_template = "sphinx-apidoc -f -o {outputdir} {moduledir}"
+    cmd_line_template = "sphinx-apidoc -M -f -o {outputdir} {moduledir}"
     cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
 
     args = cmd_line.split(" ")
@@ -79,7 +71,7 @@ except Exception as e:
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
               'sphinx.ext.autosummary', 'sphinx.ext.viewcode', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.ifconfig', 'sphinx.ext.mathjax',
-              'sphinx.ext.napoleon', 'reno.sphinxext']
+              'sphinx.ext.napoleon', 'reno.sphinxext', 'sphinxcontrib.asyncio']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -89,6 +81,7 @@ source_suffix = '.rst'
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
+
 
 # The master toctree document.
 master_doc = 'index'
@@ -279,7 +272,7 @@ python_version = '.'.join(map(str, sys.version_info[0:2]))
 intersphinx_mapping = {
 #    'sphinx': ('http://www.sphinx-doc.org/en/stable', None),
     'python': ('https://docs.python.org/' + python_version, None),
-#    'matplotlib': ('https://matplotlib.org', None),
+    'yarl': ('https://yarl.readthedocs.io/en/latest/', None),
 #    'numpy': ('https://docs.scipy.org/doc/numpy', None),
 #    'sklearn': ('http://scikit-learn.org/stable', None),
 #    'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),

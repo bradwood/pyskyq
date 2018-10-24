@@ -1,14 +1,35 @@
-"""Constants for button codes, ports, and so on"""
-from enum import IntEnum
+"""Constants for button codes, ports, and so on."""
+
+from enum import IntEnum, Enum, IntFlag
 
 REMOTE_LEGACY_PORT: int = 5900
 """int: Legacy port number for older Sky Boxes."""
 
 REMOTE_PORT: int = 49160
-"""int: Current port number for newer Sky Boxes."""
+"""int: Current port number for newer SkyQ Boxes."""
 
-class RCMD(IntEnum):
+class QUALITY(Enum):
+    """Enumeration of Video Quality constants."""
+    UHD = 'uhd' # ultra-high def
+    HD = 'hd'  # high def
+    SD = 'sd'  # standard def
+    AU = 'au'  # audio
+
+
+
+class CHANNELSOURCES(IntFlag):
+    """Enumeration of Channel Sources."""
+
+    no_source = 0
+    skyq_service_summary = 1  # data got from skyq:9006/as/service
+    skyq_service_detail = 2   # data got from skyq:9006/as/service/detail/<sid>
+    xml_tv = 4  # data got from XMLTV servce
+    all_source = skyq_service_summary | skyq_service_detail | xml_tv
+
+
+class REMOTECOMMANDS(IntEnum):
     """Enumeration of Remote codes."""
+
     power = 0
     select = 1
     backup = 2

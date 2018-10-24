@@ -1,0 +1,46 @@
+---
+prelude: >
+    This release adds much better EPG support through the addition of channel
+    and programme data from www.xmltv.co.uk (or any other XMLTV source). With
+    the addition of a number of new classes, it's now possible to load XMLTV
+    into the ``EPG`` on demand, or via a schedule and have it integrate
+    seamlessly with data obtained directly from the SkyQ box.
+
+
+    This has resulted in a refactoring and clean up of a number of other parts
+    of the codebase, including a major rework of all asyncio-based coroutines to
+    operate in a separate dedicated thread (:class:`~.asyncthread.AsyncThread`).
+    The rationale for this, apart from general tidying up, is to provide a
+    synchronous API to users whilst still taking advantage of asyncio, as well
+    as to separate the internal event from any others that the calling code
+    might employ in the main thread.
+features:
+  - Added the :class:`~.xmltvlisting.XMLTVListing` class to download and
+    parse XMLTV feeds.
+  - Added cron-style scheduling through the introduction of
+    class:`~.cronthread.CronThread` - this is used to scheduled the download of
+    XMLTV listings.
+  - Generalised :class:`~.channel.Channel` to support data from multiple sources
+    and made some factory functions to generate Channels from various sources.
+  - Added channel merge function to enable a new channel to be created using
+    merged data from both the XML TV and SkyQ sources.
+  - Introduced a :class:`~.asyncthread.AsyncThread` to manage asyncio event loops
+    in a separate thread and refactored all async calls throughout the library to
+    run in this thread.
+  - Added JSON Encoding/Decoding for Channels & EPG.
+fixes:
+  - Massively improved test coverage for :class:`~.epg.EPG` and made the
+    tests more granular.
+  - Made a better ``__repr__()`` for EPG, Channel and a few other classe to make
+    debugging easier.
+  - Fixed Sphinx layout, coroutine support, and ordering. Much improved module
+    documentation also.
+  - Made :class:`~.channel.Channel` immutable and ``Hashable`` to facilitate
+    easier management of lists of Channels.
+  - Added :class:`.constants.QUALITY` for representing the various channel
+    quality types (``HD``, ``SD``, ``AU``).
+  - Refactored :class:`~.status.Status` to use :class:`~.asyncthread.AsyncThread`.
+  - Simplified fetching of channel data from both summary and detail SkyQ endpoints
+    in :meth:`.epg.load_skyq_channel_data` to load the detail data on the fly rather
+    than after all summary channel data was downloaded.
+

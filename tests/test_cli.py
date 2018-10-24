@@ -8,11 +8,10 @@ import aiohttp
 import pytest
 from asynctest import CoroutineMock, MagicMock
 
-from pyskyq import RCMD
-#from pyskyq.cli import run
+from pyskyq import REMOTECOMMANDS as RCMD
 
 from .asynccontextmanagermock import AsyncContextManagerMock
-from .mock_constants import SERVICE_MOCK, REMOTE_TCP_MOCK
+from .mock_constants import REMOTE_TCP_MOCK
 
 
 # Disabled for now -- to be refactored in https://gitlab.com/bradwood/pyskyq/issues/21

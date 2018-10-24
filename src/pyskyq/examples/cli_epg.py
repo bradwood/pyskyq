@@ -17,7 +17,7 @@ from pyskyq import EPG
 
 
 def parse_args(args: List[str]) -> argparse.Namespace:
-    """Parse command line parameters"""
+    """Parse command line parameters."""
     parser = argparse.ArgumentParser(
         description="Query Channel Description from SkyQ EPG")
     parser.add_argument(
@@ -29,12 +29,12 @@ def parse_args(args: List[str]) -> argparse.Namespace:
 
 
 def main(args: List[str]):
-    """Main entry point allowing external calls"""
+    """Run main routine, allowing arguments to be passed."""
     pargs = parse_args(args)
     epg = EPG('skyq')  # replace with hostname / IP of your Sky box
-    epg.load_channel_data() # load channel listing from Box.
+    epg.load_skyq_channel_data()  # load channel listing from Box.
 
-    print(epg.get_channel(pargs.sid).desc)
+    print(epg.get_channel_by_sid(pargs.sid).desc)
 
 
 if __name__ == "__main__":

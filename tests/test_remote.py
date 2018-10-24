@@ -4,7 +4,8 @@ import socket
 
 import pytest
 
-from pyskyq import RCMD, press_remote
+from pyskyq import REMOTECOMMANDS as RCMD
+from pyskyq import press_remote
 
 from .mock_constants import REMOTE_TCP_MOCK
 

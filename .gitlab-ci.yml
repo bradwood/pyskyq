@@ -63,7 +63,7 @@ static_type_checking:
   stage: Linting
   script:
   - pipenv install --dev --ignore-pipfile
-  - pipenv run mypy src --quick-and-dirty --verbose --ignore-missing-imports
+  - pipenv run mypy src --quick-and-dirty --ignore-missing-imports
 
 pylint:
   stage: Linting

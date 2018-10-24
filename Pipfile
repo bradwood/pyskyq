@@ -7,6 +7,11 @@ name = "pypi"
 "e1839a8" = {editable = true, path = "."}
 aiohttp = "*"
 websockets = "*"
+yarl = "*"
+croniter = "*"
+tzlocal = "*"
+aiocron = {editable = true, git = "https://github.com/bradwood/aiocron.git"}
+metaphone = "*"
 
 [dev-packages]
 pytest = "*"
@@ -26,6 +31,10 @@ asynctest = "*"
 pytest-aiohttp = "*"
 pytest-asyncio = "*"
 mock = "*"
+pydocstyle = "*"
+aresponses = "*"
+python-dateutil = "*"
+sphinxcontrib-asyncio = "*"
 
 [requires]
 python_version = "3.7"

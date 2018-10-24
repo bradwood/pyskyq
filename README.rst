@@ -35,7 +35,7 @@ There are currently three main capabilities provided by the library.
 Pressing buttons on the remote
 ------------------------------
 
-Here is how to emulate a button-press on the SkyQ Remote. See the documentation for :class:`RCMD` for
+Here is how to emulate a button-press on the SkyQ Remote. See the documentation for :class:`REMOTECOMMANDS` for
 the various buttons that can be pressed.
 
 .. code:: python
@@ -72,7 +72,7 @@ Loading and interrogating channel data
 --------------------------------------
 
 Getting access to channel data requires initialising an ``EPG`` object. Once
-this is done, you need to load the channel data from the box using the ``EPG.load_channel_data()`` method.
+this is done, you need to load the channel data from the box using the ``EPG.load_skyq_channel_data()`` method.
 
 To access this data use ``EPG.get_channel()``. See the method's documentation for the
 full list of available attributes.
@@ -82,7 +82,7 @@ full list of available attributes.
     from pyskyq import EPG
 
     epg = EPG(('1.2.3.4')  # replace with hostname / IP of your Sky box
-    epg.load_channel_data() # load channel listing from Box.
+    epg.load_skyq_channel_data() # load channel listing from Box.
     print(epg.get_channel(2002).desc) # print out the description of channel with sid = 2002
 
 
