@@ -117,7 +117,9 @@ class EPG:
         """Return the channel and programme data as JSON.
 
         Returns:
-            str: A JSON representation of this EPG."""
+            str: A JSON representation of this EPG.
+
+        """
         return json.dumps(self._channels, cls=_ChannelJSONEncoder, indent=4)
 
     def from_json(self, json_: str) -> None:
@@ -151,7 +153,6 @@ class EPG:
             None
 
         """
-
         at.run(self._load_channels_from_skyq())
 
     def get_channel_by_sid(self,
@@ -192,7 +193,12 @@ class EPG:
     def delete_XMLTV_listing_cronjob(self,
                                      listing: XMLTVListing,
                                      ) -> None:
-        """Delete an XML TV listing cronjob from the EPG."""
+        """Delete an XML TV listing cronjob from the EPG.
+
+        Args:
+            listing[XMLTVListing]: An XMLTVListing object to unschedule.
+
+        """
         try:
             cronjob = [job for job in self._jobs if job.listing == listing][0]
         except (ValueError, IndexError) as ve:
@@ -290,7 +296,6 @@ class EPG:
             ValueError: Raised if the XMLTVListing file cannot be found.
 
         """
-
         if not listing.downloaded:
             raise ValueError("No XMLTVListing file found.")
 

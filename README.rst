@@ -35,7 +35,7 @@ There are currently three main capabilities provided by the library.
 Pressing buttons on the remote
 ------------------------------
 
-Here is how to emulate a button-press on the SkyQ Remote. See the documentation for :class:`REMOTECOMMANDS` for
+Here is how to emulate a button-press on the SkyQ Remote. See the documentation for the class `REMOTECOMMANDS` for
 the various buttons that can be pressed.
 
 .. code:: python

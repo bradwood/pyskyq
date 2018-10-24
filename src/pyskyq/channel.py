@@ -263,7 +263,9 @@ def channel_from_json(json_) -> Channel:
         str: A string of JSON data.
 
     Returns:
-        Channel: A channel object."""
+        Channel: A channel object.
+
+    """
     chan = Channel.__new__(Channel)
     data = json.loads(json_, object_hook=skyq_json_decoder_hook)
     if not data.get('__type__') == '__channel__':

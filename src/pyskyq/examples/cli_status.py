@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-"""
-Example use of the Status API.
-
-"""
+"""Example use of the Status API."""
 
 import logging
 import sys

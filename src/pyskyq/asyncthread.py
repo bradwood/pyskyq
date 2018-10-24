@@ -1,31 +1,15 @@
+# pylint: disable=no-member
 """This module provides global management of asyncio-based tasks in a dedicated thread.
 
-It provides the :class:`AsyncThread` class which is a singleton with some specical quirks.
-When instantiated it will figure out if it has been instantiated before. If this is the first
-instantiation, it will create an internal thread and run an event loop in it. If it's being
-instantiated again, it will check the state of the thead and the event loop within it and restart
-those if needed.
-
-It also provides signal handlers that cleanly cancel and await the completion of any tasks upon
-receipt of a ``SIGINT`` or ``SIGTERM`` interrupt.
-
-Example:
-    This can be used as follows::
-
-        at = AsyncThread()
-
-        future = at.run(my_coro())
-
-        # do some other stuff
-
-        at.shutdown()
-
-Warning:
-    Remember that you **must** always used thread-safe asyncio invocation methods with this
-    class.
-
+It provides the :class:`AsyncThread` class which is a singleton with some
+specical quirks. When instantiated it will figure out if it has been
+instantiated before. If this is the first instantiation, it will create an
+internal thread and run an event loop in it. If it's being instantiated again,
+it will check the state of the thead and the event loop within it and restart
+those if needed. It also provides signal handlers that cleanly cancel and await
+the completion of any tasks upon receipt of a ``SIGINT`` or ``SIGTERM``
+interrupt.
 """
-# pylint: disable=no-member
 import asyncio
 import threading
 import signal
@@ -45,7 +29,21 @@ class AsyncThread():
     Attributes:
         loop (asyncio.AbstractEventLoop): The associated event loop.
         thread (threading.Thread): The thread that the event loop is running in.
+
+    Example:
+        This can be used as follows::
+
+            at = AsyncThread()
+            future = at.run(my_coro())
+            # do some other stuff
+            at.shutdown()
+
+    Warning:
+        Remember that you **must** always used thread-safe asyncio invocation methods with this
+        class.
+
     """
+
     _instance = None
     # pylint: disable=protected-access
     def __new__(cls, *args, **kwargs):

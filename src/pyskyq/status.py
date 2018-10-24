@@ -1,11 +1,9 @@
-""" This module implements the Status class.
+"""This module implements the Status class.
 
-It schedules subscriptions/polling tasks that monitor  various events emitted
-from the SkyQin box. Each of these will await an event (e.g. on a websocket or
+It schedules subscriptions/polling tasks that monitor various events emitted
+from the SkyQ box. Each of these will await an event (e.g. on a websocket or
 uPNP subscription) and then update object attributes when neccessary.
-
 """
-
 import asyncio
 import json
 import logging
@@ -20,8 +18,10 @@ LOGGER = logging.getLogger(__name__)
 
 at = AsyncThread()
 class Status:
-    """This class implements the Status object, an internal :py:mod:`asyncio`-based
-    concurrency object used to subscribe to various web-socket and/or uPNP based events.
+    """This class provides real-time access to the status of the SkyQ box.
+
+    It uses an internal :py:mod:`asyncio`-based concurrency object used to
+    subscribe to various web-socket and/or uPNP based events.
 
     It also logs all status changes.
 

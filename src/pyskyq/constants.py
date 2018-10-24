@@ -10,6 +10,7 @@ REMOTE_PORT: int = 49160
 
 class QUALITY(Enum):
     """Enumeration of Video Quality constants."""
+
     UHD = 'uhd' # ultra-high def
     HD = 'hd'  # high def
     SD = 'sd'  # standard def
@@ -20,7 +21,8 @@ class QUALITY(Enum):
 class CHANNELSOURCES(IntFlag):
     """Enumeration of Channel Sources.
 
-    These are ORed together when sources are overlaid."""
+    These are ORed together when sources are overlaid.
+    """
 
     no_source = 0
     skyq_service_summary = 1  # data got from skyq:9006/as/service

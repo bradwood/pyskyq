@@ -13,4 +13,4 @@ pylint src
 echo
 echo ---- pydocstyle ----
 echo
-echo TODO: 'Implement pydocstyle here and in CI!'
+pydocstyle src

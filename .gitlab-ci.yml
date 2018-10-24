@@ -71,6 +71,14 @@ pylint:
   - pipenv install --dev --ignore-pipfile
   - pipenv run pylint src
 
+doccheck:
+  stage: Linting
+  script:
+  - pipenv install --dev --ignore-pipfile
+  - pipenv run python setup.py check --restructuredtext --strict  # make sure README.rst parses okay.
+  - pipenv run python python setup.py check --metadata --strict # check metadata for correctness.
+  - pipenv run pydocstyle src
+
 package:
   stage: Package
   artifacts:
@@ -81,8 +89,6 @@ package:
     expire_in: 10 mins
   script:
   - pipenv install --dev --ignore-pipfile
-  - pipenv run python setup.py check --restructuredtext --strict  # make sure README.rst parses okay.
-  - pipenv run python python setup.py check --metadata --strict # check metadata for correctness.
   - rm -rf dist
   - pipenv run python setup.py sdist bdist_wheel
   only:
