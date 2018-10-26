@@ -13,10 +13,10 @@ from typing import Dict
 import websockets
 
 from .constants import REST_PORT, REST_STATUS_URL
-from .asyncthread import AsyncThread
+# from .asyncthread import AsyncThread
 LOGGER = logging.getLogger(__name__)
 
-at = AsyncThread()
+# at = AsyncThread()
 class Status:
     """This class provides real-time access to the status of the SkyQ box.
 

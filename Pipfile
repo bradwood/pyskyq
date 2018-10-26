@@ -12,6 +12,8 @@ croniter = "*"
 tzlocal = "*"
 aiocron = {editable = true, git = "https://github.com/bradwood/aiocron.git"}
 metaphone = "*"
+trio = "*"
+asks = "*"
 
 [dev-packages]
 pytest = "*"
@@ -35,6 +37,8 @@ pydocstyle = "*"
 aresponses = "*"
 python-dateutil = "*"
 sphinxcontrib-asyncio = "*"
+pytest-trio = "*"
+"h11" = "*"
 
 [requires]
 python_version = "3.7"

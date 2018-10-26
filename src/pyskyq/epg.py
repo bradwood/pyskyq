@@ -5,12 +5,14 @@ import json
 import logging
 from typing import Any, List, Optional, Tuple
 
+import trio
+import asks
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from croniter.croniter import croniter
 
 from dataclasses import dataclass
 
-from .asyncthread import AsyncThread
+# from .asyncthread import AsyncThread
 from .channel import (Channel, _ChannelJSONEncoder, channel_from_json,
                       channel_from_skyq_service, merge_channels)
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
@@ -20,7 +22,9 @@ from .xmltvlisting import XMLTVListing
 
 LOGGER = logging.getLogger(__name__)
 
-at = AsyncThread()
+# at = AsyncThread()
+
+asks.init('trio')
 
 class EPG:
     """The top-level class for all EPG data and functions.
@@ -58,11 +62,6 @@ class EPG:
         self.rest_port: int = rest_port
         self._channels: list = []
         self._jobs: list = []
-
-        #self._loop = loop if loop else asyncio.get_event_loop()
-
-        #assert not self._loop.is_closed()
-
         LOGGER.debug(f"Initialised EPG object using SkyQ box={self.host}")
 
     def __repr__(self):
@@ -90,27 +89,38 @@ class EPG:
             None
 
         """
+        async def _load_chan_detail(detail_url: str, channel:Channel) -> None:
+            """Nursery async function to fetch the details of each channel."""
+            LOGGER.debug(f'Fetching channel details from {detail_url}')
+            detail_payload_json = await sess.get(detail_url)
+            LOGGER.debug(f'Got channel details from {detail_url}')
+            detail_payload = detail_payload_json.json()
+            LOGGER.debug(f'Parsed JSON from {detail_url}')
+            detailed_channel = channel.load_skyq_detail_data(detail_payload)
+            LOGGER.debug(f'Merged {detail_url} into {channel}...')
+            LOGGER.debug(f'...resulting in  {detailed_channel}')
+            self._channels.append(detailed_channel)
+            LOGGER.debug(f'Added {detailed_channel} to EPG')
+
         url = f'http://{self.host}:{self.rest_port}{REST_SERVICES_URL}'
         LOGGER.debug(f'Fetching channel list from {url}')
+        sess = asks.Session(connections=50)
+        LOGGER.debug(f'About to fetch channel list from sky box.')
+        chan_payload_json = await sess.get(url)
+        LOGGER.debug(f'Got channel list from sky box.')
+        chan_payload = chan_payload_json.json()
+        LOGGER.debug(f'Parsed channel list JSON payload.')
 
-        timeout = ClientTimeout(total=60)
-        async with ClientSession(timeout=timeout) as session:
-            LOGGER.debug(f'About to fetch channel list from sky box.')
-            chan_payload_json = await session.get(url)
-            LOGGER.debug(f'Got channel list from sky box.')
-            chan_payload = await chan_payload_json.json()
-            LOGGER.debug(f'Parsed channel list JSON from sky box.')
-
-            for single_channel_payload in chan_payload['services']:
-                LOGGER.debug(f'Processing {single_channel_payload}')
-                channel = channel_from_skyq_service(single_channel_payload)
-                sid = channel.sid
-                detail_url = f'http://{self.host}:{self.rest_port}' + \
-                    f'{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
-                detail_payload_json = await session.get(detail_url)
-                detail_payload = await detail_payload_json.json()
-                detailed_channel = channel.load_skyq_detail_data(detail_payload)
-                self._channels.append(detailed_channel)
+        with trio.move_on_after(90): # 90 sec timeout  #TODO parametrise this.
+            async with trio.open_nursery() as nursery:
+                LOGGER.debug('Started nursery to collect channel details.')
+                for single_channel_payload in chan_payload['services']:
+                    LOGGER.debug(f'Processing {single_channel_payload}')
+                    channel = channel_from_skyq_service(single_channel_payload)
+                    sid = channel.sid
+                    detail_url = f'http://{self.host}:{self.rest_port}' + \
+                        f'{REST_SERVICE_DETAIL_URL_PREFIX}{sid}'
+                    nursery.start_soon(_load_chan_detail, detail_url, channel)
 
 
     def as_json(self) -> str:
@@ -153,7 +163,7 @@ class EPG:
             None
 
         """
-        at.run(self._load_channels_from_skyq())
+        trio.run(self._load_channels_from_skyq)
 
     def get_channel_by_sid(self,
                            sid: Any
@@ -258,7 +268,7 @@ class EPG:
             raise ValueError('XMLTVListing already added.')
 
         if run_now:
-            at.run(self._download_and_apply_XMLTVListing(listing))
+            trio.run(self._download_and_apply_XMLTVListing, listing)
 
 
     async def _download_and_apply_XMLTVListing(self, listing: XMLTVListing) -> None:
