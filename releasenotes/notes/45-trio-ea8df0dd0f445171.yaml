@@ -1,0 +1,55 @@
+---
+prelude: >
+    The major change in this release is to move off ``asyncio` for a number of
+    reasons and onto ``trio` as the preferred async library..
+features:
+  - |
+    List new features here, or remove this section.  All of the list items in
+    this section are combined when the release notes are rendered, so the text
+    needs to be worded so that it does not depend on any information only
+    available in another section, such as the prelude. This may mean repeating
+    some details.
+issues:
+  - |
+    List known issues here, or remove this section.  All of the list items in
+    this section are combined when the release notes are rendered, so the text
+    needs to be worded so that it does not depend on any information only
+    available in another section, such as the prelude. This may mean repeating
+    some details.
+upgrade:
+  - |
+    List upgrade notes here, or remove this section.  All of the list items in
+    this section are combined when the release notes are rendered, so the text
+    needs to be worded so that it does not depend on any information only
+    available in another section, such as the prelude. This may mean repeating
+    some details.
+deprecations:
+  - ``AsyncThread`` removed - not needed with ``Trio``.
+  - Crontab support removed from EPG -- its better to be implemented outside the
+    library or even just as a unix cronjob -- no sense re-inventing a perfectly
+    good wheel.
+critical:
+  - |
+    Add critical notes here, or remove this section.  All of the list items in
+    this section are combined when the release notes are rendered, so the text
+    needs to be worded so that it does not depend on any information only
+    available in another section, such as the prelude. This may mean repeating
+    some details.
+security:
+  - |
+    Add security notes here, or remove this section.  All of the list items in
+    this section are combined when the release notes are rendered, so the text
+    needs to be worded so that it does not depend on any information only
+    available in another section, such as the prelude. This may mean repeating
+    some details.
+fixes:
+  - |
+    Add normal bug fixes here, or remove this section.  All of the list items
+    in this section are combined when the release notes are rendered, so the
+    text needs to be worded so that it does not depend on any information only
+    available in another section, such as the prelude. This may mean repeating
+    some details.
+other:
+  - Got so p*ssed off with RTD not supporting Python 3.7 in their build process
+    that in the end I followeed ``Quart``'s example and just serve the docs now
+    via GitHub Pages.

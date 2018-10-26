@@ -1,28 +1,20 @@
 """This module implements the EPG class."""
 
-import functools
 import json
 import logging
 from typing import Any, List, Optional, Tuple
 
-import trio
 import asks
-from aiohttp import ClientSession, ClientTimeout  # type: ignore
-from croniter.croniter import croniter
-
-from dataclasses import dataclass
+import trio
 
 # from .asyncthread import AsyncThread
 from .channel import (Channel, _ChannelJSONEncoder, channel_from_json,
                       channel_from_skyq_service, merge_channels)
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
-from .cronthread import CronThread
 from .xmltvlisting import XMLTVListing
 
 LOGGER = logging.getLogger(__name__)
-
-# at = AsyncThread()
 
 asks.init('trio')
 
@@ -35,11 +27,11 @@ class EPG:
     two different endpoints from the box and aggregates this data into a list of
     :class:`~.channel.Channel` objects.
 
-    This channel data is then *augmented* with data from www.xmltv.co.uk which provides
-    an XML file which follows the ``xmltv`` DTD.
+    This channel data can then be *augmented* with data from www.xmltv.co.uk
+    which provides an XML file which follows the ``xmltv`` DTD.
 
-    It also uses the ``xmltv`` file to load **listings** data to enable the querying of
-    programmes that are scheduled on the channels.
+    It also uses the ``xmltv`` file to load **listings** data to enable the
+    querying of programmes that are scheduled on the channels.
 
     Args:
         host (str): String with resolvable hostname or IPv4 address to SkyQ box.
@@ -61,7 +53,6 @@ class EPG:
         self.host: str = host
         self.rest_port: int = rest_port
         self._channels: list = []
-        self._jobs: list = []
         LOGGER.debug(f"Initialised EPG object using SkyQ box={self.host}")
 
     def __repr__(self):
@@ -77,6 +68,23 @@ class EPG:
 
         """
         return bool(self._channels)
+
+    def load_skyq_channel_data(self) -> None:
+        """Load all channel data from the SkyQ REST Service.
+
+        This method loads all channel data from the SkyQ box into the
+        :class:`~.epg.EPG` object.
+
+        Warning:
+            This method is non-blocking. You may need to wait a bit before
+            the channel data is all fully loaded.
+
+        Returns:
+            None
+
+        """
+        trio.run(self._load_channels_from_skyq) # pragma: no cover
+
 
     async def _load_channels_from_skyq(self) -> None:
         """Load channel data into channel property.
@@ -149,21 +157,6 @@ class EPG:
         self._channels = new_chans
 
 
-    def load_skyq_channel_data(self) -> None:
-        """Load all channel data from the SkyQ REST Service.
-
-        This method loads all channel data from the SkyQ box into the
-        :class:`~.epg.EPG` object.
-
-        Warning:
-            This method is non-blocking. You may need to wait a bit before
-            the channel data is all fully loaded.
-
-        Returns:
-            None
-
-        """
-        trio.run(self._load_channels_from_skyq)
 
     def get_channel_by_sid(self,
                            sid: Any
@@ -193,105 +186,6 @@ class EPG:
         raise ValueError(f"Sid:{sid} not found.")
 
 
-
-    @dataclass
-    class _CronJob:
-        listing: XMLTVListing
-        crontab: str
-        thread: Optional[CronThread] = None
-
-    def delete_XMLTV_listing_cronjob(self,
-                                     listing: XMLTVListing,
-                                     ) -> None:
-        """Delete an XML TV listing cronjob from the EPG.
-
-        Args:
-            listing[XMLTVListing]: An XMLTVListing object to unschedule.
-
-        """
-        try:
-            cronjob = [job for job in self._jobs if job.listing == listing][0]
-        except (ValueError, IndexError) as ve:
-            raise ValueError('No cronjob found for the passed XMLTVListing.') from ve
-
-        cronjob.thread.stop()
-        del self._jobs[self._jobs.index(cronjob)]
-
-
-    def add_XMLTV_listing_cronjob(self,
-                                  listing: XMLTVListing,
-                                  cronspec: str,
-                                  *,
-                                  run_now: bool = False
-                                  ) -> None:
-        """Add an XML TV listing cronjob to the EPG.
-
-        This method will add a :class:`~.xmltvlisting.XMLTVListing` to the EPG object
-        and immediately schedule it as a cronjob.
-
-        The processing of the XMLTV download and load into memory will be immedately triggered
-        if ``run_now`` is ``True``.
-
-        Args:
-            listing (XMLTVListing): a :class:`~.xmltvlisting.XMLTVListing` object to
-                add to the EPG.
-            cronspec (str): cronspec string, e.g.: ``0 9,10 * * * mon,fri``.
-            run_now (bool): If ``True`` **runs** the XMLTV job immediately in addition to
-                scheduling the cronjob.
-
-        Returns:
-            None
-
-        Raises:
-            ValueError: Raised if this XMLTV listing is already added to the EPG, the
-                cronspec passes is invalid, or the channel list is empty.
-
-        """
-        if not self._channels:
-            raise ValueError(f"No channels loaded.")
-
-        if listing not in [job.listing for job in self._jobs]:
-            if cronspec and croniter.is_valid(cronspec):
-                cron_t = CronThread()
-                cron_t.crontab(cronspec,
-                               func=functools.partial(
-                                   self._download_and_apply_XMLTVListing,
-                                   listing),
-                               start=True
-                               )
-                cronjob = self._CronJob(listing=listing, crontab=cronspec, thread=cron_t)
-                LOGGER.info(f'Listing cronjob added: {cronjob}')
-                self._jobs.append(cronjob)
-            else:
-                raise ValueError('Bad cronspec passed.')
-        else:
-            raise ValueError('XMLTVListing already added.')
-
-        if run_now:
-            trio.run(self._download_and_apply_XMLTVListing, listing)
-
-
-    async def _download_and_apply_XMLTVListing(self, listing: XMLTVListing) -> None:
-        """Download a listing and merge its data into the EPG channels data structure.
-
-        This method is intended primarily for use in EPG cronjobs. If you wish to manually
-        download and apply an XMLTVListing, you might prefer to call
-        :meth:`.xmltvlisting.XMLTVListing.fetch` manually first, followed by
-        :meth:`apply_XMLTVListing`.
-
-        Args:
-            listing (XMLTVListing): a :class:`~.xmltvlisting.XMLTVListing` object to
-                download and apply to the EPG.
-
-        Returns:
-            None
-
-        """
-        LOGGER.debug(f'Listing = {listing}')
-        await listing.fetch()  # do the download
-        self.apply_XMLTVListing(listing)
-
-
     def apply_XMLTVListing(self, listing: XMLTVListing) -> None:
         """Merge listing data into the EPG channels data structure by channel name.
 
@@ -318,25 +212,3 @@ class EPG:
                 self._channels.append(new_chan)
                 LOGGER.debug(f'Replaced {self._channels[idx]} with {new_chan} in EPG.')
                 del self._channels[idx]
-
-
-    def get_cronjobs(self) -> List[Tuple[XMLTVListing, str]]:
-        """Return currently loaded XML TV Listings and associated cronjobs.
-
-        This returns a list of tuples containing
-        :class:`~.xmltvlisting.XMLTVListing` objects and associated cronspec
-        strings.
-
-        Returns:
-            List[Tuple[XMLTVListing, str]]: Returns a list of tuples where each
-                tuple is as follows::
-
-                    (XMLTVListing, cronspec)
-
-                where:
-
-                - listing is an :class:`~.xmltvlisting.XMLTVListing` object
-                - str is a string like ``0 9,10 * * * mon,fri``
-
-        """
-        return [(j.listing, j.crontab) for j in self._jobs]

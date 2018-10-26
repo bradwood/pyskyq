@@ -1,7 +1,7 @@
 # This code stolen from https://h11.readthedocs.io/en/latest/examples.html
 # and modified to suit my mocking needed.
 # Credit to Nathaniel J. Smith for producting the original version.
-
+# pylint: disable=no-member
 import json
 from itertools import count
 from wsgiref.handlers import format_date_time
@@ -152,12 +152,16 @@ async def http_server(stream, responses):
 # Helper function
 
 
-async def send_simple_response(wrapper, status_code, content_type, body):
+async def send_simple_response(wrapper, status_code, content_type, body, passed_headers):
     LOGGER.debug(f"Sending {status_code} response with {len(body)} bytes")
     headers = wrapper.basic_headers()
     headers.append(("Content-Type", content_type))
     headers.append(("Content-Length", str(len(body))))
-    headers.append(("Connection", 'close')) # to emulate the skyq box TODO parametrise this.
+    if passed_headers:
+        for k, v in passed_headers.items():
+            headers.append((k, v))
+    LOGGER.debug(f'Final headers = {headers}')
+
     res = h11.Response(status_code=status_code, headers=headers)
     await wrapper.send(res)
     await wrapper.send(h11.Data(data=body))
@@ -181,7 +185,8 @@ async def maybe_send_error_response(wrapper, exc):
         await send_simple_response(wrapper,
                                    status_code,
                                    "text/plain; charset=utf-8",
-                                   body)
+                                   body,
+                                   passed_headers=None) # no special headers needed.
     except Exception as exc:
         LOGGER.debug(f"error while sending error response: {exc}")
 
@@ -195,4 +200,6 @@ async def send_mock_response(wrapper, request, response):
     await send_simple_response(wrapper,
                                response['status_code'],
                                response['content_type'],
-                               response['body'].encode('utf-8'))
+                               response['body'],
+                               response['headers']
+                               )

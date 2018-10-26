@@ -11,11 +11,14 @@ from typing import Iterator, Optional
 
 from aiohttp import ClientSession, ClientTimeout  # type: ignore
 from yarl import URL
+import asks
+import trio
 
 from .channel import Channel, channel_from_xmltv_list
 from .utils import parse_http_date, xml_parse_and_remove
 
 LOGGER = logging.getLogger(__name__)
+asks.init('trio')
 
 
 class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
@@ -99,7 +102,6 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
         Returns:
             datetime: A :py:class:`datetime.datetime` object
 
-
         """
         return self._last_modified
 
@@ -144,33 +146,20 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
         """
         return self._full_path
 
-    # TODO - add aiofiles support HERE!
     # TODO -- add error handling for
     # -- HTTP headers missing
     # -- timeouts
     # -- etc
     # TODO -- add retry support
 
-    async def fetch(self,  # pylint: disable=too-many-locals
-                    *,
-                    timeout: int = 60, # sec
-                    range_size: int = 256*1024,   # bytes
-                    ) -> None:
+    async def fetch(self) -> None:
         """Fetch the XMLTVListing file.
 
         This async method will download the (XML) file specified by the URL passed
         at instantiation.
 
-        As these files can be large, and because www.xmltv.co.uk, in particular,
-        supports Range Requests (see rfc7233_) this method will attempt to download
-        the file in parts using HTTP Range Requests, if the server supports them.
-        This will limit the use of memory during the download process to that specified
-        by the ``range_size`` parameter.
-
-        If the server does not support Range Requests the method will will fall back
-        to a more memory-intensive, vanilla HTTP download.
-
-        .. _rfc7233 : https://tools.ietf.org/html/rfc7233
+        If the server does not support streaming downloads the method will will
+        fall back to a more memory-intensive, vanilla HTTP download.
 
         Args:
             timeout (int): timeout in seconds for the HTTP session. Defaults to
@@ -184,55 +173,27 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
         """
         LOGGER.debug(f'Fetch({self}) called started.')
         self._downloading = True
-        to_ = ClientTimeout(total=timeout)
-        async with ClientSession(timeout=to_) as session:
-            LOGGER.debug(f'Client session created: {session}. About to fetch url={self._url}')
-            byte_start = 0
-            byte_stop = range_size - 1  # as we count from 0
-            newfile = self._full_path.with_suffix('.tmp')
-            with open(newfile, 'wb') as file_desc:  # TODO: use aiofile
-                while True:
-                    req_header = {"Range": f'bytes={byte_start}-{byte_stop}'}
-                    resp = await session.get(self._url, headers=req_header)
-                    #async with session.get(self._url, headers=req_header) as resp:
-                    # -------
-                    LOGGER.debug(f'Attempting byte range download. Range = {byte_start}-{byte_stop}')
-                    LOGGER.info(f"Server responsed with status: {resp.status}.")
-                    LOGGER.debug(f'Server response headers: {resp.headers}')
+        newfile = self._full_path.with_suffix('.tmp')
 
-                    if 'Last-Modified' in resp.headers:
-                        self._last_modified = parse_http_date(resp.headers['Last-Modified'])
-                        LOGGER.debug(f'Content last modified on: {resp.headers["Last-Modified"]}.')
 
-                    if resp.status == 416:
-                        raise HTTPException("Server responsed with {resp.status}: {resp.message}")  # pragma: no cover
+        async def chunk_processor(bytechunk):
+            async with await trio.open_file(newfile, 'ab') as output_file:
+                await output_file.write(bytechunk)
+                LOGGER.debug(f'Wrote file chunk size = {len(bytechunk)}')
 
-                    if resp.status == 206:  # partial content served.
-                        # parse Content-Range header -- it looks like this: Content-Range: bytes 0-1023/16380313
-                        content_range_from_total = resp.headers['Content-Range'].split()[1] # remove "bytes" from front of header
-                        content_entire_payload_size = int(content_range_from_total.split('/')[1])  # grab the bit after  "/"
+        resp = await asks.get(str(self._url), callback=chunk_processor)
+        LOGGER.debug(f'Got headers = {resp.headers}')
 
-                    if resp.status == 200:  # full content served as HTTP server doesn't appear to handle range requests.
-                        LOGGER.info("Server responsed with status 200 and not 206 so full download assumed.")
+        # h11 makes header keys lowercase so we can reply on this
+        if resp.headers.get("last-modified"):
+            self._last_modified = parse_http_date(resp.headers.get("last-modified"))
+            LOGGER.debug(f'Content last modified on: {resp.headers.get("last-modified")}.')
 
-                    chunk = await resp.read()
-                    file_desc.write(chunk)
-                    if resp.status == 206:
-                        if byte_stop + range_size + 1 > content_entire_payload_size: # type: ignore
-                            byte_start = byte_stop + 1
-                            byte_stop = content_entire_payload_size  # type: ignore
-                            if byte_start >= byte_stop:
-                                break
-                        else:
-                            byte_start = byte_stop + 1
-                            byte_stop = byte_start + range_size
-                        continue
-                    break
-                    # -------
-            shutil.move(newfile, self._full_path)
-            self._downloading = False
-            self._downloaded = True
+        shutil.move(newfile, self._full_path)
+        self._downloading = False
+        self._downloaded = True
         LOGGER.debug(f'Fetch finished on {self}')
+
 
     def parse_channels(self) -> Iterator[Channel]:
         """Parse the XMLTVListing XML file and create an iterator over the channels in it."""
