@@ -13,7 +13,7 @@ from .mock_constants import (SERVICE_DETAIL_1, SERVICE_DETAIL_2,
                              SERVICE_SUMMARY_MOCK)
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
 LOGGER = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ async def test_EPG_sky_channels():
             await server_nursery.start(trio.serve_tcp, partial(http_server, responses=responses), 8000)
             # await trio.serve_tcp(partial(http_server, responses=responses), 8000)
             LOGGER.debug('started server.')
-            await epg._load_channels_from_skyq()
+            await epg.load_skyq_channel_data()
 
     assert isinstance(epg, EPG)
     assert len(epg._channels) == 2

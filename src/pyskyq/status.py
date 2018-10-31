@@ -4,139 +4,108 @@ It schedules subscriptions/polling tasks that monitor various events emitted
 from the SkyQ box. Each of these will await an event (e.g. on a websocket or
 uPNP subscription) and then update object attributes when neccessary.
 """
-import asyncio
 import json
 import logging
-import socket
-from typing import Dict
+from contextlib import asynccontextmanager
 
-import websockets
+import h11  # this import needed for the monkey-patch
+import trio
+from trio_websocket import open_websocket_url, WebSocketConnection
 
+from dataclasses import dataclass, field
+
+from ._h11_header_monkey_patch import write_headers_titlecase
 from .constants import REST_PORT, REST_STATUS_URL
-# from .asyncthread import AsyncThread
+
 LOGGER = logging.getLogger(__name__)
 
-# at = AsyncThread()
+# Monkey patch h11 HTTP header writing to override case. SkyQ needs this to be happy.
+h11._writers.write_headers = write_headers_titlecase # pylint: disable=protected-access
+
+@dataclass
 class Status:
-    """This class provides real-time access to the status of the SkyQ box.
+    """This dataclass provides real-time access to the status of the SkyQ box.
 
-    It uses an internal :py:mod:`asyncio`-based concurrency object used to
-    subscribe to various web-socket and/or uPNP based events.
+    Example:
 
-    It also logs all status changes.
+        It should be access via an asynchronous context manager like so::
 
-    Args:
-        host (str): String with resolvable hostname or IPv4 address to SkyQ box.
-        port (int, optional): Port number to use to connect to the Remote REST API.
-            Defaults to the standard port used by SkyQ boxes which is ``9006``.
-        ws_url_path (str, optional): Path string to append to the URL, defaults to
-            ``/as/system/status``
-        ws_timeout (int, optional): Web socket connection timeout. Defaults is 20 sec.
-        ping_timeout (int, optional): Web socket ping timeout. Defaults is 10 sec.
+            async def report_box_online():
+                async with get_status('skyq') as stat:
+                    while True:
+                        if stat.standby:
+                            print('The SkyQ Box is in Standby Mode')
+                        else:
+                            print('The SkyQ Box is in Online Mode')
+                        await trio.sleep(1)
+
+            try:
+                print("Type Ctrl-C to exit.")
+                trio.run(report_box_online)
+            except KeyboardInterrupt:
+                raise SystemExit(0)
 
     Attributes:
-        host (str): Hostname or IPv4 address of SkyQ Box.
-        port (int): Port number to use to connect to the REST HTTP server.
-            Defaults to the standard port used by SkyQ boxes which is 9006.
-        ws_url (str): ``ws://`` based URL to the SkyQ Box websocket.
-        standby (bool): A Boolean indicator stating whether the box is in
-            Standby Mode or not.
+        onlien (bool): Is the box in online?
+
+    Todos:
+        Add more attributes once the JSON has been figured out.
 
     """
 
-    def __init__(self,
-                 host: str,
-                 *,
-                 port: int = REST_PORT,
-                 ws_url_path: str = REST_STATUS_URL,
-                 ws_timeout: int = 20,
-                 ping_timeout: int = 10,
-                 ) -> None:
-        """Initialise the Status object."""
-        self.host: str = host
-        self.port: int = port
-        self.standby: bool = False
-        self.ws_url: str = f'ws://{self.host}:{self.port}{ws_url_path}'
-
-        self._shutdown_sentinel: bool = False # used to trigger a clean shutdown.
-
-        self._ws_timeout: int = ws_timeout
-        self._ping_timeout: int = ping_timeout
-        LOGGER.debug(f"Initialised Status object object with host={host}, port={port}")
+    online: bool = field(init=False, default=False)
 
 
-    async def _ws_subscribe(self) -> None:
-        """Fetch data from web socket asynchronously.
+@asynccontextmanager
+async def get_status(host: str,
+                     *,
+                     port: int = REST_PORT,
+                     ws_url_path: str = REST_STATUS_URL,
+                     ):
+    """Yield a Status object through an asynchronous context manager.
 
-        This  method fetches data from a web socket asynchronously. It is used to
-        subscribe to websockets of the SkyQ box.
+    This async function yields a :class:`Status` object asynchronously to enable
+    the calling code to interact with is while it is updated via a websocket connection
+    to the SkyQ box.
 
-        """
-        LOGGER.debug(f'Setting up web socket listener on {self.ws_url}.')
+    Args:
+        host (str): Hostname/IP address of the SkyQ Box
+        port (int): Port number to connect to. Defaults to :var:`RESTPORT`.
+        w_url_path (str): URL path to the websocket. Defaults to :var:`REST_STATUS_URL`
 
-        while not at.shutdown_sentinel and not self._shutdown_sentinel:
-        # outer loop that will restart every time the connection fails (if sentinel says its okay)
-            LOGGER.debug('No shutdown sentinel set, so (re)-starting websocket connection.')
-            try:
-                async with websockets.connect(self.ws_url) as ws:
+    Yields:
+        status (Status): A :class:`Status` object.
 
-                    while not at.shutdown_sentinel and not self._shutdown_sentinel:
-                        # listener loop
-                        LOGGER.debug('Starting websocket listener loop iteration...')
-                        try:
-                            LOGGER.debug('Waiting for data...')
-                            payload = await asyncio.wait_for(ws.recv(), timeout=self._ws_timeout)
-                            LOGGER.debug(f'Web-socket data received. size = {len(payload)}')
-                        except (asyncio.TimeoutError,
-                                websockets.exceptions.ConnectionClosed) as err:
-                            LOGGER.debug(f'Websocket timed out or was closed. Error = {err}')
-                            try:
-                                if at.shutdown_sentinel or self._shutdown_sentinel:
-                                    LOGGER.debug(f'Shutdown triggered. Shutting down...')
-                                    break # inner listening loop.
-                                else:
-                                    LOGGER.debug(f'Trying ping message...')
-                                    pong = await ws.ping()
-                                    await asyncio.wait_for(pong, timeout=self._ping_timeout)
-                                    LOGGER.debug(f'Ping OK, keeping connection alive.')
-                            except:  # pylint: disable=bare-except
-                                LOGGER.debug(f'Ping timeout - retrying...')
-                                break # inner listener loop
-                        # process payload
-                        LOGGER.debug(f'Invoking payload handler on received message...')
-                        asyncio.create_task(self._handle(json.loads(payload)))
+    """
+    ws_url: str = f'ws://{host}:{port}{ws_url_path}'
+    LOGGER.debug(f'About to connect to: {ws_url}')
+    status = Status()
 
-            except (socket.gaierror, ConnectionRefusedError) as sc_err:
-                await asyncio.sleep(.1)
-                LOGGER.debug(f'Could not connect to web socket. Error={sc_err}. Retrying...')
-                # sleep a bit, log it, then try again
-                continue
+    # no try/except as we want the exception thown up the stack if the socket's closed.
+    async with open_websocket_url(ws_url) as conn:
+        LOGGER.debug(f'Created connection to socket: {ws_url}')
+        async with trio.open_nursery() as ws_nursery:
+            LOGGER.debug('In ws_nursery yielding loop...')
+            LOGGER.debug('Backgrounding connection_handler...')
+            ws_nursery.start_soon(_handle_connection, status, conn)
+            LOGGER.debug(f'Handler backgrounded. Yielding...')
+            yield status
 
 
-    def create_event_listener(self) -> None:
-        """Create status event listener coroutine and schedule it.
+async def _handle_connection(s: Status, conn: WebSocketConnection):
+    LOGGER.debug(f'Entered connection handler...{conn}')
+    async with trio.open_nursery() as handler_nursery:
+        LOGGER.debug('Created handler_nursery...')
+        LOGGER.debug('Backgrounded _process_messages...')
+        handler_nursery.start_soon(_process_messages, s, conn)
 
-        This method spawns a coroutine that runs using the facility provided by
-        :class:`.asyncthread.AsyncThread`. The coroutine manages all
-        subscriptions to various endpoints/services on the SkyQ box and takes
-        the appropriate update actions when these events fire.
-
-        This means that you will be able to simply refer to properties like
-        :attr:`standby` and rely on them to report the _current_ status from the
-        SkyQ Box.
-
-        """
-        at.run(self._ws_subscribe())
-
-
-    async def _handle(self,
-                      payload: Dict,
-                      ) -> None:
-        """Update status properties with payload."""
-        self.standby = payload['hdmi']['state'] != 'available'
-        LOGGER.info(f'standby =  {str(self.standby)}')
-
-
-    def shudown_event_listener(self) -> None:
-        """Terminate the event listener thread and event loop."""
-        self._shutdown_sentinel = True
+# TODO parse the entire payload and load it into Status.
+async def _process_messages(s: Status, conn: WebSocketConnection):
+    LOGGER.debug('Inside _process_messages...')
+    while True:
+        LOGGER.debug(f'conn: {conn}')
+        data_json = await conn.get_message()
+        LOGGER.debug('Got data from websocket...')
+        data = json.loads(data_json)
+        LOGGER.debug(f'Parsed JSON data from websocket.')
+        s.online = data['hdmi']['state'] == 'available'

@@ -1,88 +1,41 @@
-# pylint: skip-file
-
-import asyncio
 import logging
 import sys
-import time
-
+import trio
 import pytest
-import websockets
+from trio_websocket import ConnectionClosed, WebSocketConnection
+from contextlib import asynccontextmanager
+from functools import partial
 from asynctest import CoroutineMock, MagicMock
-
-from pyskyq import Status
+from pyskyq import get_status
+from .http_server import http_server, websocket_server
 
 from .asynccontextmanagermock import AsyncContextManagerMock
 from .mock_constants import WS_STATUS_MOCK
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
-# logging.getLogger().setLevel(logging.DEBUG)
-
-def serve_ws_json_with_detail():
-    time.sleep(0.2)
-    return WS_STATUS_MOCK
+LOGGER = logging.getLogger(__name__)
 
 
-def test_status(mocker):
-    a = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
-    a.return_value.__aenter__.return_value.recv = \
-        CoroutineMock(side_effect=serve_ws_json_with_detail)
+async def test_get_status():
 
+    with trio.move_on_after(1):
+        async with trio.open_nursery() as server_nursery:
+            responses = []
+            response = {
+                'target': '/as/system/status',
+                'body': WS_STATUS_MOCK.encode('utf-8'),
+                }
 
-    stat = Status('some_host')
-    stat.create_event_listener()
+            for _ in range(10):
+                responses.append(response)  # add 10 of them for good measure.
+            server_nursery.start_soon(websocket_server, 'localhost', 9006, responses)
+            # await trio.serve_tcp(partial(http_server, responses=responses), 8000)
+            LOGGER.debug('started websocket server.')
+            await trio.sleep(0.3)
+            async with get_status('localhost') as stat:
+                await trio.sleep(0.1)
+                assert stat.online is True  #object initialises this to False, JSON payload sets to True.
 
-    time.sleep(0.5) # allow time for awaiting, etc.
-    assert stat.standby is True
-
-    stat.shudown_event_listener()
-
-
-timeout_test_call_count :int  # global var to count calls.
-
-def server_then_close():
-    global timeout_test_call_count
-    timeout_test_call_count += 1
-    # print(timeout_test_call_count)
-    time.sleep(0.2)
-    if timeout_test_call_count > 5:
-        raise websockets.exceptions.ConnectionClosed
-    else:
-        return WS_STATUS_MOCK
-
-
-def test_status_timeout(mocker):
-    global timeout_test_call_count
-    timeout_test_call_count = 0
-    a = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
-    a.return_value.__aenter__.return_value.recv = \
-        CoroutineMock(side_effect=server_then_close)
-
-
-    stat = Status('timeout_host', ws_timeout=2)
-    stat.create_event_listener()
-
-    time.sleep(2)
-
-    assert stat.standby is True
-
-    stat.shudown_event_listener()
-
-
-def test_status_shutdown_sentinel(mocker):
-    global timeout_test_call_count
-    timeout_test_call_count = 0
-    a = mocker.patch('websockets.connect', new_callable=AsyncContextManagerMock)
-    a.return_value.__aenter__.return_value.recv = \
-        CoroutineMock(side_effect=server_then_close)
-
-
-    stat = Status('shutdown_host')
-    stat.create_event_listener()
-    time.sleep(1)
-    stat.shudown_event_listener()
-    assert stat._shutdown_sentinel is True
-    time.sleep(3)
-    assert stat.standby is True

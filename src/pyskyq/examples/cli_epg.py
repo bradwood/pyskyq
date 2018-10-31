@@ -8,12 +8,19 @@ Example:
         ``$ python cli_epg.py pause``
 
 """
-
+import logging
 import argparse
 import sys
 from typing import List
-from time import sleep
+
+import trio
+
 from pyskyq import EPG, XMLTVListing
+
+logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+                    format=logformat)
+
 
 
 def parse_args(args: List[str]) -> argparse.Namespace:
@@ -28,32 +35,36 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
-def main(args: List[str]):
+async def main(args: List[str]):
     """Run main routine, allowing arguments to be passed."""
     pargs = parse_args(args)
-    epg = EPG('skyq')  # replace with hostname / IP of your Sky box
-    epg.load_skyq_channel_data()  # load channel listing from Box.
-    all_72_hour = XMLTVListing('http: // www.xmltv.co.uk/feed/6715')
-    limited_7_day = XMLTVListing('http://www.xmltv.co.uk/feed/6784')
+    epg = EPG('10.0.1.6')  # replace with hostname / IP of your Sky box
+    await epg.load_skyq_channel_data()  # load channel listing from Box.
+    all_72_hour = XMLTVListing('http://www.xmltv.co.uk/feed/6715')
+    #limited_7_day = XMLTVListing('http://www.xmltv.co.uk/feed/6784')
 
-    sleep(5)
+    async with trio.open_nursery() as nursery:
 
+        # fetch 2 separate XMLTV listing concurrently.
+        nursery.start_soon(all_72_hour.fetch)
+     #   nursery.start_soon(limited_7_day.fetch)
 
-    epg.add_XMLTV_listing_cronjob(limited_7_day, '0 2 * * *', run_now=True)  # at At 02:00 every day
-    epg.add_XMLTV_listing_cronjob(all_72_hour, '0 3 * * *', run_now=True)  # at At 03:00 every day
+    assert all_72_hour.downloaded
+    print("Downloaded XMLTV Listing: {all_72_hour}")
 
+    # assert limited_7_day.downloaded
+    # print("Downloaded XMLTV Listing: {limited_7_day}")
 
-    sec = 0
-    while True:
-        print(f'Seconds = {sec}')
-        print('Channel Description from the SkyQ Box:')
-        print(epg.get_channel_by_sid(pargs.sid).desc)
-        print('Channel XMLTV ID from the XMLTV Feed:')
-        print(epg.get_channel_by_sid(pargs.sid).xmltv_id)
-        sleep(1)
-        sec += 1
-    # for job in epg.get_cronjobs():
-    #     epg.delete_XMLTV_listing_cronjob(job[0])
+    epg.apply_XMLTVListing(all_72_hour)
+
+    #epg.apply_XMLTVListing(limited_7_day)
+
+    print('Channel Description from the SkyQ Box:')
+    print(epg.get_channel_by_sid(pargs.sid).desc)
+    print('Channel XMLTV ID from the XMLTV Feed:')
+    print(epg.get_channel_by_sid(pargs.sid).xmltv_id)
+    print('Channel Logo URL from the XMLTV Feed:')
+    print(epg.get_channel_by_sid(pargs.sid).xmltv_icon_url)
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    trio.run(main, sys.argv[1:])

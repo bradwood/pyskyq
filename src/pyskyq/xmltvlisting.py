@@ -5,17 +5,17 @@ import logging
 import shutil
 from collections.abc import Hashable
 from datetime import datetime
-from http.client import HTTPException
 from pathlib import Path
-from typing import Iterator, Optional
+from os import PathLike
+from typing import Any, Iterator, Optional, IO, Union
+from xml.etree.ElementTree import iterparse, Element
 
-from aiohttp import ClientSession, ClientTimeout  # type: ignore
-from yarl import URL
 import asks
 import trio
+from yarl import URL
 
 from .channel import Channel, channel_from_xmltv_list
-from .utils import parse_http_date, xml_parse_and_remove
+from .utils import parse_http_date
 
 LOGGER = logging.getLogger(__name__)
 asks.init('trio')
@@ -44,7 +44,7 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self,
                  url: URL,
-                 path: Path = Path('.epg_data'),
+                 path: PathLike = Path('.epg_data'),
                  ) -> None:
         """Instantiate the object with the URL to fetch."""
         self._url: URL
@@ -141,7 +141,7 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
 
         Returns:
             :py:class:`pathlib.Path`: A `Path` to the location of the
-            XML file (whether it has yet been :meth:`fetch`'ed or not).
+                XML file (whether it has yet been :meth:`fetch`'ed or not).
 
         """
         return self._full_path
@@ -149,7 +149,7 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
     # TODO -- add error handling for
     # -- HTTP headers missing
     # -- timeouts
-    # -- etc
+    # -- badURL, etc, etc.
     # TODO -- add retry support
 
     async def fetch(self) -> None:
@@ -182,6 +182,13 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
                 LOGGER.debug(f'Wrote file chunk size = {len(bytechunk)}')
 
         resp = await asks.get(str(self._url), callback=chunk_processor)
+
+        # resp = await asks.get(str(self._url), stream=True)
+        # async with await trio.open_file(newfile, 'ab') as output_file:
+        #     async with resp.body:
+        #         async for bytechunk in resp.body:
+        #             await output_file.write(bytechunk)
+
         LOGGER.debug(f'Got headers = {resp.headers}')
 
         # h11 makes header keys lowercase so we can reply on this
@@ -201,6 +208,45 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
             raise OSError('File not downloaded, or download is currently in flight.')
         else:
             LOGGER.debug(f'in parse_channels. file = {self.file_path}')
-            for xml_chan in xml_parse_and_remove(self.file_path, 'channel'):
+            for xml_chan in _xml_parse_and_remove(self._full_path, 'channel'): # type: ignore
                 LOGGER.debug('yielding channel...')
                 yield channel_from_xmltv_list(xml_chan)
+
+
+# TODO: add error checking for XML errors
+# TODO: see if this can be made async.
+def _xml_parse_and_remove(filename: Union[str, bytes, int, IO[Any]],
+                          path: str
+                          ) -> Iterator[Element]:
+    """Incrementally load and parse an XML file.
+
+    Stolen from Python Cookbook 3rd edition, section 6.4 with credit to the book's authors.
+
+    Args:
+        filename(Union[str, bytes, int, IO[Any]]): a file-like object.
+        path(str): The XML element to parse
+
+    Yields:
+        Element: A Parsed XML element.
+
+    """
+    path_parts = path.split('/')
+    doc = iterparse(filename, ('start', 'end'))
+    # skip the root element
+    next(doc)  # pylint: disable=stop-iteration-return
+    tag_stack = []
+    elem_stack = []
+    for event, elem in doc:
+        if event == 'start':
+            LOGGER.debug(f'Parsing XML element: {elem.tag}')
+            tag_stack.append(elem.tag)
+            elem_stack.append(elem)
+        else:  # event == 'end'
+            if tag_stack == path_parts:
+                yield elem
+                elem.clear()
+            try:
+                tag_stack.pop()
+                elem_stack.pop()
+            except IndexError:
+                pass

@@ -114,7 +114,7 @@ WS_STATUS_MOCK = """
       "sinkHDCP" : "NONE",
       "sinkHLG" : false,
       "sinkUHD" : false,
-      "state" : "unavailable",
+      "state" : "available",
       "uhdConfigured" : false
    },
    "network" : {
@@ -139,12 +139,12 @@ WS_STATUS_MOCK = """
       "countryCode" : "GBR",
       "currency" : "GBP",
       "cwe" : true,
-      "householdid" : "10947783",
+      "householdid" : "12345678",
       "paired" : true,
       "state" : "available",
       "subbouquet" : "1",
       "transactionlimit" : 65535,
-      "viewingCardNumber" : "725 325 260"
+      "viewingCardNumber" : "123 456 789"
    },
    "swupdate" : {
       "reason" : "IDLE",
@@ -161,7 +161,6 @@ WS_STATUS_MOCK = """
       "state" : "unavailable"
    }
 }
-
 
 """
 

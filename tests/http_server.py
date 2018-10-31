@@ -7,15 +7,18 @@ from itertools import count
 from wsgiref.handlers import format_date_time
 
 import trio
+from trio_websocket import serve_websocket, ConnectionClosed
 import h11
 import logging
+
+from functools import partial
 import sys
 MAX_RECV = 2 ** 16
 
 TIMEOUT = 10
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
 LOGGER = logging.getLogger(__name__)
@@ -203,3 +206,17 @@ async def send_mock_response(wrapper, request, response):
                                response['body'],
                                response['headers']
                                )
+
+
+async def websocket_request_handler(request, *, responses):
+    ws = await request.accept()
+    for res in responses:
+        try:
+            await ws.send_message(res['body'])
+            await trio.sleep(0.2)
+        except ConnectionClosed:
+            continue
+
+
+async def websocket_server(ip_addr, port, responses):
+    await serve_websocket(partial(websocket_request_handler, responses=responses), ip_addr, port, ssl_context=None)

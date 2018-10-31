@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import asks
 import trio
@@ -69,24 +69,7 @@ class EPG:
         """
         return bool(self._channels)
 
-    def load_skyq_channel_data(self) -> None:
-        """Load all channel data from the SkyQ REST Service.
-
-        This method loads all channel data from the SkyQ box into the
-        :class:`~.epg.EPG` object.
-
-        Warning:
-            This method is non-blocking. You may need to wait a bit before
-            the channel data is all fully loaded.
-
-        Returns:
-            None
-
-        """
-        trio.run(self._load_channels_from_skyq) # pragma: no cover
-
-
-    async def _load_channels_from_skyq(self) -> None:
+    async def load_skyq_channel_data(self) -> None:
         """Load channel data into channel property.
 
         This method fetches the channel list from ``/as/services`` endpoint and loads
@@ -97,7 +80,7 @@ class EPG:
             None
 
         """
-        async def _load_chan_detail(detail_url: str, channel:Channel) -> None:
+        async def _load_chan_detail(detail_url: str, channel: Channel) -> None:
             """Nursery async function to fetch the details of each channel."""
             LOGGER.debug(f'Fetching channel details from {detail_url}')
             detail_payload_json = await sess.get(detail_url)

@@ -85,30 +85,6 @@ async def test_download():
                     assert src.read(-1) == dest.read(-1)
 
 
-async def tesst_xmltvlisting_fetch_200(aresponses):
-
-    async def get_handler_200(request):
-        with open(xmlfile_path, 'r') as fd:
-            data = fd.read()
-            hdr = {'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT'}
-            resp = aresponses.Response(status=200, reason='OK', body=data, headers=hdr)
-        return resp
-
-
-    aresponses.add('foo.com', '/feed/6715', 'get', response=get_handler_200)
-
-    with isolated_filesystem():
-        l = XMLTVListing('http://foo.com/feed/6715')
-        assert not l._downloaded
-        await l.fetch()
-        assert l._downloaded
-        assert l.file_path.is_file()
-        assert l.last_modified == datetime(2018,10,8,1,50,19,0)
-
-        with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
-            assert src.read(-1) == dest.read(-1)
-
-
 #TODO -- add bad xml file test here.
 def test_channel_parse():
     l = XMLTVListing('http://foo.com/feed/6715')

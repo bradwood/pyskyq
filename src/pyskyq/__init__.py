@@ -23,12 +23,10 @@ from .constants import REMOTECOMMANDS, CHANNELSOURCES, QUALITY
 from ._version import __version__
 from .remote import press_remote
 from .epg import EPG
-from .status import Status
+from .status import get_status
 from .xmltvlisting import XMLTVListing
 from .channel import (Channel, channel_from_skyq_service,
                       channel_from_xmltv_list, merge_channels,
                       channel_from_json)
-from .cronthread import CronThread
-# from .asyncthread import AsyncThread
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
