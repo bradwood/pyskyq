@@ -21,7 +21,7 @@ def parse_http_date(httpdatetime: str) -> datetime:
 
 #TODO: this is ugly, fix at some point.
 def skyq_json_decoder_hook(obj):
-    """Decode JSON into appropriate types used in the project."""
+    """Decode JSON into appropriate types used in this library."""
     if "xmltv_icon_url" in obj.keys():
         obj['xmltv_icon_url'] = URL(obj['xmltv_icon_url'])
     return obj

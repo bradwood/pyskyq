@@ -1,8 +1,4 @@
-======
-pyskyq
-======
-
-A Python API for controlling a Sky Q Box.
+.. include:: ../README.rst
 
 
 Contents
@@ -11,7 +7,6 @@ Contents
 .. toctree::
    :maxdepth: 3
 
-   Quickstart <readme>
    License <license>
    Authors <authors>
    Release Notes <changelog>

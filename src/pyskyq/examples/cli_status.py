@@ -23,8 +23,6 @@ async def report_box_online():
             else:
                 print('The SkyQ Box is Offline')
             await trio.sleep(1)
-
-
 try:
     print("Type Ctrl-C to exit.")
     trio.run(report_box_online)

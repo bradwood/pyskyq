@@ -14,3 +14,6 @@ echo
 echo ---- pydocstyle ----
 echo
 pydocstyle src
+echo ---- checking docs and metadata ----
+python setup.py check --restructuredtext --strict  # make sure README.rst parses okay.
+python setup.py check --metadata --strict # check metadata for correctness.

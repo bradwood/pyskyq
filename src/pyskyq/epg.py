@@ -27,8 +27,9 @@ class EPG:
     two different endpoints from the box and aggregates this data into a list of
     :class:`~.channel.Channel` objects.
 
-    This channel data can then be *augmented* with data from www.xmltv.co.uk
-    which provides an XML file which follows the ``xmltv`` DTD.
+    This channel data can then be *augmented* with data from an XMLTV feed site
+    like http://www.xmltv.co.uk/ which provides an XML file which follows the ``xmltv``
+    DTD.
 
     It also uses the ``xmltv`` file to load **listings** data to enable the
     querying of programmes that are scheduled on the channels.
@@ -41,6 +42,7 @@ class EPG:
         host (str): Hostname or IPv4 address of SkyQ Box.
         rest_port (int): Port number to use to connect to the REST HTTP server.
             Defaults to the standard port used by SkyQ boxes which is 9006.
+
 
     """
 
@@ -72,9 +74,10 @@ class EPG:
     async def load_skyq_channel_data(self) -> None:
         """Load channel data into channel property.
 
-        This method fetches the channel list from ``/as/services`` endpoint and loads
-        :attr:`~.epg.EPG._channels`. It then fetches the detail from ``/as/services/details/<sid>``
-        and adds that to the channels.
+        This method fetches the channel list from ``/as/services`` endpoint and
+        loads the fetched channels into this ``EPG`` object. It then
+        concurrently fetches each channel's detail info from
+        ``/as/services/details/<sid>`` and adds that to the channels.
 
         Returns:
             None
@@ -172,9 +175,14 @@ class EPG:
     def apply_XMLTVListing(self, listing: XMLTVListing) -> None:
         """Merge listing data into the EPG channels data structure by channel name.
 
+        This method takes an XMLTV listing object and, for every channel already loaded
+        in the EPG it augments that channel's data with the data obtained from the XMLTV
+        listing. This could provide additional descriptive channel data, the URL to the
+        channel's logo and similar extra stuff.
+
         Args:
-            listing(XMLTVListing): a: class: `~.xmltvlisting.XMLTVListing` object to
-            merge to the EPG.
+            listing(XMLTVListing): a :class:`~.xmltvlisting.XMLTVListing` object to
+                merge to the EPG.
 
         Returns:
             None

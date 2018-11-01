@@ -38,9 +38,9 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
 
         This class provides the means to download and parse XML data to do with
         channels, but more importantly, programming schedules. While it can be used
-        stand-alone, it is designed to be injected into the
+        stand-alone, it is most effective when injected into the
         :class:`~.epg.EPG` object using
-        :meth:`.epg.EPG.add_XMLTV_listing_schedule`.
+        :meth:`.epg.EPG.apply_XMLTVListing()`.
 
     """
 
@@ -226,7 +226,11 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
 
 
     def parse_channels(self) -> Iterator[Channel]:
-        """Parse the XMLTVListing XML file and create an iterator over the channels in it."""
+        """Parse the XMLTVListing XML file and create an iterator over the channels in it.
+
+        Yield:
+            :class:`~pyskyq.channel.Channel`
+        """
         if not self.downloaded and not self.downloading:
             raise OSError('File not downloaded, or download is currently in flight.')
         else:

@@ -44,10 +44,8 @@ async def main(args: List[str]):
     #limited_7_day = XMLTVListing('http://www.xmltv.co.uk/feed/6784')
 
     async with trio.open_nursery() as nursery:
-
         # fetch 2 separate XMLTV listing concurrently.
         nursery.start_soon(all_72_hour.fetch)
-     #   nursery.start_soon(limited_7_day.fetch)
 
     assert all_72_hour.downloaded
     print("Downloaded XMLTV Listing: {all_72_hour}")
