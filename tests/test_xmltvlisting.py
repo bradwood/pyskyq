@@ -14,7 +14,7 @@ from .http_server import http_server
 from .isloated_filesystem import isolated_filesystem
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)
 
 LOGGER = logging.getLogger(__name__)
