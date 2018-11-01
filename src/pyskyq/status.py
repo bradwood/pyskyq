@@ -70,8 +70,10 @@ async def get_status(host: str,
 
     Args:
         host (str): Hostname/IP address of the SkyQ Box
-        port (int): Port number to connect to. Defaults to :data:`~pyskyq.constants.REST_PORT`.
-        w_url_path (str): URL path to the websocket. Defaults to :data:`~pyskyq.constants.REST_STATUS_URL`
+        port (int): Port number to connect to. Defaults to
+            :data:`~pyskyq.constants.REST_PORT`.
+        w_url_path (str): URL path to the websocket. Defaults to
+            :data:`~pyskyq.constants.REST_STATUS_URL`
 
     Yields:
         status (Status): A :class:`Status` object.
