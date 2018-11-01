@@ -3,19 +3,24 @@
 import hashlib
 import logging
 import shutil
+import zlib
 from collections.abc import Hashable
 from datetime import datetime
-from http.client import HTTPException
+from functools import partial
+from os import PathLike
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import IO, Any, Iterator, Optional, Union
+from xml.etree.ElementTree import Element, iterparse
 
-from aiohttp import ClientSession, ClientTimeout  # type: ignore
+import asks
+import trio
 from yarl import URL
 
 from .channel import Channel, channel_from_xmltv_list
-from .utils import parse_http_date, xml_parse_and_remove
+from .utils import parse_http_date
 
 LOGGER = logging.getLogger(__name__)
+asks.init('trio')
 
 
 class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
@@ -33,15 +38,15 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
 
         This class provides the means to download and parse XML data to do with
         channels, but more importantly, programming schedules. While it can be used
-        stand-alone, it is designed to be injected into the
+        stand-alone, it is most effective when injected into the
         :class:`~.epg.EPG` object using
-        :meth:`.epg.EPG.add_XMLTV_listing_schedule`.
+        :meth:`.epg.EPG.apply_XMLTVListing()`.
 
     """
 
     def __init__(self,
                  url: URL,
-                 path: Path = Path('.epg_data'),
+                 path: PathLike = Path('.epg_data'),
                  ) -> None:
         """Instantiate the object with the URL to fetch."""
         self._url: URL
@@ -96,9 +101,10 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
         Returns the date and time when the data was last modified. Taken directly
         from the ``HTTP-Header``.
 
-        Returns:
-            datetime: A :py:class:`datetime.datetime` object
+        If the header was not provided, it returns ``None``.
 
+        Returns:
+            datetime: A :py:class:`datetime.datetime` object or ``None``.
 
         """
         return self._last_modified
@@ -139,38 +145,25 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
 
         Returns:
             :py:class:`pathlib.Path`: A `Path` to the location of the
-            XML file (whether it has yet been :meth:`fetch`'ed or not).
+                XML file (whether it has yet been :meth:`fetch`'ed or not).
 
         """
         return self._full_path
 
-    # TODO - add aiofiles support HERE!
     # TODO -- add error handling for
     # -- HTTP headers missing
     # -- timeouts
-    # -- etc
+    # -- badURL, etc, etc.
     # TODO -- add retry support
 
-    async def fetch(self,  # pylint: disable=too-many-locals
-                    *,
-                    timeout: int = 60, # sec
-                    range_size: int = 256*1024,   # bytes
-                    ) -> None:
+    async def fetch(self) -> None:
         """Fetch the XMLTVListing file.
 
         This async method will download the (XML) file specified by the URL passed
         at instantiation.
 
-        As these files can be large, and because www.xmltv.co.uk, in particular,
-        supports Range Requests (see rfc7233_) this method will attempt to download
-        the file in parts using HTTP Range Requests, if the server supports them.
-        This will limit the use of memory during the download process to that specified
-        by the ``range_size`` parameter.
-
-        If the server does not support Range Requests the method will will fall back
-        to a more memory-intensive, vanilla HTTP download.
-
-        .. _rfc7233 : https://tools.ietf.org/html/rfc7233
+        If the server does not support streaming downloads the method will will
+        fall back to a more memory-intensive, vanilla HTTP download.
 
         Args:
             timeout (int): timeout in seconds for the HTTP session. Defaults to
@@ -182,64 +175,105 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
             None
 
         """
-        LOGGER.debug(f'Fetch({self}) called started.')
+        LOGGER.debug(f'Fetch({self}) call started.')
         self._downloading = True
-        to_ = ClientTimeout(total=timeout)
-        async with ClientSession(timeout=to_) as session:
-            LOGGER.debug(f'Client session created: {session}. About to fetch url={self._url}')
-            byte_start = 0
-            byte_stop = range_size - 1  # as we count from 0
-            newfile = self._full_path.with_suffix('.tmp')
-            with open(newfile, 'wb') as file_desc:  # TODO: use aiofile
-                while True:
-                    req_header = {"Range": f'bytes={byte_start}-{byte_stop}'}
-                    resp = await session.get(self._url, headers=req_header)
-                    #async with session.get(self._url, headers=req_header) as resp:
-                    # -------
-                    LOGGER.debug(f'Attempting byte range download. Range = {byte_start}-{byte_stop}')
-                    LOGGER.info(f"Server responsed with status: {resp.status}.")
-                    LOGGER.debug(f'Server response headers: {resp.headers}')
+        newfile = self._full_path.with_suffix('.tmp')
 
-                    if 'Last-Modified' in resp.headers:
-                        self._last_modified = parse_http_date(resp.headers['Last-Modified'])
-                        LOGGER.debug(f'Content last modified on: {resp.headers["Last-Modified"]}.')
 
-                    if resp.status == 416:
-                        raise HTTPException("Server responsed with {resp.status}: {resp.message}")  # pragma: no cover
+        # We support gzip encoding as www.xmltv.co.uk sends stuff gzipped.
+        # the zlib decompressiion object supports streaming decompression which
+        # why we use it.
 
-                    if resp.status == 206:  # partial content served.
-                        # parse Content-Range header -- it looks like this: Content-Range: bytes 0-1023/16380313
-                        content_range_from_total = resp.headers['Content-Range'].split()[1] # remove "bytes" from front of header
-                        content_entire_payload_size = int(content_range_from_total.split('/')[1])  # grab the bit after  "/"
+        # We should probably support more encoding algorithms at some point.
 
-                    if resp.status == 200:  # full content served as HTTP server doesn't appear to handle range requests.
-                        LOGGER.info("Server responsed with status 200 and not 206 so full download assumed.")
+        decompression_obj = zlib.decompressobj(wbits=16 + zlib.MAX_WBITS)
+        compressed_payload = True  # assume payload is compressed first.
 
-                    chunk = await resp.read()
-                    file_desc.write(chunk)
-                    if resp.status == 206:
-                        if byte_stop + range_size + 1 > content_entire_payload_size: # type: ignore
-                            byte_start = byte_stop + 1
-                            byte_stop = content_entire_payload_size  # type: ignore
-                            if byte_start >= byte_stop:
-                                break
-                        else:
-                            byte_start = byte_stop + 1
-                            byte_stop = byte_start + range_size
-                        continue
-                    break
-                    # -------
-            shutil.move(newfile, self._full_path)
-            self._downloading = False
-            self._downloaded = True
+        async def chunk_processor(decomp_obj, bytechunk):
+            nonlocal compressed_payload
+            async with await trio.open_file(newfile, 'ab') as output_file:
+                if compressed_payload:
+                    try:
+                        LOGGER.debug(f'Got zipped chunk. size = {len(bytechunk)}. Unzipping...')
+                        await output_file.write(decomp_obj.decompress(bytechunk))
+                        LOGGER.debug(f'Wrote unzipped chunk. size = {len(bytechunk)}')
+                    except zlib.error:
+                        await output_file.write(bytechunk)
+                        LOGGER.debug(f'Wrote chunk. size = {len(bytechunk)}')
+                        compressed_payload = False  # it wasn't compressed, so fall back
+                else:
+                    await output_file.write(bytechunk)
+                    LOGGER.debug(f'Wrote chunk. size = {len(bytechunk)}')
+
+
+        resp = await asks.get(str(self._url),
+                              headers={'Accept-Encoding': 'gzip'},
+                              # callback takes bytes only
+                              callback=partial(chunk_processor, decompression_obj)
+                              )
+
+        LOGGER.debug(f'Got headers = {resp.headers}')
+
+        # h11 makes header keys lowercase so we can reply on this
+        if resp.headers.get("last-modified"):
+            self._last_modified = parse_http_date(resp.headers.get("last-modified"))
+            LOGGER.debug(f'Content last modified on: {resp.headers.get("last-modified")}.')
+
+        shutil.move(newfile, self._full_path)
+        self._downloading = False
+        self._downloaded = True
         LOGGER.debug(f'Fetch finished on {self}')
 
+
     def parse_channels(self) -> Iterator[Channel]:
-        """Parse the XMLTVListing XML file and create an iterator over the channels in it."""
+        """Parse the XMLTVListing XML file and create an iterator over the channels in it.
+
+        Yield:
+            :class:`~pyskyq.channel.Channel`
+        """
         if not self.downloaded and not self.downloading:
             raise OSError('File not downloaded, or download is currently in flight.')
         else:
             LOGGER.debug(f'in parse_channels. file = {self.file_path}')
-            for xml_chan in xml_parse_and_remove(self.file_path, 'channel'):
+            for xml_chan in _xml_parse_and_remove(self._full_path, 'channel'): # type: ignore
                 LOGGER.debug('yielding channel...')
                 yield channel_from_xmltv_list(xml_chan)
+
+
+# TODO: add error checking for XML errors
+# TODO: see if this can be made async.
+def _xml_parse_and_remove(filename: Union[str, bytes, int, IO[Any]],
+                          path: str
+                          ) -> Iterator[Element]:
+    """Incrementally load and parse an XML file.
+
+    Stolen from Python Cookbook 3rd edition, section 6.4 with credit to the book's authors.
+
+    Args:
+        filename(Union[str, bytes, int, IO[Any]]): a file-like object.
+        path(str): The XML element to parse
+
+    Yields:
+        Element: A Parsed XML element.
+
+    """
+    path_parts = path.split('/')
+    doc = iterparse(filename, ('start', 'end'))
+    # skip the root element
+    next(doc)  # pylint: disable=stop-iteration-return
+    tag_stack = []
+    elem_stack = []
+    for event, elem in doc:
+        if event == 'start':
+            LOGGER.debug(f'Parsing XML element: {elem.tag}')
+            tag_stack.append(elem.tag)
+            elem_stack.append(elem)
+        else:  # event == 'end'
+            if tag_stack == path_parts:
+                yield elem
+                elem.clear()
+            try:
+                tag_stack.pop()
+                elem_stack.pop()
+            except IndexError:
+                pass

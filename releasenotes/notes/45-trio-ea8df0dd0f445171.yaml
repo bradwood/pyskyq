@@ -1,0 +1,38 @@
+---
+prelude: |
+    The major change in this release is to move off ``asyncio`` for a number of
+    reasons and onto trio_ as the preferred async library.
+
+    .. _trio: https://trio.readthedocs.io/en/latest/
+features:
+  - Implemented :func:`pyskyq.status.get_status()` async context manager for
+    accessing the status of the SkyQ box.
+  - added explicit support for gzipped XMLTV payloads.
+issues:
+  - |
+    Had to monkeypatch the ``h11`` HTTP/1.1 Sans-IO library to force a specific
+    case on the ``Upgrade:`` websocket header due to SkyQ not liking all lower-
+    case headers that are the default from ``h11``. See here_ for the details.
+
+    .. _here: https://github.com/python-hyper/h11/issues/31
+
+upgrade:
+deprecations:
+  - |
+    Removed ``AsyncThread`` - not needed with ``trio``.
+  - Crontab support removed from EPG -- its better to be implemented outside the
+    library or even just as a unix cronjob -- no sense re-inventing a perfectly
+    good wheel.
+  - Removed ``pyskyq.status.Status.standby`` and replaced it with
+    :attr:`pyskyq.status.Status.online`.
+fixes:
+  - |
+    Got rid of a lot of now superfluous ``asyncio`` related test packages.
+  - |
+    Fixed all relevant example scripts to use ``trio``.
+  - Improved test coverage to 100% :)
+other:
+  - |
+    Got so p*ssed off with RTD not supporting Python 3.7 in their build process
+    that in the end I followeed ``Quart``'s example and just serve the docs now
+    via GitHub Pages.

@@ -3,26 +3,28 @@
 
 import logging
 import sys
-from time import sleep
+import trio
 
-from pyskyq import Status
+from pyskyq import get_status
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
                     format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
 
-logging.getLogger().setLevel(logging.INFO)  # status changes are logged.
+logging.getLogger().setLevel(logging.DEBUG)  # status changes are logged.
 
-stat = Status('skyq')  # replace with hostname / IP of your Sky box
-stat.create_event_listener()  # set up listener thread.
-
-# do other stuff.
-sleep(30)
-
-# standby property will be updated asynchronously when the box is turned on or off.
-if stat.standby:
-    print('The SkyQ Box is in Standby Mode')
-else:
-    print('The SkyQ Box is in Online Mode')
-
-stat.shudown_event_listener()  # shut down listener thread.
+async def report_box_online():
+    """Report whether the SkyQ is online or not."""
+    # pylint: disable=not-async-context-manager
+    async with get_status('skyq') as stat:
+        while True:
+            if stat.online:
+                print('The SkyQ Box is Online ')
+            else:
+                print('The SkyQ Box is Offline')
+            await trio.sleep(1)
+try:
+    print("Type Ctrl-C to exit.")
+    trio.run(report_box_online)
+except KeyboardInterrupt:
+    raise SystemExit(0)

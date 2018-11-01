@@ -114,7 +114,7 @@ WS_STATUS_MOCK = """
       "sinkHDCP" : "NONE",
       "sinkHLG" : false,
       "sinkUHD" : false,
-      "state" : "unavailable",
+      "state" : "available",
       "uhdConfigured" : false
    },
    "network" : {
@@ -139,12 +139,12 @@ WS_STATUS_MOCK = """
       "countryCode" : "GBR",
       "currency" : "GBP",
       "cwe" : true,
-      "householdid" : "10947783",
+      "householdid" : "12345678",
       "paired" : true,
       "state" : "available",
       "subbouquet" : "1",
       "transactionlimit" : 65535,
-      "viewingCardNumber" : "725 325 260"
+      "viewingCardNumber" : "123 456 789"
    },
    "swupdate" : {
       "reason" : "IDLE",
@@ -161,7 +161,6 @@ WS_STATUS_MOCK = """
       "state" : "unavailable"
    }
 }
-
 
 """
 
@@ -383,4 +382,52 @@ FUZZY_CHANNELS_MOCK = """
     ],
     "version": 3
 }
+"""
+EPG_JSON = """
+[
+    {
+        "__type__": "__channel__",
+        "attributes": {
+            "sid": "2002",
+            "c": "101",
+            "t": "BBC One Lon",
+            "xmltv_id": null,
+            "dvbtriplet": "2.2045.6301",
+            "schedule": "true",
+            "servicetype": "DSAT",
+            "sf": "sd",
+            "sg": 12,
+            "sk": 2002,
+            "xsg": 3,
+            "isbroadcasting": true,
+            "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
+        },
+        "sources": 3
+    },
+    {
+        "__type__": "__channel__",
+        "attributes": {
+            "sid": "2306",
+            "c": "811",
+            "t": "Dave",
+            "xmltv_id": null,
+            "dvbtriplet": "2.2022.6506",
+            "schedule": true,
+            "servicetype": "DSAT",
+            "sf": "sd",
+            "sg": 12,
+            "sk": 2306,
+            "xsg": 3,
+            "isbroadcasting": true,
+            "upgradeMessage": "Dave is the home of witty banter with quizcoms, cars and comedies."
+        },
+        "sources": 3
+    },
+    {
+        "__type__": "__SOMETHING_TBC__",
+        "attributes": {
+            "blah": "yadda"
+        }
+    }
+]
 """

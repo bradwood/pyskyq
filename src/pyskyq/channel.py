@@ -56,8 +56,8 @@ class Channel(Hashable):
         returing ``None`` if the attribute is not present, rather than raising a
         ``KeyError``.
 
-
-     Data from XML TV sources presents the following channel attributes.
+    Note:
+        Data from XML TV sources presents the following channel attributes.
 
     Attributes:
         xmltv_id (str): A hex string uniquely identifying this channel in the XML TV listing.

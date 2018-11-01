@@ -1,22 +1,21 @@
-import asyncio
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
+from functools import partial
 from pathlib import Path
 
-import aiohttp
 import pytest
-from aiohttp import MultipartWriter
-from dateutil import tz
+import trio
 from yarl import URL
 
 from pyskyq import XMLTVListing
 
+from .http_server import http_server
 from .isloated_filesystem import isolated_filesystem
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
-                    format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
+logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
+                    format=logformat)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,67 +44,120 @@ def test_xmltvlisting_init():
         assert m.__hash__() == n.__hash__()
 
 
-xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.txt')
-
-@pytest.mark.asyncio
-async def test_xmltvlisting_fetch_200(aresponses):
-
-    async def get_handler_200(request):
-        with open(xmlfile_path, 'r') as fd:
-            data = fd.read()
-            hdr = {'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT'}
-            resp = aresponses.Response(status=200, reason='OK', body=data, headers=hdr)
-        return resp
+xmlfile_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
 
 
-    aresponses.add('foo.com', '/feed/6715', 'get', response=get_handler_200)
-
+async def test_download():
     with isolated_filesystem():
-        l = XMLTVListing('http://foo.com/feed/6715')
-        assert not l._downloaded
-        await l.fetch()
-        assert l._downloaded
-        assert l.file_path.is_file()
-        assert l.last_modified == datetime(2018,10,8,1,50,19,0)
+        with trio.move_on_after(5):
+            async with trio.open_nursery() as server_nursery:
+                LOGGER.debug('in nursery')
+                async with await trio.open_file(xmlfile_path, 'r') as fd:
+                    data = await fd.read()
+                responses = [
+                    {
+                        'target': '/feed/6715',
+                        'status_code': 200,
+                        'content_type': "application/xml",
+                        'body': bytearray(data.encode('utf-8')),
+                        'headers': {
+                            'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT',
+                            'Connection': 'close',
+                        },
 
-        with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
-            assert src.read(-1) == dest.read(-1)
+                    },
+                ]
 
-
-@pytest.mark.asyncio
-async def test_xmltvlisting_fetch_206(aresponses):
-
-    async def get_handler_206(request):
-        LOGGER.debug(f'request headers = {request.headers}')
-        rng = request.http_range
-        LOGGER.debug(f'Range = {rng}. Start = {rng.start}. Stop = {rng.stop}. Diff = {rng.stop - rng.start}.')
-        with open(xmlfile_path, 'rb') as f:
-            f.seek(rng.start)
-            data = f.read(rng.stop - rng.start)
-            LOGGER.debug(f'data = {data}')
-            hdr = {
-                'Content-Range': f'bytes {rng.start}-{rng.stop - 1 }/{xmlfile_path.stat().st_size}',
-            }
-            if rng.stop - 1 > xmlfile_path.stat().st_size:
-                LOGGER.debug('Range request went too far...')
-                resp = aresponses.Response(status=416, reason='Range Not Satisfiable', body=data)
-            else:
-                LOGGER.debug('Range request OK.')
-                resp = aresponses.Response(status=206, reason='OK', body=data, headers=hdr)
-            LOGGER.debug(f'resp header = {hdr}')
-        return resp
-
-    for _ in range(1000):
-        aresponses.add('foo.com', '/feed/6715', 'get', response=get_handler_206)
+                await server_nursery.start(trio.serve_tcp, partial(http_server, responses=responses), 8000)
+                LOGGER.debug('started server.')
 
 
+                l = XMLTVListing('http://localhost:8000/feed/6715')
+                assert not l._downloaded
+                await l.fetch()
+                assert l._downloaded
+                assert l.file_path.is_file()
+                assert l.last_modified == datetime(2018, 10, 8, 1, 50, 19, 0)
+
+                with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
+                    assert src.read(-1) == dest.read(-1)
+
+
+async def test_download_no_last_modified():
     with isolated_filesystem():
-        l = XMLTVListing('http://foo.com/feed/6715')
-        await l.fetch(range_size=100)
-        assert l.file_path.is_file()
+        with trio.move_on_after(5):
+            async with trio.open_nursery() as server_nursery:
+                LOGGER.debug('in nursery')
+                async with await trio.open_file(xmlfile_path, 'r') as fd:
+                    data = await fd.read()
+                responses = [
+                    {
+                        'target': '/feed/6715',
+                        'status_code': 200,
+                        'content_type': "application/xml",
+                        'body': bytearray(data.encode('utf-8')),
+                        'headers': {
+                            'Connection': 'close',
+                        },
 
-        with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
-            assert src.read(-1) == dest.read(-1)
+                    },
+                ]
+
+                await server_nursery.start(trio.serve_tcp, partial(http_server, responses=responses), 8000)
+                LOGGER.debug('started server.')
+
+                l = XMLTVListing('http://localhost:8000/feed/6715')
+                assert not l._downloaded
+                await l.fetch()
+                assert l._downloaded
+                assert l.file_path.is_file()
+                assert l.last_modified is None
+
+                with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
+                    assert src.read(-1) == dest.read(-1)
+
+
+xmlfile_path_gz = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml.gz')
+
+
+async def test_download_gzipped():
+    with isolated_filesystem():
+        with trio.move_on_after(5):
+            async with trio.open_nursery() as server_nursery:
+                LOGGER.debug('in nursery')
+                async with await trio.open_file(xmlfile_path_gz, 'rb') as fd:
+                    data = await fd.read()
+                responses = [
+                    {
+                        'target': '/feed/6715',
+                        'status_code': 200,
+                        'content_type': "application/xml",
+                        'body': data,
+                        'headers': {
+                            'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT',
+                            'Connection': 'close',
+                            'Content-Encoding': 'gzip',
+                        },
+
+                    },
+                ]
+
+                await server_nursery.start(trio.serve_tcp, partial(http_server, responses=responses), 8000)
+                LOGGER.debug('started server.')
+
+                l = XMLTVListing('http://localhost:8000/feed/6715')
+                assert not l._downloaded
+                await l.fetch()
+                assert l._downloaded
+                assert l.file_path.is_file()
+                assert l.last_modified == datetime(2018, 10, 8, 1, 50, 19, 0)
+
+                # note, we assert equivalence with the unzipped file to verify uncompression worked.
+                with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
+                    assert src.read(-1) == dest.read(-1)
+
+
+
 
 #TODO -- add bad xml file test here.
 def test_channel_parse():
