@@ -17,10 +17,6 @@ MAX_RECV = 2 ** 16
 
 TIMEOUT = 10
 
-logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
-                    format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
-
 LOGGER = logging.getLogger(__name__)
 
 

@@ -5,6 +5,7 @@ prelude: >
 features:
   - Implemented :func:`pyskyq.status.getstatus()` async context manager for
     accessing the status of the SkyQ box.
+  - added explicit support for gzipped XMLTV payloads.
 issues:
   - |
     Had to monkeypatch the `h11` HTTP/1.1 Sans-IO library to force a specific
@@ -23,6 +24,7 @@ deprecations:
 fixes:
   - got rid of a lot of now superfluous ``asyncio`` related test packages.
   - fixed all relevant example scripts to use ``trio``.
+  - improved test coverage to 100% :)
 other:
   - Got so p*ssed off with RTD not supporting Python 3.7 in their build process
     that in the end I followeed ``Quart``'s example and just serve the docs now

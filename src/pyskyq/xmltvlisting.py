@@ -3,12 +3,14 @@
 import hashlib
 import logging
 import shutil
+import zlib
 from collections.abc import Hashable
 from datetime import datetime
-from pathlib import Path
+from functools import partial
 from os import PathLike
-from typing import Any, Iterator, Optional, IO, Union
-from xml.etree.ElementTree import iterparse, Element
+from pathlib import Path
+from typing import IO, Any, Iterator, Optional, Union
+from xml.etree.ElementTree import Element, iterparse
 
 import asks
 import trio
@@ -99,8 +101,10 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
         Returns the date and time when the data was last modified. Taken directly
         from the ``HTTP-Header``.
 
+        If the header was not provided, it returns ``None``.
+
         Returns:
-            datetime: A :py:class:`datetime.datetime` object
+            datetime: A :py:class:`datetime.datetime` object or ``None``.
 
         """
         return self._last_modified
@@ -171,23 +175,42 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
             None
 
         """
-        LOGGER.debug(f'Fetch({self}) called started.')
+        LOGGER.debug(f'Fetch({self}) call started.')
         self._downloading = True
         newfile = self._full_path.with_suffix('.tmp')
 
 
-        async def chunk_processor(bytechunk):
+        # We support gzip encoding as www.xmltv.co.uk sends stuff gzipped.
+        # the zlib decompressiion object supports streaming decompression which
+        # why we use it.
+
+        # We should probably support more encoding algorithms at some point.
+
+        decompression_obj = zlib.decompressobj(wbits=16 + zlib.MAX_WBITS)
+        compressed_payload = True  # assume payload is compressed first.
+
+        async def chunk_processor(decomp_obj, bytechunk):
+            nonlocal compressed_payload
             async with await trio.open_file(newfile, 'ab') as output_file:
-                await output_file.write(bytechunk)
-                LOGGER.debug(f'Wrote file chunk size = {len(bytechunk)}')
+                if compressed_payload:
+                    try:
+                        LOGGER.debug(f'Got zipped chunk. size = {len(bytechunk)}. Unzipping...')
+                        await output_file.write(decomp_obj.decompress(bytechunk))
+                        LOGGER.debug(f'Wrote unzipped chunk. size = {len(bytechunk)}')
+                    except zlib.error:
+                        await output_file.write(bytechunk)
+                        LOGGER.debug(f'Wrote chunk. size = {len(bytechunk)}')
+                        compressed_payload = False  # it wasn't compressed, so fall back
+                else:
+                    await output_file.write(bytechunk)
+                    LOGGER.debug(f'Wrote chunk. size = {len(bytechunk)}')
 
-        resp = await asks.get(str(self._url), callback=chunk_processor)
 
-        # resp = await asks.get(str(self._url), stream=True)
-        # async with await trio.open_file(newfile, 'ab') as output_file:
-        #     async with resp.body:
-        #         async for bytechunk in resp.body:
-        #             await output_file.write(bytechunk)
+        resp = await asks.get(str(self._url),
+                              headers={'Accept-Encoding': 'gzip'},
+                              # callback takes bytes only
+                              callback=partial(chunk_processor, decompression_obj)
+                              )
 
         LOGGER.debug(f'Got headers = {resp.headers}')
 

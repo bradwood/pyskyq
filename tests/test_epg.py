@@ -10,7 +10,7 @@ from pyskyq import EPG, XMLTVListing
 
 from .http_server import http_server
 from .mock_constants import (SERVICE_DETAIL_1, SERVICE_DETAIL_2,
-                             SERVICE_SUMMARY_MOCK)
+                             SERVICE_SUMMARY_MOCK, EPG_JSON)
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
@@ -98,8 +98,8 @@ def test_apply_EPG_XMLTV_listing():
     epg = EPG('localhost', rest_port=8000)
 
     global json_data
-    epg.from_json(json_data)
 
+    epg.from_json(json_data)
 
     l = XMLTVListing('http://host.com/some/feed')
     l._full_path = xmlfile_path
@@ -115,3 +115,12 @@ def test_apply_EPG_XMLTV_listing():
     assert epg.get_channel_by_sid(2002).xmltv_id == 'f3932e75f691561adbe3b609369e487b'
     assert epg.get_channel_by_sid(2002).xmltv_display_name == 'BBC One Lon'
     assert epg.get_channel_by_sid(2002).xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png'
+
+
+def test_from_json():
+    epg = EPG('localhost')
+    epg.from_json(EPG_JSON)
+
+    assert epg.get_channel_by_sid(2002).c == "101"
+    assert epg.get_channel_by_sid(2002).t == "BBC One Lon"
+    assert epg.get_channel_by_sid(2002).name == "BBC One Lon"

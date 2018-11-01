@@ -14,8 +14,8 @@ from .http_server import http_server
 from .isloated_filesystem import isolated_filesystem
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
-                    format=logformat)  # datefmt="%Y-%m-%d %H:%M:%S"
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+                    format=logformat)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def test_xmltvlisting_init():
         assert m.__hash__() == n.__hash__()
 
 
-xmlfile_path = Path(__file__).resolve().parent.joinpath('fetch_payload.txt')
+xmlfile_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
 
 
 async def test_download():
@@ -54,7 +54,6 @@ async def test_download():
                 LOGGER.debug('in nursery')
                 async with await trio.open_file(xmlfile_path, 'r') as fd:
                     data = await fd.read()
-                    # LOGGER.debug(data)
                 responses = [
                     {
                         'target': '/feed/6715',
@@ -70,7 +69,6 @@ async def test_download():
                 ]
 
                 await server_nursery.start(trio.serve_tcp, partial(http_server, responses=responses), 8000)
-                # await trio.serve_tcp(partial(http_server, responses=responses), 8000)
                 LOGGER.debug('started server.')
 
 
@@ -83,6 +81,82 @@ async def test_download():
 
                 with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
                     assert src.read(-1) == dest.read(-1)
+
+
+async def test_download_no_last_modified():
+    with isolated_filesystem():
+        with trio.move_on_after(5):
+            async with trio.open_nursery() as server_nursery:
+                LOGGER.debug('in nursery')
+                async with await trio.open_file(xmlfile_path, 'r') as fd:
+                    data = await fd.read()
+                responses = [
+                    {
+                        'target': '/feed/6715',
+                        'status_code': 200,
+                        'content_type': "application/xml",
+                        'body': bytearray(data.encode('utf-8')),
+                        'headers': {
+                            'Connection': 'close',
+                        },
+
+                    },
+                ]
+
+                await server_nursery.start(trio.serve_tcp, partial(http_server, responses=responses), 8000)
+                LOGGER.debug('started server.')
+
+                l = XMLTVListing('http://localhost:8000/feed/6715')
+                assert not l._downloaded
+                await l.fetch()
+                assert l._downloaded
+                assert l.file_path.is_file()
+                assert l.last_modified is None
+
+                with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
+                    assert src.read(-1) == dest.read(-1)
+
+
+xmlfile_path_gz = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml.gz')
+
+
+async def test_download_gzipped():
+    with isolated_filesystem():
+        with trio.move_on_after(5):
+            async with trio.open_nursery() as server_nursery:
+                LOGGER.debug('in nursery')
+                async with await trio.open_file(xmlfile_path_gz, 'rb') as fd:
+                    data = await fd.read()
+                responses = [
+                    {
+                        'target': '/feed/6715',
+                        'status_code': 200,
+                        'content_type': "application/xml",
+                        'body': data,
+                        'headers': {
+                            'Last-Modified': 'Mon, 08 Oct 2018 01:50:19 GMT',
+                            'Connection': 'close',
+                            'Content-Encoding': 'gzip',
+                        },
+
+                    },
+                ]
+
+                await server_nursery.start(trio.serve_tcp, partial(http_server, responses=responses), 8000)
+                LOGGER.debug('started server.')
+
+                l = XMLTVListing('http://localhost:8000/feed/6715')
+                assert not l._downloaded
+                await l.fetch()
+                assert l._downloaded
+                assert l.file_path.is_file()
+                assert l.last_modified == datetime(2018, 10, 8, 1, 50, 19, 0)
+
+                # note, we assert equivalence with the unzipped file to verify uncompression worked.
+                with open(xmlfile_path, 'rb') as src, open(l.file_path, 'rb') as dest:
+                    assert src.read(-1) == dest.read(-1)
+
+
 
 
 #TODO -- add bad xml file test here.
