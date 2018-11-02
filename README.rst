@@ -117,7 +117,7 @@ for the full list of available attributes.
 Documentation
 =============
 
-Please refer to the documentation at https://bradwood.gitlab.io/pyskyq/html/
+Please refer to the documentation at https://bradwood.gitlab.io/pyskyq/
 
 
 Contributions
