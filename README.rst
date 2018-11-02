@@ -144,7 +144,7 @@ Thank you to those individuals for their contributions.
    :target: https://gitlab.com/bradwood/pyskyq/pipelines
 
 .. |docs| image:: https://img.shields.io/badge/docs-passing-brightgreen.svg
-   :target: https://bradwood.gitlab.io/pyskyq/html/
+   :target: https://bradwood.gitlab.io/pyskyq/
 
 .. |pypi| image:: https://badge.fury.io/py/pyskyq.svg
    :target: https://badge.fury.io/py/pyskyq
