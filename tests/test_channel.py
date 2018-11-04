@@ -29,29 +29,23 @@ def test_hashable_channels():
     # but different to blank ones
     assert hash(blank_chan) != hash(skyq_chan1)
 
-    skyq_chan1_detail = skyq_chan1.load_skyq_detail_data(json.loads(SERVICE_DETAIL_1))
+    skyq_chan1.load_skyq_detail_data(json.loads(SERVICE_DETAIL_1))
 
     # a sky channel with detail is the same as one with only summary data.
-    assert hash(skyq_chan1) == hash(skyq_chan1_detail)
+    assert hash(skyq_chan1) == hash(skyq_chan2)
 
     xml_chan = channel_from_xmltv_list(ET.XML(XML_CHANNEL_1))
 
     # channels with the same name, but diffenent sources are the same.
     assert skyq_chan1.name == xml_chan.xmltv_display_name
     assert hash(skyq_chan1) == hash(xml_chan)
-    assert hash(skyq_chan1_detail) == hash(xml_chan)
+    assert hash(skyq_chan1) == hash(xml_chan)
 
     # a merging of 2 channels with the same name is the same as both of the sources.
     assert hash(merge_channels(skyq_chan1, xml_chan)) == \
         hash(skyq_chan1)
 
-    assert hash(merge_channels(skyq_chan1_detail, xml_chan)) == \
-        hash(skyq_chan1)
-
     assert hash(merge_channels(skyq_chan1, xml_chan)) == \
-        hash(xml_chan)
-
-    assert hash(merge_channels(skyq_chan1_detail, xml_chan)) == \
         hash(xml_chan)
 
 
@@ -93,7 +87,7 @@ def test_channel_from_skyq_service():
 
     assert chan.isbroadcasting is None
 
-    chan = chan.load_skyq_detail_data(json.loads(SERVICE_DETAIL_1))
+    chan.load_skyq_detail_data(json.loads(SERVICE_DETAIL_1))
 
     assert chan.isbroadcasting
     assert chan.sources == CHANNELSOURCES.skyq_service_summary | CHANNELSOURCES.skyq_service_detail
@@ -152,7 +146,7 @@ def test_channel_from_both_sources():
 def test_channel_json():
     chan_x = channel_from_xmltv_list(ET.XML(XML_CHANNEL_1))
     chan_q = channel_from_skyq_service(json.loads(SERVICE_SUMMARY_MOCK)['services'][0])
-    chan_q = chan_q.load_skyq_detail_data(json.loads(SERVICE_DETAIL_1))
+    chan_q.load_skyq_detail_data(json.loads(SERVICE_DETAIL_1))
 
     mergechan = merge_channels(chan_q, chan_x)  # note, chan_x overwrites chan_q
 

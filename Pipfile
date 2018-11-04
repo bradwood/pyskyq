@@ -9,6 +9,8 @@ yarl = "*"
 trio = "*"
 asks = "*"
 trio-websocket = "*"
+python-dateutil = "*"
+sortedcontainers = "*"
 
 [dev-packages]
 pytest = "*"

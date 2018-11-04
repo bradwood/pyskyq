@@ -9,14 +9,15 @@ from datetime import datetime
 from functools import partial
 from os import PathLike
 from pathlib import Path
-from typing import IO, Any, Iterator, Optional, Union
+from typing import IO, Any, Iterator, Optional, Tuple, Union
 from xml.etree.ElementTree import Element, iterparse
 
 import asks
 import trio
 from yarl import URL
 
-from .channel import Channel, channel_from_xmltv_list
+from .channel import channel_from_xmltv_list, Channel
+from .programme import programme_from_xmltv_list, Programme
 from .utils import parse_http_date
 
 LOGGER = logging.getLogger(__name__)
@@ -225,26 +226,30 @@ class XMLTVListing(Hashable):  # pylint: disable=too-many-instance-attributes
         LOGGER.debug(f'Fetch finished on {self}')
 
 
-    def parse_channels(self) -> Iterator[Channel]:
-        """Parse the XMLTVListing XML file and create an iterator over the channels in it.
+    def parse(self) -> Iterator[Union[Channel, Programme]]:
+        """Parse the XMLTVListing XML file and create an iterator over the data in it.
 
-        Yield:
-            :class:`~pyskyq.channel.Channel`
+        Yields:
+            (Any): Either a  :class:`~pyskyq.channel.Channel` or a
+                :class:`~pyskyq.programme.Programme` object is yielded.
+
         """
         if not self.downloaded and not self.downloading:
             raise OSError('File not downloaded, or download is currently in flight.')
         else:
             LOGGER.debug(f'in parse_channels. file = {self.file_path}')
-            for xml_chan in _xml_parse_and_remove(self._full_path, 'channel'): # type: ignore
-                LOGGER.debug('yielding channel...')
-                yield channel_from_xmltv_list(xml_chan)
-
+            for xml_type, xml_item in _xml_parse_and_remove(self._full_path): # type: ignore
+                if xml_type == 'channel':
+                    LOGGER.debug('yielding channel...')
+                    yield channel_from_xmltv_list(xml_item)
+                if xml_type == 'programme':
+                    LOGGER.debug('yielding programme...')
+                    yield programme_from_xmltv_list(xml_item)
 
 # TODO: add error checking for XML errors
 # TODO: see if this can be made async.
 def _xml_parse_and_remove(filename: Union[str, bytes, int, IO[Any]],
-                          path: str
-                          ) -> Iterator[Element]:
+                          ) -> Iterator[Tuple[str, Element]]:
     """Incrementally load and parse an XML file.
 
     Stolen from Python Cookbook 3rd edition, section 6.4 with credit to the book's authors.
@@ -257,7 +262,6 @@ def _xml_parse_and_remove(filename: Union[str, bytes, int, IO[Any]],
         Element: A Parsed XML element.
 
     """
-    path_parts = path.split('/')
     doc = iterparse(filename, ('start', 'end'))
     # skip the root element
     next(doc)  # pylint: disable=stop-iteration-return
@@ -269,9 +273,11 @@ def _xml_parse_and_remove(filename: Union[str, bytes, int, IO[Any]],
             tag_stack.append(elem.tag)
             elem_stack.append(elem)
         else:  # event == 'end'
-            if tag_stack == path_parts:
-                yield elem
+            if tag_stack == ['channel']:
+                yield 'channel', elem
                 elem.clear()
+            elif tag_stack == ['programme']:
+                yield 'programme', elem
             try:
                 tag_stack.pop()
                 elem_stack.pop()

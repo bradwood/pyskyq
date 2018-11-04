@@ -59,8 +59,9 @@
   </programme>
   <programme start="20181005091500 +0100" stop="20181005100000 +0100" channel="f3932e75f691561adbe3b609369e487b">
     <title lang="en">Rip Off Britain</title>
-    <desc lang="en">15/20. Gloria Hunniford, Angela Rippon and Julia Somerville investigate a builder with a string of unhappy customers, and fundraisers whose money never reached the intended charity. Also in HD. [S]</desc>
     <episode-num system="onscreen">e15</episode-num>
+    <desc lang="en">15/20. Gloria Hunniford, Angela Rippon and Julia Somerville investigate a builder with a string of unhappy customers, and fundraisers whose money never reached the intended charity. Also in HD. [S]</desc>
+    <junk>testing</junk>
   </programme>
   <programme start="20181005100000 +0100" stop="20181005110000 +0100" channel="f3932e75f691561adbe3b609369e487b">
     <title lang="en">Homes Under the Hammer</title>
@@ -565,4 +566,12 @@
     <desc lang="en">Frank Skinner lends a sympathetic ear as celebs get crabby. Ross Kemp, Sophie Ellis-Bextor and Rob Beckett are waspish about snobby shop assistants, seating plans and teeth. S6 Ep3</desc>
     <episode-num system="onscreen">s06.e03</episode-num>
   </programme>
+
+  <programme start="20181005141500 +0100" stop="20181005150000 +0100" channel="ffff2e75f691561adbe3b609369e487b">
+    <title lang="en">Prog NO Channel</title>
+    <desc lang="en">15/20. Strategy game show hosted by Dan Walker. Five players compete to win the case containing the most cash. Also in HD. [S]</desc>
+  </programme>
+
+
+
 </tv>

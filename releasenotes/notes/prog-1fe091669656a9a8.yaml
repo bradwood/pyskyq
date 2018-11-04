@@ -1,0 +1,14 @@
+---
+prelude: >
+    This release adds support for programme information to the
+    :class:`~pyskyq.channel.Channel` object.
+features:
+  - |
+    Created the :class:`~pyskyq.programme.Programme` class and added a
+    SortedSet_ of these to the :class:`~pyskyq.channel.Channel` object.
+
+    .. _SortedSet: http://www.grantjenks.com/docs/sortedcontainers/sortedset.html
+other:
+  - |
+    Removed immutability constraint :class:`~pyskyq.channel.Channel` objects. This was,
+    in hind-sight, probably not a good idea.
