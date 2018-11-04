@@ -1,16 +1,16 @@
 """This module implements the Channel class and associated factory functions."""
-import copy
 import json
 import logging
 from collections.abc import Hashable
 from typing import Any, Dict
 from xml.etree.ElementTree import Element
 
+from sortedcontainers.sortedset import SortedSet
 from yarl import URL
 
 from .constants import CHANNEL_FIELD_MAP
 from .constants import CHANNELSOURCES as CSRC
-
+from .programme import Programme
 from .utils import skyq_json_decoder_hook
 
 LOGGER = logging.getLogger(__name__)
@@ -24,28 +24,42 @@ class _ChannelJSONEncoder(json.JSONEncoder):
             type_ = '__channel__'
             chan_dict = obj._chan_dict # pylint: disable=protected-access
             sources = obj._sources  # pylint: disable=protected-access
+            programmes = obj.programmes  # pylint: disable=protected-access
             return {'__type__': type_,
                     'attributes': chan_dict,
-                    'sources': sources
+                    'sources': sources,
+                    'programmes': programmes,
                     }
+
+        if isinstance(obj, SortedSet):
+            return list(obj)
+
+        if isinstance(obj, Programme):
+            return {'__type__': '__programme__',
+                    # remove attributes that are not needed to re-create the object.
+                    'attributes': {k: v for k, v in vars(obj).items()
+                                   if k not in ['start', 'stop', 'channel_xml_id']}
+                    }
+
         if isinstance(obj, URL):
             return obj.human_repr()
 
-        json.JSONEncoder.default(self, obj) # pragma: no cover
+        json.JSONEncoder.default(self, obj)  # pragma: no cover
 
 
 class Channel(Hashable):
     """This class holds channel data and methods for manipulating the channel.
 
+    Specifically, this includes information about a particular channel and a SortedSet
+    of programme data.
+
     Channel data can come form a variety of sources, including the SkyQ box
-    itself or from a remote XML TV feed.
+    itself or from a remote XML TV feed. Programme data relies upon the XMLTV
+    Source data feed as I haven't (yet) figured out how to source Programme data
+    from Sky/SkyQ directly yet.
 
     Warning:
         This class cannot be instantiated directly, but only via one of the factory methods.
-
-        In order to be ``Hashable`` this class is **immutable**, and so its
-        methods will return a new instance of the class with the effect of the
-        method applied to returned class.
 
     Note:
         Attributes are dynamically set based on the data payload provided, so if
@@ -65,6 +79,8 @@ class Channel(Hashable):
         xmltv_icon_url (:py:class:`yarl.URL`): An internet URL to a graphic logo file.
         xmltv_display_name (str): The human-friendly name of the channel. Should be the same
             as ``name``.
+        programmes (OrderedSet[:class:`~pyskyq.programme.Programme`]): Holds a set of
+            :class:`~pyskyq.programme.Programme` objects ordered by start time.
 
     Note:
         The following attributes come from the SkyQ Box's various endpoints.
@@ -109,6 +125,7 @@ class Channel(Hashable):
         new_obj = super(Channel, cls).__new__(cls, *args, **kwargs)
         new_obj._chan_dict: Dict[str, Any] = blank_chan_dict
         new_obj._sources: CSRC = CSRC.no_source
+        new_obj.programmes: SortedSet = SortedSet()
         return new_obj
 
     def __getattr__(self, name: str) -> Any:
@@ -120,12 +137,14 @@ class Channel(Hashable):
             return self._chan_dict[name]
         if name in CHANNEL_FIELD_MAP.keys():
             return self._chan_dict.get(CHANNEL_FIELD_MAP[name], None)
+        # if name == 'programmes':
+        #     return self.programmes
         return None
 
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Handle attribute assignments."""
-        if not name.startswith('_'):
+        if not name.startswith('_') and name != 'programmes':
             raise AttributeError(f"Can't modify {name}")
         else:
             super().__setattr__(name, value)
@@ -158,7 +177,12 @@ class Channel(Hashable):
         """Return True if self == other."""
         if not isinstance(other, Channel):
             return False
-        return self._chan_dict == other._chan_dict and self._sources == other._sources # pylint: disable=protected-access
+
+        # pylint: disable=protected-access
+        return self._chan_dict == other._chan_dict and \
+            self._sources == other._sources and \
+            self.programmes == other.programmes
+
 
 
     def as_json(self) -> str:
@@ -175,84 +199,64 @@ class Channel(Hashable):
                 which sources have been applied to this object.
 
         """
-        return self._sources
+        return self._sources # type: ignore
 
     def load_skyq_summary_data(self,
                                chan_dict: Dict[str, Any]
-                               ) -> 'Channel':
-        """Load summary data from SkyQ box into a new Channel.
+                               ) -> None:
+        """Load summary data from SkyQ box into the Channel.
 
         Args:
             chan_dict (dict): A detail dict that is obtained from the
                 ``as/services/`` endpoint.
 
-        Returns:
-            Channel: A new channel with the summary SkyQ data added.
-
         """
         # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=protected-access
-        newchannel = Channel.__new__(Channel)
-        newchannel._chan_dict = copy.deepcopy(self._chan_dict)
-        newchannel._chan_dict.update(chan_dict)
-        newchannel._sources = copy.copy(self._sources | CSRC.skyq_service_summary)
-        return newchannel
+        self._chan_dict.update(chan_dict)
+        self._sources = (self._sources | CSRC.skyq_service_summary)  # type: ignore
 
-    def load_skyq_detail_data(self, detail_dict: Dict[str, Any]) -> 'Channel':
-        """Add additional properties obtained from the SkqQ box to a new object.
+    def load_skyq_detail_data(self, detail_dict: Dict[str, Any]) -> None:
+        """Add additional properties obtained from the SkqQ box to the object.
 
         Args:
             detail_dict (dict): A detail dict that is obtained from the
                 ``as/services/details/<sid>`` endpoint.
 
-        Returns:
-            Channel: A new channel with the detailed SkyQ data added.
-
         """
         # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=protected-access
-        newchannel = Channel.__new__(Channel)
-        newchannel._chan_dict = copy.deepcopy(self._chan_dict)
-        newchannel._chan_dict.update(detail_dict['details'])
-        newchannel._sources = copy.copy(self._sources | CSRC.skyq_service_detail)
-        return newchannel
+        self._chan_dict.update(detail_dict['details'])
+        self._sources = (self._sources | CSRC.skyq_service_detail)
 
     def load_xmltv_data(self,
                         xml_chan: Element,
                         base_url: URL = URL('http://www.xmltv.co.uk/'),
-                        ) -> 'Channel':
-        """Take an XML TV Channel element and load it into the channel's data structure.
+                        ) -> None:
+        """Take an XML TV element and load it into the channel's data structure.
 
-        This method loads this object with data passed in from an XML TV channel element.
+        This method loads the :class:`~pyskyq.channel.Channel` object with data
+        passed in from an XML TV channel element. Specifically, this is either
+        additional data about the :class:`~pyskyq.channel.Channel` in question,
+        or it is :class:`~pyskyq.programme.Programme` data for this channel.
 
         Args:
-            xml_chan (Element): A XML element of ``<channel>...</channel>`` tags.
-            base_url (URL): A :py:class:`~yarl.URL` prefix which is used construct the full
-                :attr:`~.channel.Channel.xmltv_icon_url` property.
-
-        Returns:
-            Channel: A new channel with the detailed XMLTV data added.
+            xml_chan (Element): A XML element of ``<channel>...</channel>`` or
+                tags ``<programme>...</programme>``.
+            base_url (URL): A :py:class:`~yarl.URL` prefix which is used construct
+                the full :attr:`~.channel.Channel.xmltv_icon_url` property.
 
         """
-        # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=protected-access
-
-        newchannel = Channel.__new__(Channel)
-        newchannel._chan_dict = copy.deepcopy(self._chan_dict)
-
         assert xml_chan.tag.lower() == 'channel'
 
-        newchannel._chan_dict['xmltv_id'] = xml_chan.attrib['id']
+        self._chan_dict['xmltv_id'] = xml_chan.attrib['id']
         for child in xml_chan:
             if child.tag.lower() == 'icon':
-                newchannel._chan_dict['xmltv_icon_url'] = base_url.join(URL(child.attrib['src']))
+                self._chan_dict['xmltv_icon_url'] = base_url.join(URL(child.attrib['src']))
                 continue
             if child.tag.lower() == 'display-name':
-                newchannel._chan_dict['xmltv_display_name'] = child.text
+                self._chan_dict['xmltv_display_name'] = child.text
 
-        newchannel._sources = copy.copy(self._sources | CSRC.xml_tv)
-
-        return newchannel
+        # pylint: disable=attribute-defined-outside-init
+        self._sources = (self._sources | CSRC.xml_tv)
 
 # pylint: disable=attribute-defined-outside-init
 # pylint: disable=protected-access
@@ -272,6 +276,11 @@ def channel_from_json(json_) -> Channel:
         raise ValueError('Incorrect type metadata in JSON payload.')
     chan._chan_dict = data['attributes']
     chan._sources = data['sources']
+    chan.programmes = SortedSet()
+    for prog in data['programmes']:
+        chan.programmes.add(
+            Programme(channel_xml_id=data['attributes']['xmltv_id'], **prog['attributes'])
+        )
     return chan
 
 
@@ -288,7 +297,8 @@ def channel_from_skyq_service(skyq_chan: Dict[str, Any]) -> Channel:
 
     """
     chan = Channel.__new__(Channel)
-    return chan.load_skyq_summary_data(skyq_chan)
+    chan.load_skyq_summary_data(skyq_chan)
+    return chan
 
 def channel_from_xmltv_list(xml_chan: Element) -> Channel:
     """Create a Channel object from an XMLTV channel element.
@@ -304,7 +314,8 @@ def channel_from_xmltv_list(xml_chan: Element) -> Channel:
 
     """
     chan = Channel.__new__(Channel)
-    return chan.load_xmltv_data(xml_chan)
+    chan.load_xmltv_data(xml_chan)
+    return chan
 
 def merge_channels(chan_a: Channel,
                    chan_b: Channel,
@@ -371,4 +382,5 @@ def merge_channels(chan_a: Channel,
         new_chan._chan_dict['xmltv_id'] = chan_b.xmltv_id
 
     new_chan._sources = chan_a._sources | chan_b._sources
+    new_chan.programmes = chan_b.programmes.union(chan_a.programmes)
     return new_chan

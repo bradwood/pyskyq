@@ -28,5 +28,6 @@ from .xmltvlisting import XMLTVListing
 from .channel import (Channel, channel_from_skyq_service,
                       channel_from_xmltv_list, merge_channels,
                       channel_from_json)
+from .programme import Programme, programme_from_xmltv_list
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

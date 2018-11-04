@@ -1,13 +1,5 @@
 #!/usr/bin/env python
-"""
-Cli wrapper for the skyq API.
-
-Example:
-    You can invoke the cli client like this:
-
-        ``$ python cli_epg.py pause``
-
-"""
+"""Show the use of the EPG, Channel, XMLTVListing and Programme objects."""
 import logging
 import argparse
 import sys
@@ -63,6 +55,16 @@ async def main(args: List[str]):
     print(epg.get_channel_by_sid(pargs.sid).xmltv_id)
     print('Channel Logo URL from the XMLTV Feed:')
     print(epg.get_channel_by_sid(pargs.sid).xmltv_icon_url)
+
+    print('\n\n')
+    print('---- EPG Listing ----')
+    for prog in epg.get_channel_by_sid(pargs.sid).programmes:
+        print(f'Name: {prog.title}', end='')
+        print(f' Start: {prog.start}')
+        print(f'{prog.desc}')
+
+
+
 
 if __name__ == "__main__":
     trio.run(main, sys.argv[1:])

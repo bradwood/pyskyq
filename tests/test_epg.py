@@ -2,15 +2,16 @@ import logging
 import sys
 from functools import partial
 from pathlib import Path
+from dateutil.parser import parse
 
 import pytest
 import trio
 
-from pyskyq import EPG, XMLTVListing
+from pyskyq import EPG, XMLTVListing, Programme
 
 from .http_server import http_server
 from .mock_constants import (SERVICE_DETAIL_1, SERVICE_DETAIL_2,
-                             SERVICE_SUMMARY_MOCK, EPG_JSON)
+                             SERVICE_SUMMARY_MOCK)
 
 logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(level=logging.WARNING, stream=sys.stdout,
@@ -116,11 +117,31 @@ def test_apply_EPG_XMLTV_listing():
     assert epg.get_channel_by_sid(2002).xmltv_display_name == 'BBC One Lon'
     assert epg.get_channel_by_sid(2002).xmltv_icon_url.human_repr() == 'http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png'
 
+    # check that programme list is in order.
+    start_times = [p.start for p in epg.get_channel_by_sid(2002).programmes]
+    for index, time in enumerate(start_times):
+        if index < len(start_times) - 1:
+            assert start_times[index + 1] > time
+
 
 def test_from_json():
     epg = EPG('localhost')
-    epg.from_json(EPG_JSON)
+    json_file = Path(__file__).resolve().parent.joinpath('epg.json')
+
+    with open(json_file, 'r') as jf:
+        epg_json_data = jf.read()
+
+    epg.from_json(epg_json_data)
+
+    as_json = epg.as_json()
+
+    assert epg.from_json(as_json) == epg.from_json(epg_json_data)
 
     assert epg.get_channel_by_sid(2002).c == "101"
     assert epg.get_channel_by_sid(2002).t == "BBC One Lon"
     assert epg.get_channel_by_sid(2002).name == "BBC One Lon"
+
+    assert isinstance(epg.get_channel_by_sid(2002).programmes[1], Programme)
+    assert epg.get_channel_by_sid(2002).programmes[1].title == "Rip Off Britain"
+
+    assert epg.get_channel_by_sid(2002).programmes[1].start == parse("20181005091500 +0100")

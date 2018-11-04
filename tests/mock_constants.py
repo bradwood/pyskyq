@@ -182,7 +182,8 @@ XML_CHAN_JSON = """{
         "xmltv_display_name": "BBC One Lon",
         "xmltv_icon_url": "http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png"
     },
-    "sources": 4
+    "sources": 4,
+    "programmes": []
 }
 """
 
@@ -203,7 +204,8 @@ SKYQ_CHAN_JSON = """{
         "isbroadcasting": true,
         "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
     },
-    "sources": 3
+    "sources": 3,
+    "programmes": []
 }
 """
 
@@ -226,7 +228,8 @@ MERGED_CHAN_JSON = """{
         "xmltv_display_name": "BBC One Lon",
         "xmltv_icon_url": "http://www.xmltv.co.uk/images/channels/f3932e75f691561adbe3b609369e487b.png"
     },
-    "sources": 7
+    "sources": 7,
+    "programmes": []
 }
 """
 
@@ -383,51 +386,54 @@ FUZZY_CHANNELS_MOCK = """
     "version": 3
 }
 """
-EPG_JSON = """
-[
-    {
-        "__type__": "__channel__",
-        "attributes": {
-            "sid": "2002",
-            "c": "101",
-            "t": "BBC One Lon",
-            "xmltv_id": null,
-            "dvbtriplet": "2.2045.6301",
-            "schedule": "true",
-            "servicetype": "DSAT",
-            "sf": "sd",
-            "sg": 12,
-            "sk": 2002,
-            "xsg": 3,
-            "isbroadcasting": true,
-            "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
-        },
-        "sources": 3
-    },
-    {
-        "__type__": "__channel__",
-        "attributes": {
-            "sid": "2306",
-            "c": "811",
-            "t": "Dave",
-            "xmltv_id": null,
-            "dvbtriplet": "2.2022.6506",
-            "schedule": true,
-            "servicetype": "DSAT",
-            "sf": "sd",
-            "sg": 12,
-            "sk": 2306,
-            "xsg": 3,
-            "isbroadcasting": true,
-            "upgradeMessage": "Dave is the home of witty banter with quizcoms, cars and comedies."
-        },
-        "sources": 3
-    },
-    {
-        "__type__": "__SOMETHING_TBC__",
-        "attributes": {
-            "blah": "yadda"
-        }
-    }
-]
-"""
+# EPG_JSON = """
+# [
+#     {
+#         "__type__": "__channel__",
+#         "attributes": {
+#             "sid": "2002",
+#             "c": "101",
+#             "t": "BBC One Lon",
+#             "xmltv_id": null,
+#             "dvbtriplet": "2.2045.6301",
+#             "schedule": "true",
+#             "servicetype": "DSAT",
+#             "sf": "sd",
+#             "sg": 12,
+#             "sk": 2002,
+#             "xsg": 3,
+#             "isbroadcasting": true,
+#             "upgradeMessage": "BBC ONE for Greater London and the surrounding area. Find out more about this and the other BBC English regions at www.bbc.co.uk/england."
+#         },
+#         "sources": 3,
+#         "programmes": []
+
+#     },
+#     {
+#         "__type__": "__channel__",
+#         "attributes": {
+#             "sid": "2306",
+#             "c": "811",
+#             "t": "Dave",
+#             "xmltv_id": null,
+#             "dvbtriplet": "2.2022.6506",
+#             "schedule": true,
+#             "servicetype": "DSAT",
+#             "sf": "sd",
+#             "sg": 12,
+#             "sk": 2306,
+#             "xsg": 3,
+#             "isbroadcasting": true,
+#             "upgradeMessage": "Dave is the home of witty banter with quizcoms, cars and comedies."
+#         },
+#         "sources": 3,
+#         "programmes": []
+#     },
+#     {
+#         "__type__": "__SOMETHING_TBC__",
+#         "attributes": {
+#             "blah": "yadda"
+#         }
+#     }
+# ]
+# """

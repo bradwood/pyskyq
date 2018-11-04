@@ -164,13 +164,13 @@ def test_channel_parse():
     l = XMLTVListing('http://foo.com/feed/6715')
 
     with pytest.raises(OSError, match='File not downloaded, or download is currently in flight.'):
-        for chan in l.parse_channels():
+        for chan in l.parse():
             pass # should throw an error as file is not downloaded.
 
     l._full_path = Path(__file__).resolve().parent.joinpath('parse_xmltv_data.xml')
     l._downloaded = True
 
-    for i,chan in enumerate(l.parse_channels()):
+    for i,chan in enumerate(l.parse()):
 
         LOGGER.debug(chan.xmltv_id)
         LOGGER.debug(chan.xmltv_icon_url)

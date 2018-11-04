@@ -7,11 +7,11 @@ from typing import Any
 import asks
 import trio
 
-# from .asyncthread import AsyncThread
 from .channel import (Channel, _ChannelJSONEncoder, channel_from_json,
                       channel_from_skyq_service, merge_channels)
 from .constants import (REST_PORT, REST_SERVICE_DETAIL_URL_PREFIX,
                         REST_SERVICES_URL)
+from .programme import Programme
 from .xmltvlisting import XMLTVListing
 
 LOGGER = logging.getLogger(__name__)
@@ -84,17 +84,16 @@ class EPG:
 
         """
         async def _load_chan_detail(detail_url: str, channel: Channel) -> None:
-            """Nursery async function to fetch the details of each channel."""
+            """Async function to fetch the details of each channel."""
             LOGGER.debug(f'Fetching channel details from {detail_url}')
             detail_payload_json = await sess.get(detail_url)
             LOGGER.debug(f'Got channel details from {detail_url}')
             detail_payload = detail_payload_json.json()
             LOGGER.debug(f'Parsed JSON from {detail_url}')
-            detailed_channel = channel.load_skyq_detail_data(detail_payload)
+            channel.load_skyq_detail_data(detail_payload)
             LOGGER.debug(f'Merged {detail_url} into {channel}...')
-            LOGGER.debug(f'...resulting in  {detailed_channel}')
-            self._channels.append(detailed_channel)
-            LOGGER.debug(f'Added {detailed_channel} to EPG')
+            self._channels.append(channel)
+            LOGGER.debug(f'Added {channel} to EPG')
 
         url = f'http://{self.host}:{self.rest_port}{REST_SERVICES_URL}'
         LOGGER.debug(f'Fetching channel list from {url}')
@@ -180,6 +179,8 @@ class EPG:
         listing. This could provide additional descriptive channel data, the URL to the
         channel's logo and similar extra stuff.
 
+        It then adds Programme objects to the Channel's Programme data structure.
+
         Args:
             listing(XMLTVListing): a :class:`~.xmltvlisting.XMLTVListing` object to
                 merge to the EPG.
@@ -194,12 +195,35 @@ class EPG:
         if not listing.downloaded:
             raise ValueError("No XMLTVListing file found.")
 
-        for xmltv_channel in listing.parse_channels():
-            sky_channel_names = [chan.name.lower() for chan in self._channels]
-            if xmltv_channel.xmltv_display_name.lower() in sky_channel_names:
-                idx = sky_channel_names.index(xmltv_channel.xmltv_display_name.lower())
-                new_chan = merge_channels(self._channels[idx], xmltv_channel)
-                LOGGER.debug(f'New channel:{new_chan}.')
-                self._channels.append(new_chan)
-                LOGGER.debug(f'Replaced {self._channels[idx]} with {new_chan} in EPG.')
-                del self._channels[idx]
+        # There is no guarantee that the XMLTV file will serve elements in a particular order.
+        # We want to load and create _all_ the channels before we load the programmes so we use
+        # a temp var to hold the programme items which we then add to the Channels _afterwards_.
+
+        prog_temp = []
+        for xmltv_item in listing.parse():
+            if isinstance(xmltv_item, Channel):
+                sky_channel_names = [chan.name.lower() for chan in self._channels]
+                if xmltv_item.xmltv_display_name.lower() in sky_channel_names:
+                    idx = sky_channel_names.index(xmltv_item.xmltv_display_name.lower())
+                    new_chan = merge_channels(self._channels[idx], xmltv_item)
+                    LOGGER.debug(f'New channel:{new_chan}.')
+                    self._channels.append(new_chan)
+                    LOGGER.debug(f'Replaced {self._channels[idx]} with {new_chan} in EPG.')
+                    del self._channels[idx]
+                    continue
+            if isinstance(xmltv_item, Programme):
+                prog_temp.append(xmltv_item)
+                continue
+
+        # We rely on the Programme's hash being the same as any previous
+        # instance of this programme that is being added to the programmes
+        # SortedSet as the __hash__() function relies _only_ on the programm's
+        # Title, StartTime and XMLChannelID data. In this way, if we apply a
+        # newer, richer XMLTV listing to an existing one, by adding this item to
+        # the SortedSet we will _replace_ any previously present Programme if
+        # the hash of the newer one is the same as an existing one, even if the
+        # data is newer/better. This allows us to keep applying XMLTV Listing
+        # over and over without risk of duplication.
+        for chan in self._channels:
+            chan_progs = [prog for prog in prog_temp if prog.channel_xml_id == chan.xmltv_id]
+            chan.programmes.update(chan_progs)
