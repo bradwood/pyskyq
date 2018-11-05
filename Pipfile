@@ -5,34 +5,9 @@ name = "pypi"
 
 [packages]
 "e1839a8" = {editable = true, path = "."}
-yarl = "*"
-trio = "*"
-asks = "*"
-trio-websocket = "*"
-python-dateutil = "*"
-sortedcontainers = "*"
 
 [dev-packages]
-pytest = "*"
-pytest-cov = "*"
-sphinx = "*"
-pylint = "*"
-"autopep8" = "*"
-setuptools = "*"
-bumpversion = "*"
-pytest-mock = "*"
-twine = "*"
-docutils = "*"
-mypy = "*"
-rope = "*"
-reno = {version = "*", extras = ["sphinx"]}
-asynctest = "*"
-mock = "*"
-pydocstyle = "*"
-python-dateutil = "*"
-sphinxcontrib-asyncio = "*"
-pytest-trio = "*"
-"h11" = "*"
+"e1839a8" = {editable = true, extras = ["dev"], path = "."}
 
 [requires]
 python_version = "3.7"
